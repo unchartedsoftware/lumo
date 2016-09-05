@@ -71,7 +71,7 @@
                 this.x * scaledTileSize,
                 this.x * scaledTileSize + scaledTileSize,
                 this.y * scaledTileSize,
-                this.x * scaledTileSize + scaledTileSize);
+                this.y * scaledTileSize + scaledTileSize);
             return viewportBounds.overlaps(tileBounds);
         }
     }

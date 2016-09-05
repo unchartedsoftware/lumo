@@ -4,7 +4,7 @@
 
     const esper = require('esper');
     const glm = require('gl-matrix');
-    // const Enum = require('./Enum');
+    const Const = require('./Const');
 
     const vert =
         `
@@ -124,7 +124,7 @@
                 this.proj,
                 0, plot.viewport[0],
                 0, plot.viewport[1],
-                -100, 100);
+                -Const.MAX_ZOOM, Const.MAX_ZOOM);
             shader.use();
             gl.viewport(0, 0, plot.viewport[0], plot.viewport[1]);
             // set uniforms
@@ -142,25 +142,11 @@
                 shader.setUniform('uTileOffset', tileOffset);
                 // set tile opacity
                 shader.setUniform('uOpacity', tile.opacity(timestamp));
-                // set tile zoom
-
-                // if (plot.zoomDirection === Enum.ZOOM_IN) {
-                //     shader.setUniform('uZoom', tile.coord.z);
-                // } else {
-                //     shader.setUniform('uZoom', -tile.coord.z);
-                // }
-
+                // set tile zoom, use distance from the current zoom level
+                shader.setUniform('uZoom', Math.abs(plot.zoom - tile.coord.z));
                 // set tile scale
-                if (plot.zoomAnimation) {
-                    const z = plot.zoomAnimation.zoom(timestamp);
-                    const scale = Math.pow(2, z - tile.coord.z);
-                    shader.setUniform('uTileScale', scale);
-                    shader.setUniform('uZoom', Math.abs(z - tile.coord.z));
-                } else {
-                    const scale = Math.pow(2, plot.zoom - tile.coord.z);
-                    shader.setUniform('uTileScale', scale);
-                    shader.setUniform('uZoom', Math.abs(plot.zoom - tile.coord.z));
-                }
+                const scale = Math.pow(2, plot.zoom - tile.coord.z);
+                shader.setUniform('uTileScale', scale);
                 // draw
                 quad.draw();
             });

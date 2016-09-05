@@ -5,6 +5,8 @@
     const glm = require('gl-matrix');
     const Const = require('./Const');
 
+    // Private Methods
+
     // Class / Public Methods
 
     class ZoomAnimation {
@@ -16,26 +18,26 @@
             this.viewportFrom = spec.viewportFrom;
             this.finished = false;
         }
-        t(timestamp) {
+        updatePlot(plot, timestamp) {
+            // get t value
             const t = Math.min(1.0, (timestamp - this.timestamp) / this.duration);
+            // check if animation is finished
             if (t >= 1) {
                 this.finished = true;
             }
-            return t;
-        }
-        zoom(timestamp) {
-            const t = this.t(timestamp);
+            // calc new zoom
             const range = this.zoomTo - this.zoomFrom;
-            return this.zoomFrom + range * t;
-        }
-        viewportPx(plot, timestamp) {
-            const z = this.zoom(timestamp);
-            const current = Math.pow(2, z);
-            const prev = Math.pow(2, plot.zoom);
+            const zoom = this.zoomFrom + range * t;
+            // set new zoom
+            plot.zoom = zoom;
+            // calc new viewportPx
+            const current = Math.pow(2, plot.zoom);
+            const prev = Math.pow(2, plot.prevZoom);
             const scale = (current - prev) / 2;
             const change = plot.tileSize * scale;
-            return glm.vec2.add(
-                glm.vec2.create(),
+            // set new viewportPx
+            plot.viewportPx = glm.vec2.add(
+                plot.viewportPx,
                 this.viewportFrom,
                 glm.vec2.fromValues(change, change));
         }

@@ -189,6 +189,9 @@
                 viewportFrom: glm.vec2.clone(plot.viewportPx)
             });
 
+            // store prev zoom
+            plot.prevZoom = plot.zoom;
+
             // set zoom direction
             plot.zoomDirection = (plot.zoom < plot.targetZoom) ? Enum.ZOOM_IN : Enum.ZOOM_OUT;
 
@@ -198,7 +201,7 @@
     };
 
     const zoomOut = function(plot) {
-        if (plot.zoomAnimation || plot.targetZoom === plot.minZoom) {
+        if (plot.zoomAnimation || plot.targetZoom <= plot.minZoom) {
             return;
         }
         plot.targetZoom-=2;
@@ -206,7 +209,7 @@
     };
 
     const zoomIn = function(plot) {
-        if (plot.zoomAnimation || plot.targetZoom === plot.maxZoom) {
+        if (plot.zoomAnimation || plot.targetZoom >= plot.maxZoom) {
             return;
         }
         plot.targetZoom+=2;
@@ -244,8 +247,8 @@
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
         if (plot.zoomAnimation) {
-            // animate the viewport
-            plot.viewportPx = plot.zoomAnimation.viewportPx(plot, timestamp);
+            // apply the zoom animation
+            plot.zoomAnimation.updatePlot(plot, timestamp);
         }
         // render each layer
         plot.layers.forEach(layer => {
@@ -256,7 +259,6 @@
         // remove animation once complete
         if (plot.zoomAnimation && plot.zoomAnimation.done()) {
             plot.zoomAnimation = null;
-            plot.zoom = plot.targetZoom;
         }
         // request newxt animation frame
         plot.renderQuest = requestAnimationFrame(() => {
@@ -289,11 +291,11 @@
 
             this.tileSize = 256;
 
-            this.zoom = options.zoom || 0;
             this.minZoom = Math.max(Const.MIN_ZOOM, options.minZoom || Const.MIN_ZOOM);
             this.maxZoom = Math.min(Const.MAX_ZOOM, options.maxZoom || Const.MAX_ZOOM);
+            this.zoom = Math.min(Const.MAX_ZOOM, Math.max(Const.MIN_ZOOM, options.zoom || 0));
+            this.prevZoom = this.zoom;
             this.targetZoom = this.zoom;
-            this.targetZoomPx = glm.vec2.create();
             this.zoomDirection = Enum.ZOOM_IN;
 
             this.viewport = glm.vec2.fromValues(

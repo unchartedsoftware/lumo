@@ -118,47 +118,43 @@
             });
             return ancestors;
         }
-        // getNonVisibleTiles(plot) {
-        //     const zoom = (plot.zoomAnimation) ? plot.zoomAnimation.zoom(Date.now()) : plot.zoom;
-        //     const nonVisible = [];
-        //     this.map.forEach(tile => {
-        //         const inView = tile.coord.isInView(
-        //             plot.tileSize,
-        //             zoom,
-        //             plot.viewport,
-        //             plot.viewportPx);
-        //         if (!inView) {
-        //             nonVisible.push(tile);
-        //         }
-        //     });
-        //     return nonVisible;
-        // }
-        // getVisibleTiles(plot) {
-        //     const zoom = (plot.zoomAnimation) ? plot.zoomAnimation.zoom(Date.now()) : plot.zoom;
-        //     const visible = [];
-        //     this.map.forEach(tile => {
-        //         const inView = tile.coord.isInView(
-        //             plot.tileSize,
-        //             zoom,
-        //             plot.viewport,
-        //             plot.viewportPx);
-        //         if (inView) {
-        //             visible.push(tile);
-        //         }
-        //     });
-        //     return visible;
-        // }
+        getNonVisibleTiles(plot) {
+            const nonVisible = [];
+            this.map.forEach(tile => {
+                const inView = tile.coord.isInView(
+                    plot.tileSize,
+                    plot.zoom,
+                    plot.viewport,
+                    plot.viewportPx);
+                if (!inView) {
+                    nonVisible.push(tile);
+                }
+            });
+            return nonVisible;
+        }
+        getVisibleTiles(plot) {
+            const visible = [];
+            this.map.forEach(tile => {
+                const inView = tile.coord.isInView(
+                    plot.tileSize,
+                    plot.zoom,
+                    plot.viewport,
+                    plot.viewportPx);
+                if (inView) {
+                    visible.push(tile);
+                }
+            });
+            return visible;
+        }
         pruneTiles(plot, tile) {
             if (plot.zoomDirection === Enum.ZOOM_IN) {
-                const zoom = (plot.zoomAnimation) ? plot.zoomAnimation.zoom(tile.timestamp) : plot.zoom;
                 // get all ancestors
                 const ancestors = this.getAncestors(tile);
-
                 ancestors.forEach(ancestor => {
                     // check if out of view
                     const inView = ancestor.coord.isInView(
                         plot.tileSize,
-                        zoom,
+                        plot.zoom,
                         plot.viewport,
                         plot.viewportPx);
                     // if ancestor is not in view, get rid of it
@@ -178,7 +174,7 @@
                                 plot.tileSize,
                                 plot.viewport,
                                 plot.viewportPx,
-                                zoom,
+                                plot.zoom,
                                 level);
                             // are all visible descendants here?
                             // TODO: short circuit this
