@@ -6,14 +6,10 @@
     const glm = require('gl-matrix');
     const EventEmitter = require('events');
     const Event = require('./Event');
+    const Enum = require('./Enum');
     const Tile = require('./Tile');
-
-    const DEFAULT_MIN_ZOOM = 0;
-    const DEFAULT_MAX_ZOOM = 24;
-
-    const ZOOM_THROTTLE = 100;
-    const UPDATE_THROTTLE = 100;
-    const RESIZE_THROTTLE = 200;
+    const Const = require('./Const');
+    const ZoomAnimation = require('./ZoomAnimation');
 
     // Private Methods
 
@@ -65,13 +61,12 @@
         return wrapper;
     };
 
-    const getVisibleTiles = function(plot) {
-        const x = plot.viewportPx[0];
-        const y = plot.viewportPx[1];
-        const width = plot.viewport[0];
-        const height = plot.viewport[1];
+    const getVisibleTiles = function(plot, viewport, viewportPx, zoom) {
+        const x = viewportPx[0];
+        const y = viewportPx[1];
+        const width = viewport[0];
+        const height = viewport[1];
         const tileSize = plot.tileSize;
-        const zoom = plot.zoom;
         const dim = Math.pow(2, zoom);
         // TODO: add wrap-around logic here
         const xMin = Math.floor(Math.max(0, x / tileSize));
@@ -92,8 +87,79 @@
         return coords;
     };
 
-    const requestTiles = function(plot) {
-        let coords = getVisibleTiles(plot);
+    const getParentTile = function(coord) {
+        return {
+            z: coord.z - 1,
+            x: Math.floor(coord.x / 2),
+            y: Math.floor(coord.y / 2),
+        };
+    };
+
+    const getChildTiles = function(coord) {
+        const coords = [];
+        for (let x=0; x<2; x++) {
+            for (let y=0; y<2; y++) {
+                coords.push({
+                    z: coord.z + 1,
+                    x: coord.x * 2 + x,
+                    y: coord.y * 2 + y
+                });
+            }
+        }
+        return coords;
+    };
+
+    const getSiblingTiles = function(coord) {
+        return getChildTiles(getParentTile(coord));
+    };
+
+    const pruneTiles = function(plot, layer, tile) {
+        const coord = tile.coord;
+        if (plot.zoomDirection === Enum.ZOOM_IN) {
+            // if zooming in we remove the ones on top
+            const siblings = getSiblingTiles(coord);
+            let retrieved = 0;
+            siblings.forEach(sibling => {
+                const hash = hashCoord(sibling);
+                if (layer.tiles.has(hash)) {
+                    retrieved++;
+                }
+            });
+            if (retrieved === 4) {
+                // remove parent once tile finishes fading in
+                tile.onFadeIn(() => {
+                    const parent = getParentTile(coord);
+                    const hash = hashCoord(parent);
+                    if (layer.tiles.has(hash)) {
+                        const tile = layer.tiles.get(hash);
+                        // remove the tile
+                        layer.tiles.delete(hash);
+                        // emit remove
+                        layer.emit(Event.TILE_REMOVE, tile);
+                    }
+                });
+            }
+        } else {
+            // remove parent once tile finishes fading in
+            tile.onFadeIn(() => {
+                // zooming out, remove all children
+                const children = getChildTiles(coord);
+                children.forEach(child => {
+                    const hash = hashCoord(child);
+                    if (layer.tiles.has(hash)) {
+                        const tile = layer.tiles.get(hash);
+                        // remove the tile
+                        layer.tiles.delete(hash);
+                        // emit remove
+                        layer.emit(Event.TILE_REMOVE, tile);
+                    }
+                });
+            });
+        }
+    };
+
+    const requestTiles = function(plot, viewport, viewportPx, zoom) {
+        let coords = getVisibleTiles(plot, viewport, viewportPx, zoom);
         plot.layers.forEach(layer => {
             // remove coords for tiles we already have
             const pendingCoords = coords.filter(coord => {
@@ -115,10 +181,18 @@
                 layer.emit(Event.TILE_REQUEST, tile);
                 // request tile
                 layer.requestTile(coord, (err, data) => {
+                    // timestamp the tile
+                    tile.timestamp = Date.now();
                     // remove tile from pending
                     layer.pendingTiles.delete(hash);
                     // add to tiles
                     layer.tiles.set(hash, tile);
+
+                    // prune tiles above / below once the tile has faded in
+                    // TODO: fix this so it supports tiles more than 1 zoom
+                    // away
+                    pruneTiles(plot, layer, tile);
+
                     // check err
                     if (err !== null) {
                         // add err
@@ -136,8 +210,8 @@
         });
     };
 
-    const removeTiles = function(plot) {
-        let coords = getVisibleTiles(plot);
+    const removeTiles = function(plot, viewport, viewportPx, zoom) {
+        let coords = getVisibleTiles(plot, viewport, viewportPx, zoom);
         plot.layers.forEach(layer => {
             // create map to track removeable tiles
             const removableTiles = new Map(layer.tiles);
@@ -157,11 +231,15 @@
     };
 
     const updateTiles = throttle(function(plot) {
-        removeTiles(plot);
-        requestTiles(plot);
-    }, UPDATE_THROTTLE);
+        removeTiles(plot, plot.viewport, plot.viewportPx, plot.zoom);
+        requestTiles(plot, plot.viewport, plot.viewportPx, plot.zoom);
+    }, Const.UPDATE_THROTTLE);
 
     const pan = function(plot, delta) {
+        if (plot.zoomAnimation) {
+            // no panning while zooming
+            return;
+        }
         plot.viewportPx = glm.vec2.sub(plot.viewportPx, plot.viewportPx, delta);
         plot.emit(Event.PAN, delta);
         updateTiles(plot);
@@ -174,7 +252,8 @@
     //     plot.viewportPx = glm.vec2.sub(plot.viewportPx, px, half);
     // };
 
-    const zoom = throttle(function(plot) {
+    // TODO: implement a batch and delay. Batch up to N zooms, then delay
+    const zoom = function(plot) {
         if (plot.zoom !== plot.targetZoom) {
             // get the current dimension
             const current = Math.pow(2, plot.zoom);
@@ -182,24 +261,30 @@
             const next = Math.pow(2, plot.targetZoom);
             // determine the change in pixels to center the existing plot
             const change = plot.tileSize * (next - current) / 2;
-            // offset it by the dim change in the plot
-            // TODO: ensure clicked ps remains in the same position
-            plot.viewportPx[0] += change;
-            plot.viewportPx[1] += change;
-            // update zoom level
-            plot.zoom = plot.targetZoom;
-            // clear current tiles
-            // TODO: only clear once the replacements have arrived
-            plot.layers.forEach(layer => {
-                layer.tiles.clear();
+
+            // get target viewport
+            const viewportTo = glm.vec2.add(
+                glm.vec2.create(),
+                plot.viewportPx,
+                glm.vec2.fromValues(change, change));
+
+            // plot zoom timestamp
+            plot.zoomAnimation = new ZoomAnimation({
+                zoomFrom: plot.zoom,
+                zoomTo: plot.targetZoom,
+                viewportFrom: glm.vec2.clone(plot.viewportPx)
             });
+
+            // set zoom direction
+            plot.zoomDirection = (plot.zoom < plot.targetZoom) ? Enum.ZOOM_IN : Enum.ZOOM_OUT;
+
             // request tiles
-            requestTiles(plot);
+            requestTiles(plot, plot.viewport, viewportTo, plot.targetZoom);
         }
-    }, ZOOM_THROTTLE);
+    };
 
     const zoomOut = function(plot) {
-        if (plot.targetZoom === plot.minZoom) {
+        if (plot.zoomAnimation || plot.targetZoom === plot.minZoom) {
             return;
         }
         plot.targetZoom--;
@@ -207,7 +292,7 @@
     };
 
     const zoomIn = function(plot) {
-        if (plot.targetZoom === plot.maxZoom) {
+        if (plot.zoomAnimation || plot.targetZoom === plot.maxZoom) {
             return;
         }
         plot.targetZoom++;
@@ -227,21 +312,38 @@
             // emit resize
             plot.emit(Event.RESIZE, {});
         }
-    }, RESIZE_THROTTLE);
+    }, Const.RESIZE_THROTTLE);
 
     const render = function(plot) {
         // update size
         resize(plot);
+        // get timestamp
+        const timestamp = Date.now();
         // clear the backbuffer
         const gl = plot.gl;
         gl.clearColor(0, 0, 0, 0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        // enable depth testing
+        gl.enable(gl.DEPTH_TEST);
+        // enable blending
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+        if (plot.zoomAnimation) {
+            // animate the viewport
+            plot.viewportPx = plot.zoomAnimation.viewportPx(plot, timestamp);
+        }
         // render each layer
         plot.layers.forEach(layer => {
             if (layer.renderer) {
-                layer.renderer.draw();
+                layer.renderer.draw(timestamp);
             }
         });
+        // remove animation once complete
+        if (plot.zoomAnimation && plot.zoomAnimation.done()) {
+            plot.zoomAnimation = null;
+            plot.zoom = plot.targetZoom;
+        }
         // request newxt animation frame
         plot.renderQuest = requestAnimationFrame(() => {
             render(plot);
@@ -274,10 +376,11 @@
             this.tileSize = 256;
 
             this.zoom = options.zoom || 0;
-            this.minZoom = Math.max(DEFAULT_MIN_ZOOM, options.minZoom || DEFAULT_MIN_ZOOM);
-            this.maxZoom = Math.min(DEFAULT_MAX_ZOOM, options.maxZoom || DEFAULT_MAX_ZOOM);
+            this.minZoom = Math.max(Const.MIN_ZOOM, options.minZoom || Const.MIN_ZOOM);
+            this.maxZoom = Math.min(Const.MAX_ZOOM, options.maxZoom || Const.MAX_ZOOM);
             this.targetZoom = this.zoom;
             this.targetZoomPx = glm.vec2.create();
+            this.zoomDirection = Enum.ZOOM_IN;
 
             this.viewport = glm.vec2.fromValues(
                 this.element.offsetWidth,
@@ -333,7 +436,6 @@
                 } else {
                     zoomIn(this);
                 }
-                zoom(this);
             });
 
             // render loop
@@ -357,7 +459,7 @@
                 this.layers.push(layer);
                 layer.activate(this);
             }
-            requestTiles(this);
+            requestTiles(this, this.viewport, this.viewportPx, this.zoom);
         }
         remove(layer) {
             if (!layer) {
