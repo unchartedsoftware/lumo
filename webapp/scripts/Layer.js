@@ -3,6 +3,7 @@
     'use strict';
 
     const EventEmitter = require('events');
+    const TilePyramid = require('./TilePyramid');
 
     // Class / Public Methods
 
@@ -11,7 +12,7 @@
             super();
             this.renderer = options.renderer;
             this.plot = null;
-            this.tiles = new Map();
+            this.tiles = new TilePyramid(this);
             this.pendingTiles = new Map();
         }
         activate(plot) {

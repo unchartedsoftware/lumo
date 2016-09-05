@@ -7,15 +7,13 @@
     const EventEmitter = require('events');
     const Event = require('./Event');
     const Enum = require('./Enum');
+    const Coord = require('./Coord');
     const Tile = require('./Tile');
     const Const = require('./Const');
+    const Bounds = require('./Bounds');
     const ZoomAnimation = require('./ZoomAnimation');
 
     // Private Methods
-
-    const hashCoord = function(coord) {
-        return `${coord.z}-${coord.x}-${coord.y}`;
-    };
 
     const mouseToViewPx = function(plot, event) {
         return glm.vec2.fromValues(
@@ -61,110 +59,30 @@
         return wrapper;
     };
 
-    const getVisibleTiles = function(plot, viewport, viewportPx, zoom) {
-        const x = viewportPx[0];
-        const y = viewportPx[1];
-        const width = viewport[0];
-        const height = viewport[1];
-        const tileSize = plot.tileSize;
+    const getVisibleTiles = function(tileSize, viewport, viewportPx, zoom) {
         const dim = Math.pow(2, zoom);
         // TODO: add wrap-around logic here
-        const xMin = Math.floor(Math.max(0, x / tileSize));
-        const xMax = Math.ceil(Math.min(dim, (x + width) / tileSize));
-        const yMin = Math.floor(Math.max(0, y / tileSize));
-        const yMax = Math.ceil(Math.min(dim, (y + height) / tileSize));
+        const bounds = new Bounds(
+            Math.floor(Math.max(0, viewportPx[0] / tileSize)),
+            Math.ceil(Math.min(dim, (viewportPx[0] + viewport[0]) / tileSize)),
+            Math.floor(Math.max(0, viewportPx[1] / tileSize)),
+            Math.ceil(Math.min(dim, (viewportPx[1] + viewport[1]) / tileSize)));
         // TODO: pre-allocate this and index
         let coords = [];
-        for (let i=xMin; i<xMax; i++) {
-            for (let j=yMin; j<yMax; j++) {
-                coords.push({
-                    z: zoom,
-                    x: i,
-                    y: j,
-                });
+        for (let x=bounds.left; x<bounds.right; x++) {
+            for (let y=bounds.bottom; y<bounds.top; y++) {
+                coords.push(new Coord(zoom, x, y));
             }
         }
         return coords;
-    };
-
-    const getParentTile = function(coord) {
-        return {
-            z: coord.z - 1,
-            x: Math.floor(coord.x / 2),
-            y: Math.floor(coord.y / 2),
-        };
-    };
-
-    const getChildTiles = function(coord) {
-        const coords = [];
-        for (let x=0; x<2; x++) {
-            for (let y=0; y<2; y++) {
-                coords.push({
-                    z: coord.z + 1,
-                    x: coord.x * 2 + x,
-                    y: coord.y * 2 + y
-                });
-            }
-        }
-        return coords;
-    };
-
-    const getSiblingTiles = function(coord) {
-        return getChildTiles(getParentTile(coord));
-    };
-
-    const pruneTiles = function(plot, layer, tile) {
-        const coord = tile.coord;
-        if (plot.zoomDirection === Enum.ZOOM_IN) {
-            // if zooming in we remove the ones on top
-            const siblings = getSiblingTiles(coord);
-            let retrieved = 0;
-            siblings.forEach(sibling => {
-                const hash = hashCoord(sibling);
-                if (layer.tiles.has(hash)) {
-                    retrieved++;
-                }
-            });
-            if (retrieved === 4) {
-                // remove parent once tile finishes fading in
-                tile.onFadeIn(() => {
-                    const parent = getParentTile(coord);
-                    const hash = hashCoord(parent);
-                    if (layer.tiles.has(hash)) {
-                        const tile = layer.tiles.get(hash);
-                        // remove the tile
-                        layer.tiles.delete(hash);
-                        // emit remove
-                        layer.emit(Event.TILE_REMOVE, tile);
-                    }
-                });
-            }
-        } else {
-            // remove parent once tile finishes fading in
-            tile.onFadeIn(() => {
-                // zooming out, remove all children
-                const children = getChildTiles(coord);
-                children.forEach(child => {
-                    const hash = hashCoord(child);
-                    if (layer.tiles.has(hash)) {
-                        const tile = layer.tiles.get(hash);
-                        // remove the tile
-                        layer.tiles.delete(hash);
-                        // emit remove
-                        layer.emit(Event.TILE_REMOVE, tile);
-                    }
-                });
-            });
-        }
     };
 
     const requestTiles = function(plot, viewport, viewportPx, zoom) {
-        let coords = getVisibleTiles(plot, viewport, viewportPx, zoom);
+        let coords = getVisibleTiles(plot.tileSize, viewport, viewportPx, zoom);
         plot.layers.forEach(layer => {
-            // remove coords for tiles we already have
+            // remove coords for tiles we already have, or are currently pending
             const pendingCoords = coords.filter(coord => {
-                const hash = hashCoord(coord);
-                return !layer.tiles.has(hash) && !layer.pendingTiles.has(hash);
+                return !layer.tiles.has(coord) && !layer.pendingTiles.has(coord.hash);
             });
             // create tile objects
             // TODO: use a pre-allocated pool
@@ -174,9 +92,8 @@
             // request tiles
             pendingTiles.forEach(tile => {
                 const coord = tile.coord;
-                const hash = hashCoord(coord);
                 // add tile to pending array
-                layer.pendingTiles.set(hash, tile);
+                layer.pendingTiles.set(coord.hash, tile);
                 // emit request
                 layer.emit(Event.TILE_REQUEST, tile);
                 // request tile
@@ -184,14 +101,14 @@
                     // timestamp the tile
                     tile.timestamp = Date.now();
                     // remove tile from pending
-                    layer.pendingTiles.delete(hash);
-                    // add to tiles
-                    layer.tiles.set(hash, tile);
+                    layer.pendingTiles.delete(coord.hash);
+                    // add to tile pyramid
+                    layer.tiles.add(tile);
 
                     // prune tiles above / below once the tile has faded in
                     // TODO: fix this so it supports tiles more than 1 zoom
                     // away
-                    pruneTiles(plot, layer, tile);
+                    layer.tiles.pruneTiles(plot, tile);
 
                     // check err
                     if (err !== null) {
@@ -211,21 +128,18 @@
     };
 
     const removeTiles = function(plot, viewport, viewportPx, zoom) {
-        let coords = getVisibleTiles(plot, viewport, viewportPx, zoom);
+        let coords = getVisibleTiles(plot.tileSize, viewport, viewportPx, zoom);
         plot.layers.forEach(layer => {
             // create map to track removeable tiles
-            const removableTiles = new Map(layer.tiles);
+            const removableTiles = new Map(layer.tiles.map);
             // remove all tiles from this map that are in view
             coords.forEach(coord => {
-                const hash = hashCoord(coord);
-                removableTiles.delete(hash);
+                removableTiles.delete(coord.hash);
             });
             // remove the removeable tiles
-            removableTiles.forEach((tile, hash) => {
+            removableTiles.forEach(tile => {
                 // remove the tile
-                layer.tiles.delete(hash);
-                // emit remove
-                layer.emit(Event.TILE_REMOVE, tile);
+                layer.tiles.remove(tile);
             });
         });
     };
@@ -287,7 +201,7 @@
         if (plot.zoomAnimation || plot.targetZoom === plot.minZoom) {
             return;
         }
-        plot.targetZoom--;
+        plot.targetZoom-=2;
         zoom(plot);
     };
 
@@ -295,7 +209,7 @@
         if (plot.zoomAnimation || plot.targetZoom === plot.maxZoom) {
             return;
         }
-        plot.targetZoom++;
+        plot.targetZoom+=2;
         zoom(plot);
     };
 

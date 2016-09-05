@@ -23,13 +23,13 @@
             }
             return t;
         }
-        z(timestamp) {
+        zoom(timestamp) {
             const t = this.t(timestamp);
             const range = this.zoomTo - this.zoomFrom;
             return this.zoomFrom + range * t;
         }
         viewportPx(plot, timestamp) {
-            const z = this.z(timestamp);
+            const z = this.zoom(timestamp);
             const current = Math.pow(2, z);
             const prev = Math.pow(2, plot.zoom);
             const scale = (current - prev) / 2;

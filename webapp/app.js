@@ -21,13 +21,16 @@
         });
 
         // layer.on('tile:request', tile => {
-        //     console.log('request', tile.coord);
+        //     console.log('request' + tile.coord.hash);
+        // });
+        // layer.on('tile:add', tile => {
+        //     console.log('add' + tile.coord.hash);
         // });
         // layer.on('tile:success', tile => {
-        //     console.log('success', tile.coord);
+        //     console.log('success' + tile.coord.hash);
         // });
         // layer.on('tile:remove', tile => {
-        //     console.log('remove', tile.coord);
+        //     console.log('remove' + tile.coord.hash);
         // });
 
         layer.requestTile = (tile, done) => {
