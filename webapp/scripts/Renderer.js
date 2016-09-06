@@ -5,6 +5,7 @@
     const esper = require('esper');
     const glm = require('gl-matrix');
     const Const = require('./Const');
+    const Enum = require('./Enum');
 
     const vert =
         `
@@ -20,7 +21,7 @@
         void main() {
             vTextureCoord = aTextureCoord;
             vec2 wPosition = (aPosition + uTileOffset) * uTileScale - uViewOffset;
-            gl_Position = uProjectionMatrix * vec4(wPosition, -uZoom, 1.0);
+            gl_Position = uProjectionMatrix * vec4(wPosition, uZoom, 1.0);
         }
         `;
 
@@ -142,8 +143,13 @@
                 shader.setUniform('uTileOffset', tileOffset);
                 // set tile opacity
                 shader.setUniform('uOpacity', tile.opacity(timestamp));
-                // set tile zoom, use distance from the current zoom level
-                shader.setUniform('uZoom', Math.abs(plot.zoom - tile.coord.z));
+                // set tile zoom
+                // TODO: do this properly
+                if (plot.zoomDirection === Enum.ZOOM_IN) {
+                    shader.setUniform('uZoom', tile.coord.z);
+                } else {
+                    shader.setUniform('uZoom', -tile.coord.z);
+                }
                 // set tile scale
                 const scale = Math.pow(2, plot.zoom - tile.coord.z);
                 shader.setUniform('uTileScale', scale);
