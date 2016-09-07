@@ -16,7 +16,8 @@
             this.timestamp = null;
         }
         opacity(timestamp) {
-            return Math.min(1.0, (timestamp - this.timestamp) / Const.TILE_FADE_MS);
+            const opacity = (timestamp - this.timestamp) / Const.TILE_FADE_MS;
+            return Math.max(0.0, Math.min(1.0, opacity));
         }
         onFadeIn(callback) {
             const diff = Date.now() - this.timestamp;

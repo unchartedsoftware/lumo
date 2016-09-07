@@ -21,7 +21,7 @@
         void main() {
             vTextureCoord = aTextureCoord;
             vec2 wPosition = (aPosition + uTileOffset) * uTileScale - uViewOffset;
-            gl_Position = uProjectionMatrix * vec4(wPosition, uZoom, 1.0);
+            gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
         }
         `;
 
@@ -31,11 +31,8 @@
         uniform float uOpacity;
         varying vec2 vTextureCoord;
         void main() {
-            gl_FragColor = vec4(
-                vTextureCoord.x,
-                vTextureCoord.y,
-                (1.0 - vTextureCoord.x),
-                uOpacity);
+            vec3 color = vec3(vTextureCoord.x, vTextureCoord.y, (1.0 - vTextureCoord.x));
+            gl_FragColor = vec4(color, uOpacity);
         }
         `;
 
@@ -119,7 +116,7 @@
             const plot = this.plot;
             const shader = this.shader;
             const quad = this.quad;
-            const tiles = this.layer.tiles;
+            const pyramid = this.layer.tiles;
             // update projection
             const proj = glm.mat4.ortho(
                 this.proj,
@@ -133,6 +130,13 @@
             shader.setUniform('uViewOffset', plot.viewportPx);
             // bind quad
             quad.bind();
+            // get tiles sorted based on last zoom direction
+            let tiles;
+            if (plot.zoomDirection === Enum.ZOOM_IN) {
+                tiles = pyramid.tiles(Enum.SORT_ASC);
+            } else {
+                tiles = pyramid.tiles(Enum.SORT_DESC);
+            }
             // for each tile
             tiles.forEach(tile => {
                 // get tile offset
@@ -143,13 +147,6 @@
                 shader.setUniform('uTileOffset', tileOffset);
                 // set tile opacity
                 shader.setUniform('uOpacity', tile.opacity(timestamp));
-                // set tile zoom
-                // TODO: do this properly
-                if (plot.zoomDirection === Enum.ZOOM_IN) {
-                    shader.setUniform('uZoom', tile.coord.z);
-                } else {
-                    shader.setUniform('uZoom', -tile.coord.z);
-                }
                 // set tile scale
                 const scale = Math.pow(2, plot.zoom - tile.coord.z);
                 shader.setUniform('uTileScale', scale);

@@ -5,6 +5,7 @@
     const Bounds = require('./Bounds');
     const Const = require('./Const');
     const Coord = require('./Coord');
+    const Enum = require('./Enum');
     const Event = require('./Event');
     const Tile = require('./Tile');
 
@@ -93,6 +94,22 @@
         }
         forEach(fn) {
             this.map.forEach(fn);
+        }
+        tiles(order = Enum.SORT_ASC) {
+            const tiles = [];
+            this.map.forEach(tile => {
+                tiles.push(tile);
+            });
+            if (order === Enum.SORT_ASC) {
+                tiles.sort((a, b) => {
+                    return a.coord.z - b.coord.z;
+                });
+            } else {
+                tiles.sort((a, b) => {
+                    return b.coord.z - a.coord.z;
+                });
+            }
+            return tiles;
         }
         getDescendants(parent) {
             const descendants = [];

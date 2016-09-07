@@ -44,7 +44,7 @@
         layer.requestTile = (tile, done) => {
             setTimeout(() => {
                 done(null, {});
-            }, Math.random() * 500);
+            }, 100 + Math.random() * 100);
         };
 
         plot.add(layer);
