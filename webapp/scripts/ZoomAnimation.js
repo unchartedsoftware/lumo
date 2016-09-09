@@ -2,7 +2,6 @@
 
     'use strict';
 
-    const glm = require('gl-matrix');
     const Const = require('./Const');
 
     // Private Methods
@@ -30,16 +29,14 @@
             const zoom = this.zoomFrom + range * t;
             // set new zoom
             plot.zoom = zoom;
-            // calc new viewportPx
+            // calc new viewport position
             const current = Math.pow(2, plot.zoom);
             const prev = Math.pow(2, plot.prevZoom);
             const scale = (current - prev) / 2;
             const change = plot.tileSize * scale;
-            // set new viewportPx
-            plot.viewportPx = glm.vec2.add(
-                plot.viewportPx,
-                this.viewportFrom,
-                glm.vec2.fromValues(change, change));
+            // set new viewport position
+            plot.viewport.pos[0] = this.viewportFrom.pos[0] + change;
+            plot.viewport.pos[1] = this.viewportFrom.pos[1] + change;
         }
         done() {
             return this.finished;

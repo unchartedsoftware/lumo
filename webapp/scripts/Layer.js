@@ -13,7 +13,6 @@
             this.renderer = options.renderer;
             this.plot = null;
             this.tiles = new TilePyramid(this);
-            this.pendingTiles = new Map();
         }
         activate(plot) {
             if (!plot) {

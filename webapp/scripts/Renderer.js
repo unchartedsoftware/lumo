@@ -15,7 +15,6 @@
         uniform vec2 uViewOffset;
         uniform vec2 uTileOffset;
         uniform float uTileScale;
-        uniform float uZoom;
         uniform mat4 uProjectionMatrix;
         varying vec2 vTextureCoord;
         void main() {
@@ -120,14 +119,14 @@
             // update projection
             const proj = glm.mat4.ortho(
                 this.proj,
-                0, plot.viewport[0],
-                0, plot.viewport[1],
+                0, plot.viewport.width,
+                0, plot.viewport.height,
                 -Const.MAX_ZOOM, Const.MAX_ZOOM);
             shader.use();
-            gl.viewport(0, 0, plot.viewport[0], plot.viewport[1]);
+            gl.viewport(0, 0, plot.viewport.width, plot.viewport.height);
             // set uniforms
             shader.setUniform('uProjectionMatrix', proj);
-            shader.setUniform('uViewOffset', plot.viewportPx);
+            shader.setUniform('uViewOffset', plot.viewport.pos);
             // bind quad
             quad.bind();
             // get tiles sorted based on last zoom direction

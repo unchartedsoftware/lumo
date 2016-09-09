@@ -10,6 +10,7 @@
     const Coord = require('./Coord');
     const Const = require('./Const');
     const Bounds = require('./Bounds');
+    const Viewport = require('./Viewport');
     const ZoomAnimation = require('./ZoomAnimation');
 
     // Private Methods
@@ -17,15 +18,19 @@
     const mouseToViewPx = function(plot, event) {
         return glm.vec2.fromValues(
             event.clientX,
-            plot.viewport[1] - event.clientY);
+            plot.viewport.height - event.clientY);
     };
 
     // const viewPxToPlotPx = function(plot, px) {
-    //     return glm.vec2.add(glm.vec2.create(), plot.viewportPx, px);
+    //     return glm.vec2.fromValues(
+    //         plot.viewport.pos[0] + px[0],
+    //         plot.viewport.pos[1] + px[1]);
     // };
 
     // const plotPxToViewPx = function(plot, px) {
-    //     return glm.vec2.sub(glm.vec2.create(), px, plot.viewportPx);
+    //     return glm.vec2.fromValues(
+    //         px[0] - plot.viewport.pos[0],
+    //         px[1] - plot.viewport.pos[1]);
     // };
 
     // const mouseToPlotPx = function(plot, event) {
@@ -58,46 +63,32 @@
         return wrapper;
     };
 
-    const getVisibleTiles = function(tileSize, viewport, viewportPx, zoom) {
-        const dim = Math.pow(2, zoom);
-        // TODO: add wrap-around logic here
-        const bounds = new Bounds(
-            Math.floor(Math.max(0, viewportPx[0] / tileSize)),
-            Math.ceil(Math.min(dim, (viewportPx[0] + viewport[0]) / tileSize)),
-            Math.floor(Math.max(0, viewportPx[1] / tileSize)),
-            Math.ceil(Math.min(dim, (viewportPx[1] + viewport[1]) / tileSize)));
-        // TODO: pre-allocate this and index
-        let coords = [];
-        for (let x=bounds.left; x<bounds.right; x++) {
-            for (let y=bounds.bottom; y<bounds.top; y++) {
-                coords.push(new Coord(zoom, x, y));
-            }
-        }
-        return coords;
-    };
-
-    const requestTiles = function(plot, viewport, viewportPx, zoom, isZooming) {
-        const coords = getVisibleTiles(plot.tileSize, viewport, viewportPx, zoom);
+    const zoomRequestTiles = function(plot) {
+        const coords = plot.getVisibleCoords(plot.targetViewport, plot.targetZoom);
         plot.layers.forEach(layer => {
             // request tiles
-            if (isZooming) {
-                layer.tiles.zoomRequestTiles(plot, coords);
-            } else {
-                layer.tiles.panRequestTiles(plot, coords);
-            }
+            layer.tiles.zoomRequestTiles(plot, coords);
         });
     };
 
-    const removeTiles = function(plot, viewport, viewportPx, zoom) {
+    const panRequestTiles = function(plot) {
+        const coords = plot.getVisibleCoords();
+        plot.layers.forEach(layer => {
+            // request tiles
+            layer.tiles.panRequestTiles(plot, coords);
+        });
+    };
+
+    const removeTiles = function(plot, zoom, viewport) {
         plot.layers.forEach(layer => {
             // prune out of view tiles
-            layer.tiles.pruneOutOfView(plot, zoom, viewport, viewportPx);
+            layer.tiles.pruneOutOfView(plot, zoom, viewport);
         });
     };
 
     const updateTiles = throttle(function(plot) {
-        removeTiles(plot, plot.viewport, plot.viewportPx, plot.zoom);
-        requestTiles(plot, plot.viewport, plot.viewportPx, plot.zoom);
+        removeTiles(plot, plot.zoom, plot.viewport);
+        panRequestTiles(plot, plot.zoom, plot.viewport);
     }, Const.UPDATE_THROTTLE);
 
     const pan = function(plot, delta) {
@@ -105,21 +96,45 @@
             // no panning while zooming
             return;
         }
-        plot.viewportPx = glm.vec2.sub(plot.viewportPx, plot.viewportPx, delta);
+        plot.viewport.pos[0] -= delta[0];
+        plot.viewport.pos[1] -= delta[1];
         plot.emit(Event.PAN, delta);
         updateTiles(plot);
     };
 
     // const center = function(plot, px) {
     //     const half = glm.vec2.fromValues(
-    //         plot.viewport[0] / 2,
-    //         plot.viewport[1] / 2);
-    //     plot.viewportPx = glm.vec2.sub(plot.viewportPx, px, half);
+    //         plot.viewport.width / 2,
+    //         plot.viewport.height / 2);
+    //     plot.viewport.pos[0] = px[0] - half[0];
+    //     plot.viewport.pos[1] = px[1] - half[1];
     // };
 
-    // TODO: implement a batch and delay. Batch up to N zooms, then delay
     const zoom = function(plot) {
-        if (plot.zoom !== plot.targetZoom) {
+
+        // map the delta with a sigmoid function to
+        let zoomDelta = plot.wheelDelta / (plot.wheelDeltaPerZoom * Const.MAX_CONCURRENT_ZOOMS);
+        zoomDelta = Const.MAX_CONCURRENT_ZOOMS * Math.log(2 / (1 + Math.exp(-Math.abs(zoomDelta)))) / Math.LN2;
+        zoomDelta = plot.continuousZoom ? zoomDelta : Math.ceil(zoomDelta);
+        zoomDelta = plot.wheelDelta > 0 ? zoomDelta : -zoomDelta;
+        zoomDelta = Math.min(Const.MAX_CONCURRENT_ZOOMS, zoomDelta);
+        zoomDelta = Math.max(-Const.MAX_CONCURRENT_ZOOMS, zoomDelta);
+
+        // reset wheel delta
+        plot.wheelDelta = 0;
+
+        // calculate the target zoom level
+        let targetZoom = plot.targetZoom + zoomDelta;
+        targetZoom = Math.min(plot.maxZoom, targetZoom);
+        targetZoom = Math.max(plot.minZoom, targetZoom);
+
+        if (targetZoom !== plot.targetZoom) {
+
+            console.log('Zooming from ' + plot.zoom + ' to ' + targetZoom);
+
+            // set target zoom
+            plot.targetZoom = targetZoom;
+
             // get the current dimension
             const current = Math.pow(2, plot.zoom);
             // get the next dimension
@@ -127,23 +142,22 @@
             // determine the change in pixels to center the existing plot
             const change = plot.tileSize * (next - current) / 2;
 
-            // get target viewport
-            plot.targetViewportPx = glm.vec2.add(
-                glm.vec2.create(),
-                plot.viewportPx,
-                glm.vec2.fromValues(change, change));
+            // set target viewport
+            plot.targetViewport = new Viewport(plot.viewport);
+            plot.targetViewport.pos[0] += change;
+            plot.targetViewport.pos[1] += change;
 
             // plot zoom timestamp
             plot.zoomAnimation = new ZoomAnimation({
                 zoomFrom: plot.zoom,
                 zoomTo: plot.targetZoom,
-                viewportFrom: glm.vec2.clone(plot.viewportPx)
+                viewportFrom: new Viewport(plot.viewport)
             });
 
             // store prev zoom
             plot.prevZoom = plot.zoom;
-            // store prev viewportPx
-            plot.prevViewportPx = glm.vec2.clone(plot.viewportPx);
+            // store prev viewport
+            plot.prevViewport = glm.vec2.clone(plot.viewport);
 
             // set zoom direction
             plot.zoomDirection = (plot.zoom < plot.targetZoom) ? Enum.ZOOM_IN : Enum.ZOOM_OUT;
@@ -151,37 +165,22 @@
             // emit zoom start
             plot.emit(Event.ZOOM_START, plot);
 
+
             // request tiles
-            requestTiles(plot, plot.viewport, plot.targetViewportPx, plot.targetZoom, true);
+            zoomRequestTiles(plot);
         }
-    };
-
-    const zoomOut = function(plot) {
-        if (plot.zoomAnimation || plot.targetZoom <= plot.minZoom) {
-            return;
-        }
-        plot.targetZoom--;
-        zoom(plot);
-    };
-
-    const zoomIn = function(plot) {
-        if (plot.zoomAnimation || plot.targetZoom >= plot.maxZoom) {
-            return;
-        }
-        plot.targetZoom++;
-        zoom(plot);
     };
 
     const resize = throttle(function(plot) {
-        const width = plot.element.offsetWidth;
-        const height = plot.element.offsetHeight;
-        if (plot.viewport[0] !== width || plot.viewport[1] !== height) {
+        const width = plot.canvas.offsetWidth;
+        const height = plot.canvas.offsetHeight;
+        if (plot.viewport.width !== width || plot.viewport.height !== height) {
             // TODO: high res displays
-            plot.element.width = width;
-            plot.element.height = height;
+            plot.canvas.width = width;
+            plot.canvas.height = height;
             // update viewport
-            plot.viewport[0] = width;
-            plot.viewport[1] = height;
+            plot.viewport.width = width;
+            plot.viewport.height = height;
             // emit resize
             plot.emit(Event.RESIZE, {});
         }
@@ -215,7 +214,7 @@
             plot.zoomAnimation = null;
             plot.layers.forEach(layer => {
                 // prune out of view tiles
-                layer.tiles.pruneOutOfView(plot, plot.zoom, plot.viewport, plot.viewportPx);
+                layer.tiles.pruneOutOfView(plot, plot.zoom, plot.viewport);
             });
             plot.emit(Event.ZOOM_END, plot);
         }
@@ -230,21 +229,25 @@
     class Plot extends EventEmitter {
         constructor(selector, options = {}) {
             super();
-            this.element = document.querySelector(selector);
-            if (!this.element) {
+            this.canvas = document.querySelector(selector);
+            if (!this.canvas) {
                 throw `Element could not be found for selector ${selector}`;
             }
             try {
-                this.gl = esper.WebGLContext.get(this.element);
+                this.gl = esper.WebGLContext.get(this.canvas);
             } catch(err) {
                 throw `Unable to create a WebGLRenderingContext, please ensure your browser supports WebGL`;
             }
+            this.canvas.width = this.canvas.offsetWidth;
+            this.canvas.height = this.canvas.offsetHeight;
 
-            // TODO: add resize callbacks
-            this.element.width = this.element.offsetWidth;
-            this.element.height = this.element.offsetHeight;
-            this.width = this.element.width;
-            this.height = this.element.height;
+            // set viewport
+            this.viewport = new Viewport({
+                width: this.canvas.width,
+                height: this.canvas.height
+            });
+            this.prevViewport = new Viewport(this.viewport);
+            this.targetViewport = new Viewport(this.viewport);
 
             this.layers = [];
 
@@ -252,40 +255,20 @@
 
             this.minZoom = Math.max(Const.MIN_ZOOM, options.minZoom || Const.MIN_ZOOM);
             this.maxZoom = Math.min(Const.MAX_ZOOM, options.maxZoom || Const.MAX_ZOOM);
-            this.zoom = Math.min(Const.MAX_ZOOM, Math.max(Const.MIN_ZOOM, options.zoom || 0));
+            this.zoom = Math.min(Const.MAX_ZOOM, Math.max(Const.MIN_ZOOM, options.zoom ? options.zoom : 0));
             this.prevZoom = this.zoom;
             this.targetZoom = this.zoom;
             this.zoomDirection = Enum.ZOOM_IN;
 
-            this.viewport = glm.vec2.fromValues(
-                this.element.offsetWidth,
-                this.element.offsetHeight);
-            this.viewportPx = glm.vec2.create();
-            this.prevViewportPx = glm.vec2.clone(this.viewportPx);
-            this.targetViewportPx = glm.vec2.clone(this.viewportPx);
+            this.continuousZoom = false;
+            this.wheelDelta = 0;
+            this.wheelDeltaPerZoom = 60;
 
             this.tiles = new Map();
-            this.pendingTiles = new Map();
-
-            this.handlers = new Map();
-            this.handlers.set('tileload', []);
-            this.handlers.set('tileunload', []);
-
-            this.events = new Map();
-            this.events.set('tileload', tile => {
-                this.handlers.get('tileload').forEach(handler => {
-                    handler(tile);
-                });
-            });
-            this.events.set('tileunload', tile => {
-                this.handlers.get('tileunload').forEach(handler => {
-                    handler(tile);
-                });
-            });
 
             let down = false;
             let last = null;
-            this.element.addEventListener('mousedown', event => {
+            this.canvas.addEventListener('mousedown', event => {
                 down = true;
                 last = mouseToViewPx(this, event);
             });
@@ -301,16 +284,36 @@
                 }
             });
 
-            this.element.addEventListener('dblclick', () => {
-                zoomIn(this);
+            this.canvas.addEventListener('dblclick', () => {
+                this.wheelDelta += this.wheelDeltaPerZoom;
+                zoom(this);
             });
 
-            this.element.addEventListener('wheel', event => {
-                if (event.deltaY > 0) {
-                    zoomOut(this);
-                } else {
-                    zoomIn(this);
-                }
+            this.canvas.addEventListener('wheel', event => {
+                // if (!this.zoomAnimation) {
+                    let delta;
+                    if (event.deltaMode === 0) {
+                        // pixels
+                        delta = -event.deltaY / window.devicePixelRatio;
+    		        } else if (event.deltaMode === 1) {
+                        // lines
+                        delta = -event.deltaY * 20;
+                    } else {
+                        // pages
+                        delta = -event.deltaY * 60;
+                    }
+                    // if wheel delta is currently 0, kick off the debounce
+                    if (this.wheelDelta === 0) {
+                        setTimeout(() => {
+                            zoom(this);
+                        }, Const.ZOOM_DEBOUNCE);
+                    }
+                    // increment wheel delta
+                    this.wheelDelta += delta;
+                // }
+                // prevent default behavior and stop propagationa
+                event.preventDefault();
+                event.stopPropagation();
             });
 
             // render loop
@@ -322,9 +325,9 @@
             cancelAnimationFrame(this.renderRequest);
             this.renderRequest = null;
             // destroy context
-            esper.WebGLContext.remove(this.element);
+            esper.WebGLContext.remove(this.canvas);
             this.gl = null;
-            this.element = null;
+            this.canvas = null;
         }
         add(layer) {
             if (!layer) {
@@ -334,7 +337,7 @@
                 this.layers.push(layer);
                 layer.activate(this);
             }
-            requestTiles(this, this.viewport, this.viewportPx, this.zoom);
+            panRequestTiles(this, this.viewport, this.zoom);
         }
         remove(layer) {
             if (!layer) {
@@ -345,6 +348,23 @@
                 this.layers.splice(index, 1);
                 layer.deactivate(this);
             }
+        }
+        getVisibleCoords(viewport = this.viewport, zoom = this.zoom) {
+            const dim = Math.pow(2, zoom);
+            // TODO: add wrap-around logic here
+            const bounds = new Bounds(
+                Math.floor(Math.max(0, viewport.pos[0] / this.tileSize)),
+                Math.ceil(Math.min(dim, (viewport.pos[0] + viewport.width) / this.tileSize)),
+                Math.floor(Math.max(0, viewport.pos[1] / this.tileSize)),
+                Math.ceil(Math.min(dim, (viewport.pos[1] + viewport.height) / this.tileSize)));
+            // TODO: pre-allocate this and index
+            let coords = [];
+            for (let x=bounds.left; x<bounds.right; x++) {
+                for (let y=bounds.bottom; y<bounds.top; y++) {
+                    coords.push(new Coord(zoom, x, y));
+                }
+            }
+            return coords;
         }
     }
 

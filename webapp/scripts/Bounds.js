@@ -29,8 +29,8 @@
             return new Bounds(
                 Math.min(this.left, bounds.left),
                 Math.max(this.right, bounds.right),
-                Math.min(this.right, bounds.right),
-                Math.max(this.right, bounds.right));
+                Math.min(this.bottom, bounds.bottom),
+                Math.max(this.top, bounds.top));
         }
         intersection(bounds) {
             if (!this.overlaps(bounds)) {

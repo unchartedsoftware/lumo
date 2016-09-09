@@ -56,17 +56,16 @@
             return coords;
         }
         getSiblings() {
-            const parent = this.getParent();
-            return parent.getChildren();
+            return this.getParent().getChildren();
         }
-        isInView(tileSize, zoom, viewport, viewportPx) {
+        isInView(tileSize, zoom, viewport) {
             const scale = Math.pow(2, zoom - this.z);
             const scaledTileSize = tileSize * scale;
             const viewportBounds = new Bounds(
-                viewportPx[0],
-                viewportPx[0] + viewport[0],
-                viewportPx[1],
-                viewportPx[1] + viewport[1]);
+                viewport.pos[0],
+                viewport.pos[0] + viewport.width,
+                viewport.pos[1],
+                viewport.pos[1] + viewport.height);
             const tileBounds = new Bounds(
                 this.x * scaledTileSize,
                 this.x * scaledTileSize + scaledTileSize,

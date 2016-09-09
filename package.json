@@ -19,8 +19,8 @@
     "gulp-csso": "2.0.0",
     "gulp-jshint": "2.0.1",
     "jshint": "2.9.3",
-    "jshint-stylish": "2.1.0",
-    "run-sequence": "1.1.5",
+    "jshint-stylish": "2.2.1",
+    "run-sequence": "1.2.2",
     "vinyl-buffer": "1.0.0",
     "vinyl-source-stream": "1.1.0"
   }

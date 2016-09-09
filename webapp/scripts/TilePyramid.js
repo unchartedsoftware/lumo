@@ -11,22 +11,23 @@
 
     // Private Methods
 
-    const getVisibleDescendants = function(coord, tileSize, viewport, viewportPx, zoom, descZoom) {
+    const getVisibleDescendants = function(coord, tileSize, viewport, zoom, descZoom) {
         const currentScale = Math.pow(2, zoom - descZoom);
         const descDim = Math.pow(2, descZoom);
         const scaledTileSize = tileSize * currentScale;
         // get the tile bounds for descendant zoom tiles scaled at the current
         // zoom in the current viewport.
-        // Ex. if current zoom is 3 and descenants are at zoom 5, get the
-        // tile bounds for tiles at zoom 5 scaled to the current zoom of 3.
+        //     Ex. if current zoom is 3 and descenants are at zoom 5, get the
+        //         tile bounds for tiles at zoom 5 scaled to the current zoom of
+        //         3.
         const tileBounds = new Bounds(
-            Math.floor(Math.max(0, viewportPx[0] / scaledTileSize)),
-            Math.ceil(Math.min(descDim, (viewportPx[0] + viewport[0]) / scaledTileSize)),
-            Math.floor(Math.max(0, viewportPx[1] / scaledTileSize)),
-            Math.ceil(Math.min(descDim, (viewportPx[1] + viewport[1]) / scaledTileSize)));
+            Math.floor(Math.max(0, viewport.pos[0] / scaledTileSize)),
+            Math.ceil(Math.min(descDim, (viewport.pos[0] + viewport.width) / scaledTileSize)),
+            Math.floor(Math.max(0, viewport.pos[1] / scaledTileSize)),
+            Math.ceil(Math.min(descDim, (viewport.pos[1] + viewport.height) / scaledTileSize)));
         // get the tile bounds for the descenant tiles
-        // Ex. if ancestor is (0,0,0), and descendant zoom is 2, get bounds from
-        // [0 : 4) over both axes.
+        //     Ex. if ancestor is (0,0,0), and descendant zoom is 2, get bounds
+        //         from [0 : 4) over both axes.
         const descScale = Math.pow(2, descZoom - coord.z);
         const descBounds = new Bounds(
             coord.x * descScale,
@@ -60,7 +61,6 @@
             }
             this.map = new Map();
             this.activeLevels = new Map();
-            this.timeouts = new Map();
             this.pending = new Map();
             this.numTiles = 0;
         }
@@ -149,8 +149,7 @@
                 const inView = tile.coord.isInView(
                     plot.tileSize,
                     plot.zoom,
-                    plot.viewport,
-                    plot.viewportPx);
+                    plot.viewport);
                 if (!inView) {
                     nonVisible.push(tile);
                 }
@@ -163,8 +162,7 @@
                 const inView = tile.coord.isInView(
                     plot.tileSize,
                     plot.zoom,
-                    plot.viewport,
-                    plot.viewportPx);
+                    plot.viewport);
                 if (inView) {
                     visible.push(tile);
                 }
@@ -175,15 +173,14 @@
             // determine what in-view descendants are required at the current zoom
             // to fully occlude this tile
             let occluded = false;
-            // TODO: shot circuit this loop
+            // TODO: short circuit this loop
             this.activeLevels.forEach((_, level) => {
                 if (!occluded && level > tile.coord.z) {
                     // get all visible descendants
                     const visibleDescendants = getVisibleDescendants(
                         tile.coord,
                         plot.tileSize,
-                        plot.viewport,
-                        plot.targetViewportPx,
+                        plot.targetViewport,
                         plot.targetZoom,
                         level);
                     // are all visible descendants here?
@@ -325,25 +322,12 @@
         pruneAncestors(plot, tile) {
 
             // prune ANCESTOR when:
-            //     1) ancestor is out of view
-            //     2) plot.targetZoom > ancestor.coord.z AND have ALL occluding tiles in view
+            //     plot.targetZoom > ancestor.coord.z AND have ALL occluding tiles in view
 
             // get all ancestors
             const ancestors = this.getAncestors(tile);
             ancestors.forEach(ancestor => {
-                // TODO: confirm this is not needed / can never be true
-                // // 1) ancestor is out of view
-                // const inView = ancestor.coord.isInView(
-                //     plot.tileSize,
-                //     plot.targetZoom,
-                //     plot.viewport,
-                //     plot.targetViewportPx);
-                // if (!inView) {
-                //     this.remove(ancestor);
-                //     return;
-                // }
-
-                // 2) plot.targetZoom > ancestor.coord.z AND have ALL occluding tiles in view
+                // plot.targetZoom > ancestor.coord.z AND have ALL occluding tiles in view
                 if (this.isOccludedByDescendants(plot, ancestor)) {
                     // execute once tile finishes fading in
                     tile.onFadeIn(() => {
@@ -357,39 +341,27 @@
         pruneDescendants(plot, tile) {
 
             // prune DESCENDANTS if:
-            //     1) plot.targetZoom < descendant.coord.z
-            //     2) descendant is out of view
+            //     plot.targetZoom < descendant.coord.z
 
             // execute once tile finishes fading in
             tile.onFadeIn(() => {
                 const descendants = this.getDescendants(tile);
                 descendants.forEach(descendant => {
-                    // 1) plot.targetZoom < descendant.coord.z
+                    // plot.targetZoom < descendant.coord.z
                     if (plot.targetZoom < descendant.coord.z) {
                         this.remove(descendant);
                         return;
                     }
-                    // TODO: confirm this is not needed / can never be true
-                    // // 2) descendant is out of view
-                    // const inView = descendant.coord.isInView(
-                    //     plot.tileSize,
-                    //     plot.targetZoom,
-                    //     plot.viewport,
-                    //     plot.targetViewportPx);
-                    // if (!inView) {
-                    //     this.remove(descendant);
-                    // }
                 });
             });
         }
-        pruneOutOfView(plot, zoom, viewport, viewportPx) {
+        pruneOutOfView(plot, zoom, viewport) {
             // checks all tiles, if it is outside of the viewport, remove it
             this.map.forEach(tile => {
                 const inView = tile.coord.isInView(
                     plot.tileSize,
                     zoom,
-                    viewport,
-                    viewportPx);
+                    viewport);
                 if (!inView) {
                     this.remove(tile);
                 }
