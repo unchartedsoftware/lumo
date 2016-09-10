@@ -21,11 +21,11 @@
             plot.viewport.height - event.clientY);
     };
 
-    // const viewPxToPlotPx = function(plot, px) {
-    //     return glm.vec2.fromValues(
-    //         plot.viewport.pos[0] + px[0],
-    //         plot.viewport.pos[1] + px[1]);
-    // };
+    const viewPxToPlotPx = function(plot, px) {
+        return glm.vec2.fromValues(
+            plot.viewport.pos[0] + px[0],
+            plot.viewport.pos[1] + px[1]);
+    };
 
     // const plotPxToViewPx = function(plot, px) {
     //     return glm.vec2.fromValues(
@@ -33,9 +33,9 @@
     //         px[1] - plot.viewport.pos[1]);
     // };
 
-    // const mouseToPlotPx = function(plot, event) {
-    //     return viewPxToPlotPx(plot, mouseToViewPx(plot, event));
-    // };
+    const mouseToPlotPx = function(plot, event) {
+        return viewPxToPlotPx(plot, mouseToViewPx(plot, event));
+    };
 
     const throttle = function(fn, delay, context = this) {
         let lock = false;
@@ -110,7 +110,7 @@
     //     plot.viewport.pos[1] = px[1] - half[1];
     // };
 
-    const zoom = function(plot) {
+    const zoom = function(plot, targetPx) {
 
         // map the delta with a sigmoid function to
         let zoomDelta = plot.wheelDelta / (plot.wheelDeltaPerZoom * Const.MAX_CONCURRENT_ZOOMS);
@@ -130,41 +130,33 @@
 
         if (targetZoom !== plot.targetZoom) {
 
-            console.log('Zooming from ' + plot.zoom + ' to ' + targetZoom);
-
             // set target zoom
             plot.targetZoom = targetZoom;
 
-            // get the current dimension
-            const current = Math.pow(2, plot.zoom);
-            // get the next dimension
-            const next = Math.pow(2, plot.targetZoom);
-            // determine the change in pixels to center the existing plot
-            const change = plot.tileSize * (next - current) / 2;
-
             // set target viewport
-            plot.targetViewport = new Viewport(plot.viewport);
-            plot.targetViewport.pos[0] += change;
-            plot.targetViewport.pos[1] += change;
+            plot.targetViewport = plot.viewport.zoomFromPlotPx(
+                plot.tileSize,
+                plot.zoom,
+                plot.targetZoom,
+                targetPx);
 
-            // plot zoom timestamp
+            // set zoom animation
             plot.zoomAnimation = new ZoomAnimation({
                 zoomFrom: plot.zoom,
                 zoomTo: plot.targetZoom,
-                viewportFrom: new Viewport(plot.viewport)
+                targetPx: targetPx
             });
 
             // store prev zoom
             plot.prevZoom = plot.zoom;
             // store prev viewport
-            plot.prevViewport = glm.vec2.clone(plot.viewport);
+            plot.prevViewport = new Viewport(plot.viewport);
 
             // set zoom direction
             plot.zoomDirection = (plot.zoom < plot.targetZoom) ? Enum.ZOOM_IN : Enum.ZOOM_OUT;
 
             // emit zoom start
             plot.emit(Event.ZOOM_START, plot);
-
 
             // request tiles
             zoomRequestTiles(plot);
@@ -181,6 +173,8 @@
             // update viewport
             plot.viewport.width = width;
             plot.viewport.height = height;
+            // update tiles
+            updateTiles(plot);
             // emit resize
             plot.emit(Event.RESIZE, {});
         }
@@ -198,16 +192,13 @@
         // enable blending
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
+        // apply the zoom animation
         if (plot.zoomAnimation) {
-            // apply the zoom animation
             plot.zoomAnimation.updatePlot(plot, timestamp);
         }
         // render each layer
         plot.layers.forEach(layer => {
-            if (layer.renderer) {
-                layer.renderer.draw(timestamp);
-            }
+            layer.draw(timestamp);
         });
         // remove animation once complete
         if (plot.zoomAnimation && plot.zoomAnimation.done()) {
@@ -286,7 +277,7 @@
 
             this.canvas.addEventListener('dblclick', () => {
                 this.wheelDelta += this.wheelDeltaPerZoom;
-                zoom(this);
+                zoom(this, mouseToPlotPx(this, event));
             });
 
             this.canvas.addEventListener('wheel', event => {
@@ -305,7 +296,7 @@
                     // if wheel delta is currently 0, kick off the debounce
                     if (this.wheelDelta === 0) {
                         setTimeout(() => {
-                            zoom(this);
+                            zoom(this, mouseToPlotPx(this, event));
                         }, Const.ZOOM_DEBOUNCE);
                     }
                     // increment wheel delta

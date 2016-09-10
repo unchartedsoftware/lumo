@@ -14,7 +14,7 @@
             this.duration = Const.ZOOM_ANIMATION_MS;
             this.zoomFrom = spec.zoomFrom;
             this.zoomTo = spec.zoomTo;
-            this.viewportFrom = spec.viewportFrom;
+            this.targetPx = spec.targetPx;
             this.finished = false;
         }
         updatePlot(plot, timestamp) {
@@ -29,14 +29,12 @@
             const zoom = this.zoomFrom + range * t;
             // set new zoom
             plot.zoom = zoom;
-            // calc new viewport position
-            const current = Math.pow(2, plot.zoom);
-            const prev = Math.pow(2, plot.prevZoom);
-            const scale = (current - prev) / 2;
-            const change = plot.tileSize * scale;
-            // set new viewport position
-            plot.viewport.pos[0] = this.viewportFrom.pos[0] + change;
-            plot.viewport.pos[1] = this.viewportFrom.pos[1] + change;
+            // calc new viewport position from prev
+            plot.viewport = plot.prevViewport.zoomFromPlotPx(
+                plot.tileSize,
+                plot.prevZoom,
+                plot.zoom,
+                this.targetPx);
         }
         done() {
             return this.finished;

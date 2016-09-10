@@ -13,6 +13,7 @@
             this.renderer = options.renderer;
             this.plot = null;
             this.tiles = new TilePyramid(this);
+            this.hidden = false;
         }
         activate(plot) {
             if (!plot) {
@@ -29,10 +30,15 @@
             this.renderer.deactivate(this);
         }
         show() {
-
+            this.hidden = false;
         }
         hide() {
-
+            this.hidden = true;
+        }
+        draw(timestamp) {
+            if (this.renderer && !this.hidden) {
+                this.renderer.draw(timestamp);
+            }
         }
         requestTile(tile, done) {
             done(null, tile);
