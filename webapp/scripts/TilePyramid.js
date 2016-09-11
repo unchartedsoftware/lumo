@@ -12,9 +12,9 @@
     // Private Methods
 
     const getVisibleDescendants = function(coord, tileSize, viewport, zoom, descZoom) {
-        const currentScale = Math.pow(2, zoom - descZoom);
+        const scale = Math.pow(2, zoom - descZoom);
         const descDim = Math.pow(2, descZoom);
-        const scaledTileSize = tileSize * currentScale;
+        const scaledTileSize = tileSize * scale;
         // get the tile bounds for descendant zoom tiles scaled at the current
         // zoom in the current viewport.
         //     Ex. if current zoom is 3 and descenants are at zoom 5, get the
@@ -175,6 +175,15 @@
             let occluded = false;
             // TODO: short circuit this loop
             this.activeLevels.forEach((_, level) => {
+
+                if (Math.abs(level - tile.coord.z) > Const.ZOOM_CULL_DIST) {
+                    // prune if distance is too far, otherwise the computational
+                    // pruning space explodes
+                    console.log('Not checking occlusion for level ' + level + ' for tile.coord.z of ' + tile.coord.z + ' as distance exceeds ' + Const.ZOOM_CULL_DIST);
+                    occluded = true;
+                    return;
+                }
+
                 if (!occluded && level > tile.coord.z) {
                     // get all visible descendants
                     const visibleDescendants = getVisibleDescendants(
@@ -199,22 +208,45 @@
         isStale(plot, tile) {
 
             // NAIVE: ignore any tiles that aren't on the current zoom
-            //return (tile.coord.z !== plot.targetZoom);
+            // return (tile.coord.z !== plot.targetZoom);
 
             // tile is stale if:
-            //     1) plot.zoom < tile.coord.z AND there is an ancestor present with ancestor.coord.z < tile.coord.z
-            //     2) OR plot.zoom > tile.coord.z AND is occluded by all descendants
+            //     1) tile is not in view at the TARGET viewport / zoom
+            //     2) plot.zoom < tile.coord.z AND there is an ancestor present with ancestor.coord.z < tile.coord.z
+            //     3) OR plot.zoom > tile.coord.z AND is occluded by all descendants
 
-            // 1) plot.zoom < tile.coord.z AND there is an ancestor present with ancestor.coord.z < tile.coord.z
+            // 1) tile is not in view at the TARGET viewport / zoom
+            const inView = tile.coord.isInView(
+                plot.tileSize,
+                plot.targetZoom,
+                plot.targetViewport);
+            if (!inView) {
+                console.log(tile.coord.hash + ' is stale as it is not in target view');
+                return true;
+            }
+
+            // 2) plot.zoom < tile.coord.z AND there is an ancestor present with ancestor.coord.z < tile.coord.z
             if (plot.targetZoom < tile.coord.z) {
+                // immediately discard tile if the difference exceeds the cull
+                // distance
+                if ((tile.coord.z - plot.targetZoom) > Const.ZOOM_CULL_DIST) {
+                    console.log('Zooming out tile is state due to distance of: ' + (plot.targetZoom - tile.coord.z));
+                    return true;
+                }
                 const ancestors = this.getAncestors(tile);
                 return ancestors.some(ancestor => {
                     return (ancestor.coord.z <= tile.coord.z);
                 });
             }
 
-            // 2) OR plot.zoom > tile.coord.z AND is occluded by all descendants
+            // 3) OR plot.zoom > tile.coord.z AND is occluded by all descendants
             if (plot.targetZoom > tile.coord.z) {
+                // immediately discard tile if the difference exceeds the cull
+                // distance
+                if ((plot.targetZoom - tile.coord.z) > Const.ZOOM_CULL_DIST) {
+                    console.log('Zooming in tile is stale due to distance of: ' + (plot.targetZoom - tile.coord.z));
+                    return true;
+                }
                 return this.isOccludedByDescendants(plot, tile);
             }
 
@@ -322,12 +354,12 @@
         pruneAncestors(plot, tile) {
 
             // prune ANCESTOR when:
-            //     plot.targetZoom > ancestor.coord.z AND have ALL occluding tiles in view
+            //     1) plot.targetZoom > ancestor.coord.z AND have ALL occluding tiles in view
 
             // get all ancestors
             const ancestors = this.getAncestors(tile);
             ancestors.forEach(ancestor => {
-                // plot.targetZoom > ancestor.coord.z AND have ALL occluding tiles in view
+                // 1) plot.targetZoom > ancestor.coord.z AND have ALL occluding tiles in view
                 if (this.isOccludedByDescendants(plot, ancestor)) {
                     // execute once tile finishes fading in
                     tile.onFadeIn(() => {
@@ -347,7 +379,7 @@
             tile.onFadeIn(() => {
                 const descendants = this.getDescendants(tile);
                 descendants.forEach(descendant => {
-                    // plot.targetZoom < descendant.coord.z
+                    // 2) plot.targetZoom < descendant.coord.z
                     if (plot.targetZoom < descendant.coord.z) {
                         this.remove(descendant);
                         return;
