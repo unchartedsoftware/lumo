@@ -61,11 +61,7 @@
         isInView(tileSize, zoom, viewport) {
             const scale = Math.pow(2, zoom - this.z);
             const scaledTileSize = tileSize * scale;
-            const viewportBounds = new Bounds(
-                viewport.pos[0],
-                viewport.pos[0] + viewport.width,
-                viewport.pos[1],
-                viewport.pos[1] + viewport.height);
+            const viewportBounds = viewport.getBounds(zoom);
             const tileBounds = new Bounds(
                 this.x * scaledTileSize,
                 this.x * scaledTileSize + scaledTileSize,

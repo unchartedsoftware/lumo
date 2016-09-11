@@ -7,9 +7,7 @@
     const EventEmitter = require('events');
     const Event = require('./Event');
     const Enum = require('./Enum');
-    const Coord = require('./Coord');
     const Const = require('./Const');
-    const Bounds = require('./Bounds');
     const Viewport = require('./Viewport');
     const ZoomAnimation = require('./ZoomAnimation');
 
@@ -64,7 +62,7 @@
     };
 
     const zoomRequestTiles = function(plot) {
-        const coords = plot.getVisibleCoords(plot.targetViewport, plot.targetZoom);
+        const coords = plot.targetViewport.getVisibleCoords(plot.tileSize, plot.targetZoom);
         plot.layers.forEach(layer => {
             // request tiles
             layer.tiles.zoomRequestTiles(plot, coords);
@@ -72,7 +70,7 @@
     };
 
     const panRequestTiles = function(plot) {
-        const coords = plot.getVisibleCoords();
+        const coords = plot.viewport.getVisibleCoords(plot.tileSize, plot.zoom);
         plot.layers.forEach(layer => {
             // request tiles
             layer.tiles.panRequestTiles(plot, coords);
@@ -96,8 +94,13 @@
             // no panning while zooming
             return;
         }
+        // update current viewport
         plot.viewport.pos[0] -= delta[0];
         plot.viewport.pos[1] -= delta[1];
+        // update target viewport
+        plot.targetViewport.pos[0] -= delta[0];
+        plot.targetViewport.pos[1] -= delta[1];
+        // emit pan
         plot.emit(Event.PAN, delta);
         updateTiles(plot);
     };
@@ -339,23 +342,6 @@
                 this.layers.splice(index, 1);
                 layer.deactivate(this);
             }
-        }
-        getVisibleCoords(viewport = this.viewport, zoom = this.zoom) {
-            const dim = Math.pow(2, zoom);
-            // TODO: add wrap-around logic here
-            const bounds = new Bounds(
-                Math.floor(Math.max(0, viewport.pos[0] / this.tileSize)),
-                Math.ceil(Math.min(dim, (viewport.pos[0] + viewport.width) / this.tileSize)),
-                Math.floor(Math.max(0, viewport.pos[1] / this.tileSize)),
-                Math.ceil(Math.min(dim, (viewport.pos[1] + viewport.height) / this.tileSize)));
-            // TODO: pre-allocate this and index
-            let coords = [];
-            for (let x=bounds.left; x<bounds.right; x++) {
-                for (let y=bounds.bottom; y<bounds.top; y++) {
-                    coords.push(new Coord(zoom, x, y));
-                }
-            }
-            return coords;
         }
     }
 

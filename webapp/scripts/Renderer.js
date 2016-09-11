@@ -28,10 +28,11 @@
         `
         precision highp float;
         uniform float uOpacity;
+        uniform sampler2D uTextureSampler;
         varying vec2 vTextureCoord;
         void main() {
-            vec3 color = vec3(vTextureCoord.x, vTextureCoord.y, (1.0 - vTextureCoord.x));
-            gl_FragColor = vec4(color, uOpacity);
+            vec4 color = texture2D(uTextureSampler, vTextureCoord);
+            gl_FragColor = vec4(color.rgb, color.a * uOpacity);
         }
         `;
 
@@ -142,15 +143,21 @@
                 const tileOffset = glm.vec2.fromValues(
                     tile.coord.x * plot.tileSize,
                     tile.coord.y * plot.tileSize);
+                // bind texture
+                tile.data.bind(0);
+                // set texture sampler unit
+                shader.setUniform('uTextureSampler', 0);
                 // set tile offset
                 shader.setUniform('uTileOffset', tileOffset);
                 // set tile opacity
-                shader.setUniform('uOpacity', tile.opacity(timestamp));
+                shader.setUniform('uOpacity', this.layer.opacity * tile.opacity(timestamp));
                 // set tile scale
                 const scale = Math.pow(2, plot.zoom - tile.coord.z);
                 shader.setUniform('uTileScale', scale);
                 // draw
                 quad.draw();
+                // unbind
+                tile.data.unbind();
             });
             // unbind quad
             quad.unbind();

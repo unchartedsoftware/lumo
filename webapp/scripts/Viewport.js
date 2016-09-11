@@ -4,6 +4,8 @@
 
     const EventEmitter = require('events');
     const glm = require('gl-matrix');
+    const Bounds = require('./Bounds');
+    const Coord = require('./Coord');
 
     // Class / Public Methods
 
@@ -15,6 +17,33 @@
                 spec.pos ? spec.pos[1] : 0);
             this.width = spec.width;
             this.height = spec.height;
+        }
+        getBounds() {
+            return new Bounds(
+                this.pos[0],
+                this.pos[0] + this.width,
+                this.pos[1],
+                this.pos[1] + this.height);
+        }
+        getTileBounds(tileSize, zoom) {
+            const dim = Math.pow(2, zoom);
+            // TODO: add wrap-around logic here
+            return new Bounds(
+                Math.floor(Math.max(0, this.pos[0] / tileSize)),
+                Math.ceil(Math.min(dim, (this.pos[0] + this.width) / tileSize)),
+                Math.floor(Math.max(0, this.pos[1] / tileSize)),
+                Math.ceil(Math.min(dim, (this.pos[1] + this.height) / tileSize)));
+        }
+        getVisibleCoords(tileSize, zoom) {
+            const bounds = this.getTileBounds(tileSize, zoom);
+            // TODO: pre-allocate this and index
+            let coords = [];
+            for (let x=bounds.left; x<bounds.right; x++) {
+                for (let y=bounds.bottom; y<bounds.top; y++) {
+                    coords.push(new Coord(zoom, x, y));
+                }
+            }
+            return coords;
         }
         zoomFromPlotCenter(tileSize, zoom, targetZoom) {
             // get the current dimension
