@@ -13,33 +13,42 @@
         constructor(spec = {}) {
             super();
             this.pos = glm.vec2.fromValues(
-                spec.pos ? spec.pos[0] : 0,
-                spec.pos ? spec.pos[1] : 0);
-            this.width = spec.width;
-            this.height = spec.height;
+                spec.pos ? Math.round(spec.pos[0]) : 0,
+                spec.pos ? Math.round(spec.pos[1]) : 0);
+            this.width = spec.width ? Math.round(spec.width) : 0;
+            this.height = spec.height ? Math.round(spec.height) : 0;
         }
-        getBounds() {
+        getPixelBounds() {
+            // NOTE: bounds are INCLUSIVE
             return new Bounds(
                 this.pos[0],
-                this.pos[0] + this.width,
+                this.pos[0] + this.width - 1,
                 this.pos[1],
-                this.pos[1] + this.height);
+                this.pos[1] + this.height - 1);
         }
-        getTileBounds(tileSize, zoom) {
-            const dim = Math.pow(2, zoom);
-            // TODO: add wrap-around logic here
+        getTileBounds(tileSize, viewportZoom, tileZoom = viewportZoom) {
+            // NOTE: bounds are INCLUSIVE
+            // get the tile coordinate bounds for tiles from the tileZoom that
+            // are visible from the viewportZoom.
+            //     Ex. if current viewport zoom is 3 and tile zoom is 5, the
+            //         tiles will be 25% of there normal size compared to the
+            //         viewport.
+            const scale = Math.pow(2, viewportZoom - tileZoom);
+            const dim = Math.pow(2, tileZoom);
+            const scaledTileSize = tileSize * scale;
+            // TODO: add wrap-around logic
             return new Bounds(
-                Math.floor(Math.max(0, this.pos[0] / tileSize)),
-                Math.ceil(Math.min(dim, (this.pos[0] + this.width) / tileSize)),
-                Math.floor(Math.max(0, this.pos[1] / tileSize)),
-                Math.ceil(Math.min(dim, (this.pos[1] + this.height) / tileSize)));
+                Math.max(0, Math.floor(this.pos[0] / scaledTileSize)),
+                Math.min(dim - 1, Math.ceil(((this.pos[0] + this.width) / scaledTileSize) - 1)),
+                Math.max(0, Math.floor(this.pos[1] / scaledTileSize)),
+                Math.min(dim - 1, Math.ceil(((this.pos[1] + this.height) / scaledTileSize) - 1)));
         }
         getVisibleCoords(tileSize, zoom) {
             const bounds = this.getTileBounds(tileSize, zoom);
             // TODO: pre-allocate this and index
             let coords = [];
-            for (let x=bounds.left; x<bounds.right; x++) {
-                for (let y=bounds.bottom; y<bounds.top; y++) {
+            for (let x=bounds.left; x<=bounds.right; x++) {
+                for (let y=bounds.bottom; y<=bounds.top; y++) {
                     coords.push(new Coord(zoom, x, y));
                 }
             }

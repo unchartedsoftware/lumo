@@ -62,7 +62,9 @@
     };
 
     const zoomRequestTiles = function(plot) {
-        const coords = plot.targetViewport.getVisibleCoords(plot.tileSize, plot.targetZoom);
+        const coords = plot.targetViewport.getVisibleCoords(
+            plot.tileSize,
+            plot.targetZoom);
         plot.layers.forEach(layer => {
             // request tiles
             layer.tiles.zoomRequestTiles(plot, coords);
@@ -77,16 +79,19 @@
         });
     };
 
-    const removeTiles = function(plot, zoom, viewport) {
+    const removeTiles = function(plot) {
         plot.layers.forEach(layer => {
             // prune out of view tiles
-            layer.tiles.pruneOutOfView(plot, zoom, viewport);
+            layer.tiles.pruneOutOfView(
+                plot.tileSize,
+                plot.zoom,
+                plot.viewport);
         });
     };
 
     const updateTiles = throttle(function(plot) {
-        removeTiles(plot, plot.zoom, plot.viewport);
-        panRequestTiles(plot, plot.zoom, plot.viewport);
+        removeTiles(plot);
+        panRequestTiles(plot);
     }, Const.UPDATE_THROTTLE);
 
     const pan = function(plot, delta) {
@@ -176,6 +181,9 @@
             // update viewport
             plot.viewport.width = width;
             plot.viewport.height = height;
+            // update target viewport
+            plot.targetViewport.width = width;
+            plot.targetViewport.height = height;
             // update tiles
             updateTiles(plot);
             // emit resize
@@ -208,7 +216,10 @@
             plot.zoomAnimation = null;
             plot.layers.forEach(layer => {
                 // prune out of view tiles
-                layer.tiles.pruneOutOfView(plot, plot.zoom, plot.viewport);
+                layer.tiles.pruneOutOfView(
+                    plot.tileSize,
+                    plot.zoom,
+                    plot.viewport);
             });
             plot.emit(Event.ZOOM_END, plot);
         }

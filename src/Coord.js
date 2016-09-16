@@ -19,6 +19,11 @@
             this.y = y;
             this.hash = hashCoord(this);
         }
+        equals(other) {
+            return this.z === other.z &&
+                this.x === other.x &&
+                this.y === other.y;
+        }
         isParentOf(child) {
             if (this.z >= child.z) {
                 return false;
@@ -35,38 +40,39 @@
         isChildOf(parent) {
             return parent.isParentOf(this);
         }
-        getParent(offset = 1) {
-            const scale = Math.pow(2, offset);
-            return new Coord(
-                this.z - offset,
-                Math.floor(this.x / scale),
-                Math.floor(this.y / scale));
+        getPixelBounds(tileSize, viewportZoom = this.z) {
+            // NOTE: bounds are INCLUSIVE
+            // scale the pixel bounds depending on the viewportZoom
+            const scale = Math.pow(2, viewportZoom - this.z);
+            const scaledTileSize = tileSize * scale;
+            const scaledX = this.x * scaledTileSize;
+            const scaledY = this.y * scaledTileSize;
+            return new Bounds(
+                Math.round(scaledX),
+                Math.round(scaledX + scaledTileSize - 1),
+                Math.round(scaledY),
+                Math.round(scaledY + scaledTileSize - 1));
         }
-        getChildren(offset = 1) {
-            const scale = Math.pow(2, offset);
-            const coords = [];
-            for (let x=0; x<scale; x++) {
-                for (let y=0; y<scale; y++) {
-                    coords.push(new Coord(
-                        this.z + offset,
-                        this.x * scale + x,
-                        this.y * scale + y));
-                }
+        getDescendantTileBounds(descendantZoom) {
+            // NOTE: bounds are INCLUSIVE
+            if (!Number.isInteger(descendantZoom)) {
+                throw `Zoom parameter of ${descendantZoom} is not an integer`;
             }
-            return coords;
-        }
-        getSiblings() {
-            return this.getParent().getChildren();
+            if (descendantZoom <= this.z) {
+                throw `Zoom parameter is greater than Coord.z of ${this.z}`;
+            }
+            const scale = Math.pow(2, descendantZoom - this.z);
+            const scaledX = this.x * scale;
+            const scaledY = this.y * scale;
+            return new Bounds(
+                scaledX,
+                scaledX + scale - 1,
+                scaledY,
+                scaledY + scale - 1);
         }
         isInView(tileSize, zoom, viewport) {
-            const scale = Math.pow(2, zoom - this.z);
-            const scaledTileSize = tileSize * scale;
-            const viewportBounds = viewport.getBounds(zoom);
-            const tileBounds = new Bounds(
-                this.x * scaledTileSize,
-                this.x * scaledTileSize + scaledTileSize,
-                this.y * scaledTileSize,
-                this.y * scaledTileSize + scaledTileSize);
+            const viewportBounds = viewport.getPixelBounds(zoom);
+            const tileBounds = this.getPixelBounds(tileSize, zoom);
             return viewportBounds.overlaps(tileBounds);
         }
     }

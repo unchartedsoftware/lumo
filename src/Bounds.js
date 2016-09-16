@@ -19,20 +19,21 @@
         height() {
             return this.top - this.bottom;
         }
+        equals(other) {
+            return this.left === other.left &&
+                this.right === other.right &&
+                this.bottom === other.bottom &&
+                this.top === other.top;
+        }
         overlaps(bounds) {
+            // NOTE: inclusive of edges
             return !(this.left > bounds.right ||
                 this.right < bounds.left ||
                 this.top < bounds.bottom ||
                 this.bottom > bounds.top);
         }
-        union(bounds) {
-            return new Bounds(
-                Math.min(this.left, bounds.left),
-                Math.max(this.right, bounds.right),
-                Math.min(this.bottom, bounds.bottom),
-                Math.max(this.top, bounds.top));
-        }
         intersection(bounds) {
+            // NOTE: inclusive of edges
             if (!this.overlaps(bounds)) {
                 return null;
             }
