@@ -2,6 +2,7 @@
 
     'use strict';
 
+    const LRU = require('lru-cache');
     const Const = require('./Const');
     const Coord = require('./Coord');
     const Enum = require('./Enum');
@@ -47,6 +48,7 @@
                 this.levels[i] = [];
             }
             this.map = new Map();
+            this.cache = new LRU(Const.TILE_CACHE_SIZE);
             this.activeLevels = new Map();
             this.pending = new Map();
             this.numTiles = 0;
@@ -59,6 +61,7 @@
             this.map.set(tile.coord.hash, tile);
             this.activeLevels.set(tile.coord.z, true);
             this.numTiles++;
+            this.cache.del(tile.coord.hash);
             this.layer.emit(Event.TILE_ADD, tile);
         }
         remove(tile) {
@@ -72,6 +75,7 @@
                 this.activeLevels.delete(tile.coord.z);
             }
             this.numTiles--;
+            this.cache.set(tile.coord.hash, tile);
             this.layer.emit(Event.TILE_REMOVE, tile);
         }
         has(coord) {
@@ -164,35 +168,6 @@
                 }
             }
             return false;
-            // // TODO: short circuit this loop
-            // this.activeLevels.forEach((_, level) => {
-            //
-            //     if (Math.abs(level - coord.z) > Const.ZOOM_CULL_DIST) {
-            //         // prune if distance is too far, otherwise the computational
-            //         // pruning space explodes
-            //         occluded = true;
-            //         return;
-            //     }
-            //
-            //     if (!occluded && level > coord.z) {
-            //         // get all visible descendants
-            //         const visibleDescendants = getVisibleDescendants(
-            //             coord,
-            //             tileSize,
-            //             viewport,
-            //             zoom,
-            //             level);
-            //         // are all visible descendants here?
-            //         const available = visibleDescendants.filter(descendant => {
-            //             return this.map.has(descendant.hash);
-            //         });
-            //         // all occluding descendants are present
-            //         if (available.length === visibleDescendants.length) {
-            //             occluded = true;
-            //         }
-            //     }
-            // });
-            // return occluded;
         }
         isStale(tileSize, zoom, viewport, coord) {
 
@@ -245,16 +220,26 @@
         panRequestTiles(plot, coords) {
             // request tiles
             coords.forEach(coord => {
-                // if we already have the tile, or it's currently pending
+                // we already have the tile, or it's currently pending
                 if (this.has(coord) || this.isPending(coord)) {
                     return;
                 }
+                // if we have the tile in the cache, add it
+                if (this.cache.has(coord.hash)) {
+                    // get from cache
+                    const tile = this.cache.get(coord.hash);
+                    tile.timestamp = Date.now();
+                    this.add(tile);
+                    return;
+                }
+
                 // create the new tile
                 const tile = new Tile(coord);
                 // add tile to pending array
                 this.pending.set(coord.hash, tile);
                 // emit request
                 this.layer.emit(Event.TILE_REQUEST, tile);
+
                 // request tile
                 this.layer.requestTile(coord, (err, data) => {
                     // timestamp the tile
@@ -293,23 +278,35 @@
         zoomRequestTiles(plot, coords) {
             // request tiles
             coords.forEach(coord => {
-                // if tile is currently pending
+                // if tile is currently pending, wait for it
                 if (this.isPending(coord)) {
                     return;
                 }
-                // if we already have the tile, refresh the tile
+                // if we already have the tile, refresh it
                 if (this.has(coord)) {
                     const tile = this.get(coord);
                     tile.timestamp = Date.now();
                     this.pruneTiles(plot, tile);
                     return;
                 }
+                // if we have the tile in the cache, add it
+                if (this.cache.has(coord.hash)) {
+                    // add to tile pyramid
+                    const tile = this.cache.get(coord.hash);
+                    tile.timestamp = Date.now();
+                    this.add(tile);
+                    // prune tiles above / below
+                    this.pruneTiles(plot, tile);
+                    return;
+                }
+
                 // create the new tile
                 const tile = new Tile(coord);
                 // add tile to pending array
                 this.pending.set(coord.hash, tile);
                 // emit request
                 this.layer.emit(Event.TILE_REQUEST, tile);
+
                 // request tile
                 this.layer.requestTile(coord, (err, data) => {
                     // timestamp the tile
@@ -332,7 +329,7 @@
                         this.add(tile);
                     }
 
-                    // prune tiles above / below once the tile has faded in
+                    // prune tiles above / below
                     this.pruneTiles(plot, tile);
 
                     // check err
