@@ -12,6 +12,7 @@
     const istanbul = require('gulp-istanbul');
     const jshint = require('gulp-jshint');
     const mocha = require('gulp-mocha');
+    const nodemon = require('gulp-nodemon');
     const runSequence = require('run-sequence');
     const source = require('vinyl-source-stream');
 
@@ -95,16 +96,10 @@
     });
 
     gulp.task('serve', () => {
-        const express = require('express');
-        const compression = require('compression');
-        const app = express();
-        const port = 8080;
-        app.use(compression());
-        app.use(express.static(__dirname + '/' + paths.build));
-        app.listen(port, () => {
-            console.log(`Listening on port ${port}`);
+        return nodemon({
+            script: 'server/server.js',
+            watch: [ 'server/**/*.js' ]
         });
-        return app;
     });
 
     gulp.task('watch', [ 'build' ], () => {
