@@ -67,7 +67,7 @@
             plot.targetZoom);
         plot.layers.forEach(layer => {
             // request tiles
-            layer.tiles.zoomRequestTiles(plot, coords);
+            layer.pyramid.zoomRequestTiles(plot, coords);
         });
     };
 
@@ -75,14 +75,14 @@
         const coords = plot.viewport.getVisibleCoords(plot.tileSize, plot.zoom);
         plot.layers.forEach(layer => {
             // request tiles
-            layer.tiles.panRequestTiles(plot, coords);
+            layer.pyramid.panRequestTiles(plot, coords);
         });
     };
 
     const removeTiles = function(plot) {
         plot.layers.forEach(layer => {
             // prune out of view tiles
-            layer.tiles.pruneOutOfView(
+            layer.pyramid.pruneOutOfView(
                 plot.tileSize,
                 plot.zoom,
                 plot.viewport);
@@ -121,7 +121,7 @@
     const zoom = function(plot, targetPx) {
 
         // map the delta with a sigmoid function to
-        let zoomDelta = plot.wheelDelta / (plot.wheelDeltaPerZoom * Const.MAX_CONCURRENT_ZOOMS);
+        let zoomDelta = plot.wheelDelta / (Const.ZOOM_WHEEL_DELTA * Const.MAX_CONCURRENT_ZOOMS);
         zoomDelta = Const.MAX_CONCURRENT_ZOOMS * Math.log(2 / (1 + Math.exp(-Math.abs(zoomDelta)))) / Math.LN2;
         zoomDelta = plot.continuousZoom ? zoomDelta : Math.ceil(zoomDelta);
         zoomDelta = plot.wheelDelta > 0 ? zoomDelta : -zoomDelta;
@@ -178,6 +178,8 @@
             // TODO: high res displays
             plot.canvas.width = width;
             plot.canvas.height = height;
+            // resize render target
+            plot.renderBuffer.resize(width, height);
             // update viewport
             plot.viewport.width = width;
             plot.viewport.height = height;
@@ -196,13 +198,17 @@
         resize(plot);
         // get timestamp
         const timestamp = Date.now();
-        // clear the backbuffer
         const gl = plot.gl;
+
+        // clear the backbuffer
         gl.clearColor(0, 0, 0, 0);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
         // enable blending
         gl.enable(gl.BLEND);
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+        // set the viewport
+        gl.viewport(0, 0, plot.viewport.width, plot.viewport.height);
+
         // apply the zoom animation
         if (plot.zoomAnimation) {
             plot.zoomAnimation.updatePlot(plot, timestamp);
@@ -216,7 +222,7 @@
             plot.zoomAnimation = null;
             plot.layers.forEach(layer => {
                 // prune out of view tiles
-                layer.tiles.pruneOutOfView(
+                layer.pyramid.pruneOutOfView(
                     plot.tileSize,
                     plot.zoom,
                     plot.viewport);
@@ -246,6 +252,18 @@
             this.canvas.width = this.canvas.offsetWidth;
             this.canvas.height = this.canvas.offsetHeight;
 
+            // set render target
+            this.renderTexture = new esper.ColorTexture2D({
+                width: this.canvas.offsetWidth,
+                height: this.canvas.offsetHeight,
+                filter: 'NEAREST',
+                wrap: 'CLAMP_TO_EDGE',
+                mipMap: false,
+                // preMultiplyAlpha: false
+            });
+            this.renderBuffer = new esper.RenderTarget();
+            this.renderBuffer.setColorTarget(this.renderTexture, 0);
+
             // set viewport
             this.viewport = new Viewport({
                 width: this.canvas.width,
@@ -267,9 +285,6 @@
 
             this.continuousZoom = false;
             this.wheelDelta = 0;
-            this.wheelDeltaPerZoom = 60;
-
-            this.tiles = new Map();
 
             let down = false;
             let last = null;
@@ -290,7 +305,7 @@
             });
 
             this.canvas.addEventListener('dblclick', () => {
-                this.wheelDelta += this.wheelDeltaPerZoom;
+                this.wheelDelta += Const.ZOOM_WHEEL_DELTA;
                 zoom(this, mouseToPlotPx(this, event));
             });
 
@@ -299,7 +314,7 @@
                     let delta;
                     if (event.deltaMode === 0) {
                         // pixels
-                        delta = -event.deltaY / window.devicePixelRatio;
+                        delta = -event.deltaY;
     		        } else if (event.deltaMode === 1) {
                         // lines
                         delta = -event.deltaY * 20;

@@ -12,7 +12,7 @@
             super();
             this.renderer = options.renderer;
             this.plot = null;
-            this.tiles = new TilePyramid(this);
+            this.pyramid = new TilePyramid(this);
             this.opacity = 1.0;
             this.hidden = false;
         }
