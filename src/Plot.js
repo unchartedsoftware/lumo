@@ -3,7 +3,6 @@
     'use strict';
 
     const esper = require('esper');
-    const glm = require('gl-matrix');
     const EventEmitter = require('events');
     const Event = require('./Event');
     const Enum = require('./Enum');
@@ -14,21 +13,24 @@
     // Private Methods
 
     const mouseToViewPx = function(plot, event) {
-        return glm.vec2.fromValues(
-            event.clientX,
-            plot.viewport.height - event.clientY);
+        return {
+            x: event.clientX,
+            y: plot.viewport.height - event.clientY
+        };
     };
 
     const viewPxToPlotPx = function(plot, px) {
-        return glm.vec2.fromValues(
-            plot.viewport.pos[0] + px[0],
-            plot.viewport.pos[1] + px[1]);
+        return {
+            x: plot.viewport.x + px.x,
+            y: plot.viewport.y + px.y
+        };
     };
 
     // const plotPxToViewPx = function(plot, px) {
-    //     return glm.vec2.fromValues(
-    //         px[0] - plot.viewport.pos[0],
-    //         px[1] - plot.viewport.pos[1]);
+    //     return {
+    //         x: px.x - plot.viewport.x,
+    //         y: px.y - plot.viewport.y
+    //     };
     // };
 
     const mouseToPlotPx = function(plot, event) {
@@ -100,23 +102,15 @@
             return;
         }
         // update current viewport
-        plot.viewport.pos[0] -= delta[0];
-        plot.viewport.pos[1] -= delta[1];
+        plot.viewport.x -= delta.x;
+        plot.viewport.y -= delta.y;
         // update target viewport
-        plot.targetViewport.pos[0] -= delta[0];
-        plot.targetViewport.pos[1] -= delta[1];
+        plot.targetViewport.x -= delta.x;
+        plot.targetViewport.y -= delta.y;
         // emit pan
         plot.emit(Event.PAN, delta);
         updateTiles(plot);
     };
-
-    // const center = function(plot, px) {
-    //     const half = glm.vec2.fromValues(
-    //         plot.viewport.width / 2,
-    //         plot.viewport.height / 2);
-    //     plot.viewport.pos[0] = px[0] - half[0];
-    //     plot.viewport.pos[1] = px[1] - half[1];
-    // };
 
     const zoom = function(plot, targetPx) {
 
@@ -298,7 +292,10 @@
             document.addEventListener('mousemove', event => {
                 if (down) {
                     const current = mouseToViewPx(this, event);
-                    const delta = glm.vec2.sub(glm.vec2.create(), current, last);
+                    const delta = {
+                        x: current.x - last.x,
+                        y: current.y - last.y
+                    };
                     pan(this, delta);
                     last = current;
                 }

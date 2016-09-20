@@ -3,7 +3,6 @@
     'use strict';
 
     const assert = require('assert');
-    const glm = require('gl-matrix');
     const Coord = require('../src/Coord');
     const Viewport = require('../src/Viewport');
 
@@ -192,19 +191,15 @@
                 assert(new Coord(0, 0, 0).isInView(tileSize, 0, viewport0));
                 assert(new Coord(1, 0, 0).isInView(tileSize, 0, viewport0));
                 assert(new Coord(2, 0, 0).isInView(tileSize, 0, viewport0));
-                // const viewport1 = new Viewport({
-                //     pos: glm.vec2.fromValues(tileSize+1, 0),
-                //     width: tileSize,
-                //     height: tileSize
-                // });
             });
             it('should return false if the coord is not visible in the provided viewport', () => {
                 const tileSize = 256;
                 const viewport = new Viewport({
-                    pos: glm.vec2.fromValues(tileSize, 0),
                     width: tileSize,
                     height: tileSize
                 });
+                viewport.x = tileSize;
+                viewport.y = 0;
                 assert(!new Coord(0, 0, 0).isInView(tileSize, 0, viewport));
                 assert(!new Coord(1, 0, 0).isInView(tileSize, 0, viewport));
                 assert(!new Coord(1, 1, 0).isInView(tileSize, 0, viewport));

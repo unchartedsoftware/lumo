@@ -13,14 +13,13 @@
                 precision highp float;
                 attribute vec2 aPosition;
                 attribute vec2 aTextureCoord;
-                uniform vec2 uViewOffset;
-                uniform vec2 uTileOffset;
-                uniform float uTileScale;
+                uniform vec2 uOffset;
+                uniform float uScale;
                 uniform mat4 uProjectionMatrix;
                 varying vec2 vTextureCoord;
                 void main() {
                     vTextureCoord = aTextureCoord;
-                    vec2 wPosition = (aPosition + uTileOffset) * uTileScale - uViewOffset;
+                    vec2 wPosition = (aPosition * uScale) + uOffset;
                     gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
                 }
                 `,
@@ -127,7 +126,6 @@
         shader.use();
         // set uniforms
         shader.setUniform('uProjectionMatrix', proj);
-        shader.setUniform('uViewOffset', plot.viewport.pos);
 
         // get tiles sorted based on last zoom direction
         let tiles;
@@ -142,21 +140,30 @@
 
         // for each tile
         tiles.forEach(tile => {
-            // get tile offset
-            const tileOffset = glm.vec2.fromValues(
-                tile.coord.x * plot.tileSize,
-                tile.coord.y * plot.tileSize);
             // bind texture
             tile.data.bind(0);
             // set texture sampler unit
             shader.setUniform('uTextureSampler', 0);
-            // set tile offset
-            shader.setUniform('uTileOffset', tileOffset);
             // set tile opacity
             shader.setUniform('uOpacity', tile.opacity(timestamp));
             // set tile scale
-            const scale = Math.pow(2, plot.zoom - tile.coord.z);
-            shader.setUniform('uTileScale', scale);
+            const scale = Math.pow(2, plot.zoom - tile.coord.z) * plot.tileSize;
+            shader.setUniform('uScale', scale);
+            // get tile offset
+            const tileOffset = [
+                tile.coord.x * scale,
+                tile.coord.y * scale
+            ];
+            // get view offset
+            const viewOffset = [
+                plot.viewport.x,
+                plot.viewport.y
+            ];
+            const offset = [
+                tileOffset[0] - viewOffset[0],
+                tileOffset[1] - viewOffset[1]
+            ];
+            shader.setUniform('uOffset', offset);
             // draw
             quad.draw();
             // unbind
@@ -211,7 +218,7 @@
             this.layer = layer;
             this.plot = layer.plot;
             this.gl = esper.WebGLContext.get();
-            this.quad = createQuad(0, layer.plot.tileSize);
+            this.quad = createQuad(0, 1);
             this.screen = createQuad(-1, 1);
             this.shaders = {
                 tile: new esper.Shader(shaders.tile),

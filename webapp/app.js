@@ -16,7 +16,7 @@
         let plot = new caleida.Plot('#plot-canvas');
 
         // plot.on('pan', () => {
-        //     console.log(`pan: ${plot.viewport.pos[0]}, ${plot.viewport.pos[1]}`);
+        //     console.log(`pan: ${plot.viewport.x}, ${plot.viewport.y}`);
         // });
         // plot.on('resize', () => {
         //     console.log(`resize: ${plot.viewport.width}, ${plot.viewport.height}`);

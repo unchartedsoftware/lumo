@@ -14,15 +14,15 @@
         });
 
         describe('#constructor()', () => {
-            it('should accept `width`, `height` and `pos` arguments', () => {
+            it('should accept `width`, `height`, `x`, and `y` arguments', () => {
                 const viewport = new Viewport({
                     width: 256,
                     height: 256
                 });
                 assert(viewport.width === 256);
                 assert(viewport.height === 256);
-                assert(viewport.pos[0] === 0);
-                assert(viewport.pos[1] === 0);
+                assert(viewport.x === 0);
+                assert(viewport.y === 0);
             });
         });
 
@@ -60,24 +60,24 @@
                 assert(bounds1.bottom === 0);
                 assert(bounds1.top === 0);
                 // // (1, 1, 0)
-                viewport.pos[0] = 256;
-                viewport.pos[1] = 0;
+                viewport.x = 256;
+                viewport.y = 0;
                 const bounds2 = viewport.getTileBounds(tileSize, 1);
                 assert(bounds2.left === 1);
                 assert(bounds2.right === 1);
                 assert(bounds2.bottom === 0);
                 assert(bounds2.top === 0);
                 // // (1, 1, 1)
-                viewport.pos[0] = 256;
-                viewport.pos[1] = 256;
+                viewport.x = 256;
+                viewport.y = 256;
                 const bounds3 = viewport.getTileBounds(tileSize, 1);
                 assert(bounds3.left === 1);
                 assert(bounds3.right === 1);
                 assert(bounds3.bottom === 1);
                 assert(bounds3.top === 1);
                 // // (1, 0, 1)
-                viewport.pos[0] = 0;
-                viewport.pos[1] = 256;
+                viewport.x = 0;
+                viewport.y = 256;
                 const bounds4 = viewport.getTileBounds(tileSize, 1);
                 assert(bounds4.left === 0);
                 assert(bounds4.right === 0);
