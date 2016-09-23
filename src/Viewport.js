@@ -62,10 +62,10 @@
             // return new viewport
             const viewport = new Viewport({
                 width: this.width,
-                height: this.height
+                height: this.height,
+                x: this.x + change,
+                y: this.y + change
             });
-            viewport.x = this.x + change;
-            viewport.y = this.y + change;
             return viewport;
         }
         zoomFromPlotPx(tileSize, zoom, targetZoom, targetPx) {
@@ -79,7 +79,7 @@
             const half = tileSize * current / 2;
             // get the distance from the plot center at the current zoom
             const diff = {
-                x: targetPx.x- half,
+                x: targetPx.x - half,
                 y: targetPx.y - half
             };
             // get the scaling between the two zoom levels
@@ -92,10 +92,10 @@
             // return new viewport
             const viewport = new Viewport({
                 width: this.width,
-                height: this.height
+                height: this.height,
+                x: this.x + change + scaledDiff.x,
+                y: this.y + change + scaledDiff.y
             });
-            viewport.x = this.x + change + scaledDiff.x;
-            viewport.y = this.y + change + scaledDiff.y;
             return viewport;
         }
     }

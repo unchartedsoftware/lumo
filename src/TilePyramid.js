@@ -145,9 +145,13 @@
             for (let level of levels) {
                 // only check descendant levels
                 if (level > coord.z) {
-                    if (level - coord.z > Const.ZOOM_CULL_DIST) {
-                        // prune if distance is too far, otherwise the
-                        // computational space explodes
+                    // prune if distance is too far, otherwise the computational
+                    // space explodes
+                    if ((level > zoom) && (level - coord.z) > Const.ZOOM_CULL_DIST) {
+                        // NOTE: we check (level > zoom) here to prevent auto
+                        // pruning when zooming in very fast as that causes
+                        // gaps, and doesn't cause a pruning space explosion
+                        // TODO: check if it should be (coord.z > zoom)?
                         return true;
                     }
                     // get all visible descendants
@@ -356,7 +360,7 @@
             // get all ancestors
             const ancestors = this.getAncestors(tile.coord);
             ancestors.forEach(ancestor => {
-                // 1) plot.targetZoom > ancestor.coord.z AND have ALL occluding tiles in view
+                // 1) all occluding tiles in view
                 if (this.isOccludedByDescendants(
                     plot.tileSize,
                     plot.targetZoom,
