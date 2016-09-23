@@ -74,7 +74,7 @@
     };
 
     const panRequestTiles = function(plot) {
-        const coords = plot.viewport.getVisibleCoords(plot.tileSize, plot.zoom);
+        const coords = plot.targetViewport.getVisibleCoords(plot.tileSize, plot.zoom);
         plot.layers.forEach(layer => {
             // request tiles
             layer.pyramid.panRequestTiles(plot, coords);
@@ -253,7 +253,7 @@
                 filter: 'NEAREST',
                 wrap: 'CLAMP_TO_EDGE',
                 mipMap: false,
-                // preMultiplyAlpha: false
+                premultiplyAlpha: false
             });
             this.renderBuffer = new esper.RenderTarget();
             this.renderBuffer.setColorTarget(this.renderTexture, 0);
