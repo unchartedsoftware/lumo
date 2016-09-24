@@ -63,38 +63,84 @@
         return wrapper;
     };
 
-    const zoomRequestTiles = function(plot) {
+    // const throttle = function(func, wait) {
+    //     var timeout, context, args, result;
+    //     var previous = 0;
+    //     var later = function() {
+    //         previous = 0; //options.leading === false ? 0 : Date.now();
+    //         timeout = null;
+    //         result = func.apply(context, args);
+    //         if (!timeout) {
+    //             context = args = null;
+    //         }
+    //     };
+    //
+    //     var throttled = function() {
+    //         var now = Date.now();
+    //         if (!previous) { // && options.leading === false) {
+    //             previous = now;
+    //         }
+    //         var remaining = wait - (now - previous);
+    //         context = this;
+    //         args = arguments;
+    //         if (remaining <= 0 || remaining > wait) {
+    //             if (timeout) {
+    //                 clearTimeout(timeout);
+    //                 timeout = null;
+    //             }
+    //             previous = now;
+    //             result = func.apply(context, args);
+    //             if (!timeout) {
+    //                 context = args = null;
+    //             }
+    //         } else if (!timeout) { // && options.trailing !== false) {
+    //             timeout = setTimeout(later, remaining);
+    //         }
+    //         return result;
+    //     };
+    //
+    //     throttled.cancel = function() {
+    //       clearTimeout(timeout);
+    //       previous = 0;
+    //       timeout = context = args = null;
+    //     };
+    //
+    //     return throttled;
+    // };
+
+    const zoomRequestTiles = throttle(function(plot) {
+        // get all visible coords in the target viewport
         const coords = plot.targetViewport.getVisibleCoords(
             plot.tileSize,
             plot.targetZoom);
+        // for each layer
         plot.layers.forEach(layer => {
             // request tiles
             layer.pyramid.zoomRequestTiles(plot, coords);
         });
-    };
+    }, Const.ZOOM_THROTTLE);
 
-    const panRequestTiles = function(plot) {
-        const coords = plot.targetViewport.getVisibleCoords(plot.tileSize, plot.zoom);
+    const panRequestTiles = throttle(function(plot) {
+        // get all visible coords in the target viewport
+        const coords = plot.targetViewport.getVisibleCoords(
+            plot.tileSize,
+            plot.targetZoom);
+        // for each layer
         plot.layers.forEach(layer => {
             // request tiles
             layer.pyramid.panRequestTiles(plot, coords);
         });
-    };
+    }, Const.PAN_REQUEST_THROTTLE);
 
-    const removeTiles = function(plot) {
+    const panPruneTiles = throttle(function(plot) {
         plot.layers.forEach(layer => {
             // prune out of view tiles
             layer.pyramid.pruneOutOfView(
                 plot.tileSize,
-                plot.zoom,
-                plot.viewport);
+                plot.targetZoom,
+                plot.targetViewport);
         });
-    };
-
-    const updateTiles = throttle(function(plot) {
-        removeTiles(plot);
-        panRequestTiles(plot);
-    }, Const.UPDATE_THROTTLE);
+    }, Const.PAN_PRUNE_THROTTLE);
 
     const pan = function(plot, delta) {
         if (plot.zoomAnimation) {
@@ -107,13 +153,14 @@
         // update target viewport
         plot.targetViewport.x -= delta.x;
         plot.targetViewport.y -= delta.y;
+        // update tiles
+        panPruneTiles(plot);
+        panRequestTiles(plot);
         // emit pan
         plot.emit(Event.PAN, delta);
-        updateTiles(plot);
     };
 
     const zoom = function(plot, targetPx) {
-
         // map the delta with a sigmoid function to
         let zoomDelta = plot.wheelDelta / (Const.ZOOM_WHEEL_DELTA * Const.MAX_CONCURRENT_ZOOMS);
         zoomDelta = Const.MAX_CONCURRENT_ZOOMS * Math.log(2 / (1 + Math.exp(-Math.abs(zoomDelta)))) / Math.LN2;
@@ -181,7 +228,8 @@
             plot.targetViewport.width = width;
             plot.targetViewport.height = height;
             // update tiles
-            updateTiles(plot);
+            panPruneTiles(plot);
+            panRequestTiles(plot);
             // emit resize
             plot.emit(Event.RESIZE, {});
         }
@@ -307,27 +355,25 @@
             });
 
             this.canvas.addEventListener('wheel', event => {
-                // if (!this.zoomAnimation) {
-                    let delta;
-                    if (event.deltaMode === 0) {
-                        // pixels
-                        delta = -event.deltaY;
-    		        } else if (event.deltaMode === 1) {
-                        // lines
-                        delta = -event.deltaY * 20;
-                    } else {
-                        // pages
-                        delta = -event.deltaY * 60;
-                    }
-                    // if wheel delta is currently 0, kick off the debounce
-                    if (this.wheelDelta === 0) {
-                        setTimeout(() => {
-                            zoom(this, mouseToPlotPx(this, event));
-                        }, Const.ZOOM_DEBOUNCE);
-                    }
-                    // increment wheel delta
-                    this.wheelDelta += delta;
-                // }
+                let delta;
+                if (event.deltaMode === 0) {
+                    // pixels
+                    delta = -event.deltaY;
+                } else if (event.deltaMode === 1) {
+                    // lines
+                    delta = -event.deltaY * 20;
+                } else {
+                    // pages
+                    delta = -event.deltaY * 60;
+                }
+                // if wheel delta is currently 0, kick off the debounce
+                if (this.wheelDelta === 0) {
+                    setTimeout(() => {
+                        zoom(this, mouseToPlotPx(this, event));
+                    }, Const.ZOOM_DEBOUNCE);
+                }
+                // increment wheel delta
+                this.wheelDelta += delta;
                 // prevent default behavior and stop propagationa
                 event.preventDefault();
                 event.stopPropagation();
@@ -354,6 +400,7 @@
                 this.layers.push(layer);
                 layer.activate(this);
             }
+            // request tiles
             panRequestTiles(this, this.viewport, this.zoom);
         }
         remove(layer) {
