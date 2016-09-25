@@ -41,13 +41,13 @@
                 Math.max(0, Math.floor(this.y / scaledTileSize)),
                 Math.min(dim - 1, Math.ceil(((this.y + this.height) / scaledTileSize) - 1)));
         }
-        getVisibleCoords(tileSize, zoom) {
-            const bounds = this.getTileBounds(tileSize, zoom);
+        getVisibleCoords(tileSize, viewportZoom, tileZoom = viewportZoom) {
+            const bounds = this.getTileBounds(tileSize, viewportZoom, tileZoom);
             // TODO: pre-allocate this and index
             let coords = [];
             for (let x=bounds.left; x<=bounds.right; x++) {
                 for (let y=bounds.bottom; y<=bounds.top; y++) {
-                    coords.push(new Coord(zoom, x, y));
+                    coords.push(new Coord(tileZoom, x, y));
                 }
             }
             return coords;

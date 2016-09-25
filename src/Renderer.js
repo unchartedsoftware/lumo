@@ -4,7 +4,6 @@
 
     const esper = require('esper');
     const glm = require('gl-matrix');
-    const Enum = require('./Enum');
 
     const shaders = {
         tile: {
@@ -13,12 +12,15 @@
                 precision highp float;
                 attribute vec2 aPosition;
                 attribute vec2 aTextureCoord;
+                uniform vec4 uTextureCoordOffset;
                 uniform vec2 uOffset;
                 uniform float uScale;
                 uniform mat4 uProjectionMatrix;
                 varying vec2 vTextureCoord;
                 void main() {
-                    vTextureCoord = aTextureCoord;
+                    vTextureCoord = vec2(
+                        uTextureCoordOffset.x + (aTextureCoord.x * uTextureCoordOffset.z),
+                        uTextureCoordOffset.y + (aTextureCoord.y * uTextureCoordOffset.w));
                     vec2 wPosition = (aPosition * uScale) + uOffset;
                     gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
                 }
@@ -101,7 +103,22 @@
             });
     };
 
-    const renderTiles = function(gl, plot, shader, quad, pyramid, timestamp) {
+    const getOffset = function(descendant, ancestor) {
+        const scale = Math.pow(2, descendant.z - ancestor.z);
+        const step = 1 / scale;
+        const root = {
+            x: ancestor.x * scale,
+            y: ancestor.y * scale
+        };
+        return [
+            (descendant.x - root.x) * step,
+            (descendant.y - root.y) * step,
+            step,
+            step
+        ];
+    };
+
+    const renderTiles = function(gl, plot, shader, quad, pyramid /*, timestamp*/) {
         // update projection
         const proj = glm.mat4.ortho(
             glm.mat4.create(),
@@ -127,32 +144,57 @@
         // set uniforms
         shader.setUniform('uProjectionMatrix', proj);
 
-        // get tiles sorted based on last zoom direction
-        let tiles;
-        if (plot.zoomDirection === Enum.ZOOM_IN) {
-            tiles = pyramid.tiles(Enum.SORT_ASC);
-        } else {
-            tiles = pyramid.tiles(Enum.SORT_DESC);
-        }
+        // get all currently visible tile coords
+        const coords = plot.viewport.getVisibleCoords(
+            plot.tileSize,
+            plot.zoom,
+            plot.targetZoom);
+
+        // assemble all renderables
+        const renderables = [];
+        coords.forEach(coord => {
+            // check if we have the tile
+            if (pyramid.has(coord)) {
+                renderables.push({
+                    coord: coord,
+                    tile: pyramid.get(coord),
+                    offset: [ 0, 0, 1, 1 ]
+                });
+                return;
+            }
+            // if not, take the closest ancestor
+            const ancestor = pyramid.getClosestAncestor(coord);
+            if (ancestor) {
+                renderables.push({
+                    coord: coord,
+                    tile: pyramid.get(ancestor),
+                    offset: getOffset(coord, ancestor)
+                });
+            }
+        });
 
         // bind quad
         quad.bind();
 
-        // for each tile
-        tiles.forEach(tile => {
+        // for each renderable
+        renderables.forEach(renderable => {
+            const tile = renderable.tile;
+            const coord = renderable.coord;
             // bind texture
             tile.data.bind(0);
             // set texture sampler unit
             shader.setUniform('uTextureSampler', 0);
             // set tile opacity
-            shader.setUniform('uOpacity', tile.opacity(timestamp));
+            shader.setUniform('uTextureCoordOffset', renderable.offset);
+            // set tile opacity
+            shader.setUniform('uOpacity', 1); // tile.opacity(timestamp));
             // set tile scale
-            const scale = Math.pow(2, plot.zoom - tile.coord.z) * plot.tileSize;
+            const scale = Math.pow(2, plot.zoom - coord.z) * plot.tileSize;
             shader.setUniform('uScale', scale);
             // get tile offset
             const tileOffset = [
-                tile.coord.x * scale,
-                tile.coord.y * scale
+                coord.x * scale,
+                coord.y * scale
             ];
             // get view offset
             const viewOffset = [

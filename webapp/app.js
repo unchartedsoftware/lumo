@@ -8,7 +8,13 @@
     const SUBDOMAINS = [
         'a', 'b', 'c',
         'd', 'e', 'f',
-        'g', 'h', 'i'
+        'g', 'h', 'i',
+        'j', 'k', 'l',
+        'm', 'n', 'o',
+        'p', 'q', 'r',
+        's', 't', 'u',
+        'v', 'w', 'x',
+        'y', 'z'
     ];
 
     window.start = function() {
@@ -40,7 +46,7 @@
                     filter: 'LINEAR',
                     wrap: 'CLAMP_TO_EDGE',
                     mipMap: false,
-                    preMultiplyAlpha: false //true
+                    premultiplyAlpha: false
                 }));
             };
             image.onerror = (event) => {
@@ -53,14 +59,17 @@
             image.src = `http://${s}.basemaps.cartocdn.com/light_all/${coord.z}/${coord.x}/${dim - 1 - coord.y}.png`;
         };
 
-        base.on('tile:add', tile => {
-            console.log('add: ' + tile.coord.hash + ', ' + base.pyramid.numTiles + ' total tiles');
-        });
-        base.on('tile:remove', tile => {
-            console.log('remove: ' + tile.coord.hash + ', ' + base.pyramid.numTiles + ' total tiles');
-        });
+        // base.on('tile:request', tile => {
+        //     console.log(`request: ${tile.coord.hash}`);
+        // });
+        // base.on('tile:add', tile => {
+        //     console.log(`add: ${tile.coord.hash}, ${base.pyramid.tiles.length} total tiles`);
+        // });
+        // base.on('tile:remove', tile => {
+        //     console.log(`remove: ${tile.coord.hash}, ${base.pyramid.tiles.length} total tiles`);
+        // });
 
-        base.opacity = 0.5;
+        // base.opacity = 0.5;
 
         plot.add(base);
 
@@ -69,19 +78,13 @@
         });
 
         // layer.on('tile:request', tile => {
-        //     console.log('request: ' + tile.coord.hash);
+        //     console.log(`request: ${tile.coord.hash}`);
         // });
         // layer.on('tile:add', tile => {
-        //     console.log('add: ' + tile.coord.hash + ', ' + layer.pyramid.numTiles + ' total tiles');
-        // });
-        // layer.on('tile:success', tile => {
-        //     console.log('success: ' + tile.coord.hash);
+        //     console.log(`add: ${tile.coord.hash}, ${layer.pyramid.tiles.length} total tiles`);
         // });
         // layer.on('tile:remove', tile => {
-        //     console.log('remove: ' + tile.coord.hash + ', ' + layer.pyramid.numTiles + ' total tiles');
-        // });
-        // layer.on('tile:discard', tile => {
-        //     console.log('discard: ' + tile.coord.hash);
+        //     console.log(`remove: ${tile.coord.hash}, ${base.pyramid.tiles.length} total tiles`);
         // });
 
         layer.requestTile = (coord, done) => {
@@ -100,7 +103,7 @@
                         filter: 'LINEAR',
                         wrap: 'CLAMP_TO_EDGE',
                         mipMap: false,
-                        preMultiplyAlpha: false
+                        premultiplyAlpha: false
                     }));
                 }
             };
@@ -110,7 +113,6 @@
         // layer.opacity = 0.5;
 
         // plot.add(layer);
-
     };
 
 }());

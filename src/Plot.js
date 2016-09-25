@@ -5,7 +5,6 @@
     const esper = require('esper');
     const EventEmitter = require('events');
     const Event = require('./Event');
-    const Enum = require('./Enum');
     const Const = require('./Const');
     const Viewport = require('./Viewport');
     const ZoomAnimation = require('./ZoomAnimation');
@@ -63,52 +62,7 @@
         return wrapper;
     };
 
-    // const throttle = function(func, wait) {
-    //     var timeout, context, args, result;
-    //     var previous = 0;
-    //     var later = function() {
-    //         previous = 0; //options.leading === false ? 0 : Date.now();
-    //         timeout = null;
-    //         result = func.apply(context, args);
-    //         if (!timeout) {
-    //             context = args = null;
-    //         }
-    //     };
-    //
-    //     var throttled = function() {
-    //         var now = Date.now();
-    //         if (!previous) { // && options.leading === false) {
-    //             previous = now;
-    //         }
-    //         var remaining = wait - (now - previous);
-    //         context = this;
-    //         args = arguments;
-    //         if (remaining <= 0 || remaining > wait) {
-    //             if (timeout) {
-    //                 clearTimeout(timeout);
-    //                 timeout = null;
-    //             }
-    //             previous = now;
-    //             result = func.apply(context, args);
-    //             if (!timeout) {
-    //                 context = args = null;
-    //             }
-    //         } else if (!timeout) { // && options.trailing !== false) {
-    //             timeout = setTimeout(later, remaining);
-    //         }
-    //         return result;
-    //     };
-    //
-    //     throttled.cancel = function() {
-    //       clearTimeout(timeout);
-    //       previous = 0;
-    //       timeout = context = args = null;
-    //     };
-    //
-    //     return throttled;
-    // };
-
-    const zoomRequestTiles = throttle(function(plot) {
+    const requestTiles = function(plot) {
         // get all visible coords in the target viewport
         const coords = plot.targetViewport.getVisibleCoords(
             plot.tileSize,
@@ -116,31 +70,12 @@
         // for each layer
         plot.layers.forEach(layer => {
             // request tiles
-            layer.pyramid.zoomRequestTiles(plot, coords);
+            layer.pyramid.requestTiles(coords);
         });
-    }, Const.ZOOM_THROTTLE);
+    };
 
-    const panRequestTiles = throttle(function(plot) {
-        // get all visible coords in the target viewport
-        const coords = plot.targetViewport.getVisibleCoords(
-            plot.tileSize,
-            plot.targetZoom);
-        // for each layer
-        plot.layers.forEach(layer => {
-            // request tiles
-            layer.pyramid.panRequestTiles(plot, coords);
-        });
-    }, Const.PAN_REQUEST_THROTTLE);
-
-    const panPruneTiles = throttle(function(plot) {
-        plot.layers.forEach(layer => {
-            // prune out of view tiles
-            layer.pyramid.pruneOutOfView(
-                plot.tileSize,
-                plot.targetZoom,
-                plot.targetViewport);
-        });
-    }, Const.PAN_PRUNE_THROTTLE);
+    const panRequestTiles = throttle(requestTiles, Const.PAN_REQUEST_THROTTLE);
+    const zoomRequestTiles = throttle(requestTiles, Const.ZOOM_REQUEST_THROTTLE);
 
     const pan = function(plot, delta) {
         if (plot.zoomAnimation) {
@@ -153,8 +88,7 @@
         // update target viewport
         plot.targetViewport.x -= delta.x;
         plot.targetViewport.y -= delta.y;
-        // update tiles
-        panPruneTiles(plot);
+        // request tiles
         panRequestTiles(plot);
         // emit pan
         plot.emit(Event.PAN, delta);
@@ -201,14 +135,11 @@
             // store prev viewport
             plot.prevViewport = new Viewport(plot.viewport);
 
-            // set zoom direction
-            plot.zoomDirection = (plot.zoom < plot.targetZoom) ? Enum.ZOOM_IN : Enum.ZOOM_OUT;
+            // request tiles
+            zoomRequestTiles(plot);
 
             // emit zoom start
             plot.emit(Event.ZOOM_START, plot);
-
-            // request tiles
-            zoomRequestTiles(plot);
         }
     };
 
@@ -227,9 +158,8 @@
             // update target viewport
             plot.targetViewport.width = width;
             plot.targetViewport.height = height;
-            // update tiles
-            panPruneTiles(plot);
-            panRequestTiles(plot);
+            // request tiles
+            requestTiles(plot);
             // emit resize
             plot.emit(Event.RESIZE, {});
         }
@@ -262,13 +192,6 @@
         // remove animation once complete
         if (plot.zoomAnimation && plot.zoomAnimation.done()) {
             plot.zoomAnimation = null;
-            plot.layers.forEach(layer => {
-                // prune out of view tiles
-                layer.pyramid.pruneOutOfView(
-                    plot.tileSize,
-                    plot.zoom,
-                    plot.viewport);
-            });
             plot.emit(Event.ZOOM_END, plot);
         }
         // request newxt animation frame
@@ -323,7 +246,6 @@
             this.zoom = Math.min(Const.MAX_ZOOM, Math.max(Const.MIN_ZOOM, options.zoom ? options.zoom : 0));
             this.prevZoom = this.zoom;
             this.targetZoom = this.zoom;
-            this.zoomDirection = Enum.ZOOM_IN;
 
             this.continuousZoom = false;
             this.wheelDelta = 0;
@@ -401,7 +323,7 @@
                 layer.activate(this);
             }
             // request tiles
-            panRequestTiles(this, this.viewport, this.zoom);
+            requestTiles(this, this.viewport, this.zoom);
         }
         remove(layer) {
             if (!layer) {

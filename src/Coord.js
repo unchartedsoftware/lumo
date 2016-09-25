@@ -24,6 +24,26 @@
                 this.x === other.x &&
                 this.y === other.y;
         }
+        getAncestor(offset = 1) {
+            const scale = Math.pow(2, offset);
+            return new Coord(
+                this.z - offset,
+                Math.floor(this.x / scale),
+                Math.floor(this.y / scale));
+        }
+        getDescendants(offset = 1) {
+            const scale = Math.pow(2, offset);
+            const coords = [];
+            for (let x=0; x<scale; x++) {
+                for (let y=0; y<scale; y++) {
+                    coords.push(new Coord(
+                        this.z + offset,
+                        this.x * scale + x,
+                        this.y * scale + y));
+                }
+            }
+            return coords;
+        }
         isParentOf(child) {
             if (this.z >= child.z) {
                 return false;
