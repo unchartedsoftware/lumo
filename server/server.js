@@ -22,9 +22,6 @@
         const resolution = 256;
         const hash = `${coord.z}:${coord.x}:${coord.y}:${resolution}`;
 
-        // const buffer = mandelbrot(resolution, coord);
-        // res.send(buffer);
-
         redis.cache(hash, done => {
             done(null, mandelbrot(resolution, coord));
         }, (err, buffer) => {
