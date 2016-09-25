@@ -159,7 +159,7 @@
             plot.targetViewport.width = width;
             plot.targetViewport.height = height;
             // request tiles
-            requestTiles(plot);
+            panRequestTiles(plot);
             // emit resize
             plot.emit(Event.RESIZE, {});
         }
@@ -323,7 +323,7 @@
                 layer.activate(this);
             }
             // request tiles
-            requestTiles(this, this.viewport, this.zoom);
+            panRequestTiles(this, this.viewport, this.zoom);
         }
         remove(layer) {
             if (!layer) {

@@ -28,12 +28,10 @@
             frag:
                 `
                 precision highp float;
-                uniform float uOpacity;
                 uniform sampler2D uTextureSampler;
                 varying vec2 vTextureCoord;
                 void main() {
-                    vec4 color = texture2D(uTextureSampler, vTextureCoord);
-                    gl_FragColor = vec4(color.rgb, color.a * uOpacity);
+                    gl_FragColor = texture2D(uTextureSampler, vTextureCoord);
                 }
                 `
         },
@@ -118,7 +116,7 @@
         ];
     };
 
-    const renderTiles = function(gl, plot, shader, quad, pyramid /*, timestamp*/) {
+    const renderTiles = function(gl, plot, shader, quad, pyramid) {
         // update projection
         const proj = glm.mat4.ortho(
             glm.mat4.create(),
@@ -148,7 +146,7 @@
         const coords = plot.viewport.getVisibleCoords(
             plot.tileSize,
             plot.zoom,
-            plot.targetZoom);
+            Math.ceil(plot.zoom)); // get tiles closest to current zoom
 
         // assemble all renderables
         const renderables = [];
@@ -186,8 +184,6 @@
             shader.setUniform('uTextureSampler', 0);
             // set tile opacity
             shader.setUniform('uTextureCoordOffset', renderable.offset);
-            // set tile opacity
-            shader.setUniform('uOpacity', 1); // tile.opacity(timestamp));
             // set tile scale
             const scale = Math.pow(2, plot.zoom - coord.z) * plot.tileSize;
             shader.setUniform('uScale', scale);

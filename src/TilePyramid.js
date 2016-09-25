@@ -124,7 +124,7 @@
                     // filter by key
                     return (entry < coord.z);
                 });
-            // get active levels
+            // check for closest ancestor
             for (let i=0; i<levels.length; i++) {
                 const level = levels[i];
                 const ancestor = coord.getAncestor(coord.z - level);
@@ -159,8 +159,6 @@
                         this.layer.emit(Event.TILE_FAILURE, tile);
                         return;
                     }
-                    // timestamp the tile
-                    tile.timestamp = Date.now();
                     // add data
                     tile.data = data;
                     // add to tile pyramid

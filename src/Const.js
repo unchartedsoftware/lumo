@@ -4,8 +4,7 @@
 
     module.exports = {
         // tile
-        TILE_FADE_MS: 200,
-        TILE_CACHE_SIZE: 256,
+        TILE_CACHE_SIZE: 128,
         // zoom
         MAX_CONCURRENT_ZOOMS: 4,
         MIN_ZOOM: 0,
