@@ -146,7 +146,7 @@
         const coords = plot.viewport.getVisibleCoords(
             plot.tileSize,
             plot.zoom,
-            Math.ceil(plot.zoom)); // get tiles closest to current zoom
+            Math.round(plot.zoom)); // get tiles closest to current zoom
 
         // assemble all renderables
         const renderables = [];

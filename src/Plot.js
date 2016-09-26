@@ -66,7 +66,8 @@
         // get all visible coords in the target viewport
         const coords = plot.targetViewport.getVisibleCoords(
             plot.tileSize,
-            plot.targetZoom);
+            plot.targetZoom,
+            Math.round(plot.targetZoom));
         // for each layer
         plot.layers.forEach(layer => {
             // request tiles
@@ -94,7 +95,37 @@
         plot.emit(Event.PAN, delta);
     };
 
-    const zoom = function(plot, targetPx) {
+    const zoom = function(plot, targetPx, zoomDelta) {
+        // reset wheel delta
+        plot.wheelDelta = 0;
+        // calculate the target zoom level
+        let targetZoom = plot.targetZoom + zoomDelta;
+        targetZoom = Math.min(plot.maxZoom, targetZoom);
+        targetZoom = Math.max(plot.minZoom, targetZoom);
+        // check if we need to zoom
+        if (targetZoom !== plot.targetZoom) {
+            // set target zoom
+            plot.targetZoom = targetZoom;
+            // set target viewport
+            plot.targetViewport = plot.viewport.zoomFromPlotPx(
+                plot.tileSize,
+                plot.zoom,
+                plot.targetZoom,
+                targetPx);
+            // set zoom animation
+            plot.zoomAnimation = new ZoomAnimation({
+                zoomFrom: plot.zoom,
+                zoomTo: plot.targetZoom,
+                targetPx: targetPx
+            });
+            // store prev zoom
+            plot.prevZoom = plot.zoom;
+            // store prev viewport
+            plot.prevViewport = new Viewport(plot.viewport);
+        }
+    };
+
+    const discreteZoom = function(plot, targetPx) {
         // map the delta with a sigmoid function to
         let zoomDelta = plot.wheelDelta / (Const.ZOOM_WHEEL_DELTA * Const.MAX_CONCURRENT_ZOOMS);
         zoomDelta = Const.MAX_CONCURRENT_ZOOMS * Math.log(2 / (1 + Math.exp(-Math.abs(zoomDelta)))) / Math.LN2;
@@ -102,45 +133,23 @@
         zoomDelta = plot.wheelDelta > 0 ? zoomDelta : -zoomDelta;
         zoomDelta = Math.min(Const.MAX_CONCURRENT_ZOOMS, zoomDelta);
         zoomDelta = Math.max(-Const.MAX_CONCURRENT_ZOOMS, zoomDelta);
+        // zoom the plot
+        zoom(plot, targetPx, zoomDelta);
+        // request tiles
+        zoomRequestTiles(plot);
+        // emit zoom start
+        plot.emit(Event.ZOOM_START, plot);
+    };
 
-        // reset wheel delta
-        plot.wheelDelta = 0;
-
-        // calculate the target zoom level
-        let targetZoom = plot.targetZoom + zoomDelta;
-        targetZoom = Math.min(plot.maxZoom, targetZoom);
-        targetZoom = Math.max(plot.minZoom, targetZoom);
-
-        if (targetZoom !== plot.targetZoom) {
-
-            // set target zoom
-            plot.targetZoom = targetZoom;
-
-            // set target viewport
-            plot.targetViewport = plot.viewport.zoomFromPlotPx(
-                plot.tileSize,
-                plot.zoom,
-                plot.targetZoom,
-                targetPx);
-
-            // set zoom animation
-            plot.zoomAnimation = new ZoomAnimation({
-                zoomFrom: plot.zoom,
-                zoomTo: plot.targetZoom,
-                targetPx: targetPx
-            });
-
-            // store prev zoom
-            plot.prevZoom = plot.zoom;
-            // store prev viewport
-            plot.prevViewport = new Viewport(plot.viewport);
-
-            // request tiles
-            zoomRequestTiles(plot);
-
-            // emit zoom start
-            plot.emit(Event.ZOOM_START, plot);
-        }
+    const continuousZoom = function(plot, targetPx) {
+        // convert wheel delta to zoom delta
+        const zoomDelta = plot.wheelDelta / Const.ZOOM_WHEEL_DELTA;
+        // zoom the plot
+        zoom(plot, targetPx, zoomDelta);
+        // request tiles without throttle
+        requestTiles(plot);
+        // emit zoom start
+        plot.emit(Event.ZOOM_START, plot);
     };
 
     const resize = throttle(function(plot) {
@@ -247,7 +256,7 @@
             this.prevZoom = this.zoom;
             this.targetZoom = this.zoom;
 
-            this.continuousZoom = false;
+            this.continuousZoom = options.continuousZoom ? options.continuousZoom : false;
             this.wheelDelta = 0;
 
             let down = false;
@@ -273,7 +282,7 @@
 
             this.canvas.addEventListener('dblclick', () => {
                 this.wheelDelta += Const.ZOOM_WHEEL_DELTA;
-                zoom(this, mouseToPlotPx(this, event));
+                discreteZoom(this, mouseToPlotPx(this, event));
             });
 
             this.canvas.addEventListener('wheel', event => {
@@ -288,14 +297,21 @@
                     // pages
                     delta = -event.deltaY * 60;
                 }
-                // if wheel delta is currently 0, kick off the debounce
-                if (this.wheelDelta === 0) {
-                    setTimeout(() => {
-                        zoom(this, mouseToPlotPx(this, event));
-                    }, Const.ZOOM_DEBOUNCE);
-                }
                 // increment wheel delta
                 this.wheelDelta += delta;
+                // check zoom type
+                if (this.continuousZoom) {
+                    // process continuous zoom immediately
+                    continuousZoom(this, mouseToPlotPx(this, event));
+                } else {
+                    // debounce discrete zoom
+                    if (!this.zoomTimeout) {
+                        this.zoomTimeout = setTimeout(() => {
+                            discreteZoom(this, mouseToPlotPx(this, event));
+                            this.zoomTimeout = null;
+                        }, Const.ZOOM_DEBOUNCE);
+                    }
+                }
                 // prevent default behavior and stop propagationa
                 event.preventDefault();
                 event.stopPropagation();

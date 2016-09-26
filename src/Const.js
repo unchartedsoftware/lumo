@@ -9,12 +9,12 @@
         MAX_CONCURRENT_ZOOMS: 4,
         MIN_ZOOM: 0,
         MAX_ZOOM: 30,
-        ZOOM_WHEEL_DELTA: 100,
+        ZOOM_WHEEL_DELTA: 200,
         ZOOM_ANIMATION_MS: 250,
-        ZOOM_DEBOUNCE: 200,
-        ZOOM_REQUEST_THROTTLE: 800,
+        ZOOM_DEBOUNCE: 100,
+        ZOOM_REQUEST_THROTTLE: 200,
         // pan
-        PAN_REQUEST_THROTTLE: 100,
+        PAN_REQUEST_THROTTLE: 50,
         // resize
         RESIZE_THROTTLE: 200,
         // persistance

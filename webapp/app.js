@@ -19,7 +19,9 @@
 
     window.start = function() {
 
-        let plot = new caleida.Plot('#plot-canvas');
+        let plot = new caleida.Plot('#plot-canvas', {
+            continuousZoom: false
+        });
 
         // plot.on('pan', () => {
         //     console.log(`pan: ${plot.viewport.x}, ${plot.viewport.y}`);
@@ -56,7 +58,7 @@
             image.crossOrigin = 'anonymous';
             const dim = Math.pow(2, coord.z);
             const s = SUBDOMAINS[(coord.x + coord.y + coord.z) % SUBDOMAINS.length];
-            image.src = `http://${s}.basemaps.cartocdn.com/light_all/${coord.z}/${coord.x}/${dim - 1 - coord.y}.png`;
+            image.src = `http://${s}.basemaps.cartocdn.com/dark_nolabels/${coord.z}/${coord.x}/${dim - 1 - coord.y}.png`;
         };
 
         // base.on('tile:request', tile => {
