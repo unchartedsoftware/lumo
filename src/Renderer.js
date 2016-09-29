@@ -240,8 +240,7 @@
     };
 
     class Renderer {
-        constructor(options = {}) {
-            this.options = options;
+        constructor() {
             this.layer = null;
             this.plot = null;
             this.readyToDraw = false;
@@ -262,7 +261,6 @@
                 tile: new esper.Shader(shaders.tile),
                 layer: new esper.Shader(shaders.layer)
             };
-            this.readyToDraw = true;
         }
         deactivate() {
             if (!this.layer) {
@@ -271,11 +269,10 @@
             this.layer = null;
             this.plot = null;
             this.gl = null;
-            this.readyToDraw = false;
         }
         draw(timestamp) {
             // not ready to render
-            if (!this.readyToDraw) {
+            if (!this.gl) {
                 return;
             }
             // render the tiles to the framebuffer

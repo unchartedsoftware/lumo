@@ -2,6 +2,7 @@
 
     'use strict';
 
+    const defaultTo = require('lodash/defaultTo');
     const Const = require('./Const');
     const PanAnimation = require('./PanAnimation');
     const Request = require('./Request');
@@ -30,9 +31,9 @@
     class PanHandler {
         constructor(plot, options = {}) {
 
-            this.inertia = options.inertia !== undefined ? options.inertia : true;
-            this.inertiaEasing = options.inertiaEasing ? options.inertiaEasing : 0.2;
-            this.inertiaDeceleration = options.inertiaDeceleration ? options.inertiaDeceleration : 3400;
+            this.inertia = defaultTo(options.inertia, true);
+            this.inertiaEasing = defaultTo(options.inertiaEasing, 0.2);
+            this.inertiaDeceleration = defaultTo(options.inertiaDeceleration, 3400);
 
             let down = false;
             let lastPos = null;
@@ -110,7 +111,7 @@
                     times.shift();
                 }
 
-                if (times.length === 0) {
+                if (times.length < 2) {
                     // exit early if no remaining positions
                     plot.emit(Event.PAN_END);
                     return;

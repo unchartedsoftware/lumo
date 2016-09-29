@@ -2,6 +2,7 @@
 
     'use strict';
 
+    const defaultTo = require('lodash/defaultTo');
     const Const = require('./Const');
     const Request = require('./Request');
     const Viewport = require('./Viewport');
@@ -83,9 +84,9 @@
     class ZoomHandler {
         constructor(plot, options = {}) {
 
-            this.continuousZoom = (options.continuousZoom !== undefined) ? options.continuousZoom : true;
-            this.minZoom = Math.max(Const.MIN_ZOOM, options.minZoom || Const.MIN_ZOOM);
-            this.maxZoom = Math.min(Const.MAX_ZOOM, options.maxZoom || Const.MAX_ZOOM);
+            this.continuousZoom = defaultTo(options.continuousZoom, true);
+            this.minZoom = Math.max(defaultTo(options.minZoom, Const.MIN_ZOOM), Const.MIN_ZOOM);
+            this.maxZoom = Math.min(defaultTo(options.maxZoom, Const.MAX_ZOOM), Const.MAX_ZOOM);
 
             let wheelDelta = 0;
             let timeout = null;

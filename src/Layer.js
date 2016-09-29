@@ -2,6 +2,7 @@
 
     'use strict';
 
+    const defaultTo = require('lodash/defaultTo');
     const EventEmitter = require('events');
     const TilePyramid = require('./TilePyramid');
 
@@ -10,11 +11,11 @@
     class Layer extends EventEmitter {
         constructor(options = {}) {
             super();
-            this.renderer = options.renderer;
-            this.plot = null;
+            this.renderer = defaultTo(options.renderer, null);
+            this.opacity = defaultTo(options.opacity, 1.0);
+            this.hidden = defaultTo(options.hidden, false);
             this.pyramid = new TilePyramid(this);
-            this.opacity = 1.0;
-            this.hidden = false;
+            this.plot = null;
         }
         activate(plot) {
             if (!plot) {

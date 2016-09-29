@@ -3,6 +3,7 @@
     'use strict';
 
     const esper = require('esper');
+    const defaultTo = require('lodash/defaultTo');
     const throttle = require('lodash/throttle');
     const EventEmitter = require('events');
     const Event = require('./Event');
@@ -118,9 +119,8 @@
             this.prevViewport = new Viewport(this.viewport);
             this.targetViewport = new Viewport(this.viewport);
 
-            this.tileSize = options.tileSize ? options.tileSize : 256;
-
-            this.zoom = options.zoom ? options.zoom : 0;
+            this.tileSize = defaultTo(options.tileSize, 256);
+            this.zoom = defaultTo(options.zoom, 0);
             this.zoom = Math.min(Const.MAX_ZOOM, this.zoom);
             this.zoom = Math.max(Const.MIN_ZOOM, this.zoom);
 
