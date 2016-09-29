@@ -3,10 +3,14 @@
     'use strict';
 
     module.exports = {
-        // plot
+        // pan
+        PAN_START: 'pan:start',
         PAN: 'pan',
+        PAN_END: 'pan:end',
+        // zoom
         ZOOM_START: 'zoom:start',
-        ZOOM_END: 'zoom:start',
+        ZOOM_END: 'zoom:end',
+        // resize
         RESIZE: 'resize',
         // tile
         // when the intial request is made, the tile is not yet part of the layer

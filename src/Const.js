@@ -14,6 +14,7 @@
         ZOOM_DEBOUNCE: 100,
         ZOOM_REQUEST_THROTTLE: 200,
         // pan
+        PAN_CANCEL_DELAY: 50,
         PAN_REQUEST_THROTTLE: 50,
         // resize
         RESIZE_THROTTLE: 200,
