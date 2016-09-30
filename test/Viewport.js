@@ -24,6 +24,26 @@
                 assert(viewport.x === 0);
                 assert(viewport.y === 0);
             });
+            it('should accept floating point `x`, and `y` arguments', () => {
+                const viewport = new Viewport({
+                    width: 256,
+                    height: 256,
+                    x: 1.23,
+                    y: 2.34
+                });
+                assert(viewport.width === 256);
+                assert(viewport.height === 256);
+                assert(viewport.x - 1.23 < 0.0001);
+                assert(viewport.y - 2.34 < 0.0001);
+            });
+            it('should round floating point `width`, and `height` arguments', () => {
+                const viewport = new Viewport({
+                    width: 256.123,
+                    height: 255.789
+                });
+                assert(viewport.width === 256);
+                assert(viewport.height === 256);
+            });
         });
 
         describe('#getPixelBounds()', () => {

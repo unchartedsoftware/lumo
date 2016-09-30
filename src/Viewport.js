@@ -11,8 +11,8 @@
     class Viewport extends EventEmitter {
         constructor(spec = {}) {
             super();
-            this.x = spec.x ? Math.round(spec.x) : 0;
-            this.y = spec.y ? Math.round(spec.y) : 0;
+            this.x = spec.x ? spec.x : 0;
+            this.y = spec.y ? spec.y : 0;
             this.width = spec.width ? Math.round(spec.width) : 0;
             this.height = spec.height ? Math.round(spec.height) : 0;
         }
