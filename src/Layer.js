@@ -14,7 +14,7 @@
             this.renderer = defaultTo(options.renderer, null);
             this.opacity = defaultTo(options.opacity, 1.0);
             this.hidden = defaultTo(options.hidden, false);
-            this.pyramid = new TilePyramid(this);
+            this.pyramid = new TilePyramid(this, options);
             this.plot = null;
         }
         activate(plot) {

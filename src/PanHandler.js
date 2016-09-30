@@ -3,9 +3,34 @@
     'use strict';
 
     const defaultTo = require('lodash/defaultTo');
-    const Const = require('./Const');
     const PanAnimation = require('./PanAnimation');
     const Request = require('./Request');
+
+    // Constants
+
+    /**
+     * Time in milliseconds before a pan point expires.
+     * @constant {Number}
+     */
+    const PAN_EXPIRY_MS = 50;
+
+    /**
+     * Pan inertia enabled.
+     * @constant {boolean}
+     */
+    const PAN_INTERTIA = true;
+
+    /**
+     * Pan inertia easing.
+     * @constant {Number}
+     */
+    const PAN_INTERTIA_EASING = 0.2;
+
+    /**
+     * Pan inertia deceleration.
+     * @constant {Number}
+     */
+    const PAN_INTERTIA_DECELERATION = 3400;
 
     // Private Methods
 
@@ -31,9 +56,9 @@
     class PanHandler {
         constructor(plot, options = {}) {
 
-            this.inertia = defaultTo(options.inertia, true);
-            this.inertiaEasing = defaultTo(options.inertiaEasing, 0.2);
-            this.inertiaDeceleration = defaultTo(options.inertiaDeceleration, 3400);
+            this.inertia = defaultTo(options.inertia, PAN_INTERTIA);
+            this.inertiaEasing = defaultTo(options.inertiaEasing, PAN_INTERTIA_EASING);
+            this.inertiaDeceleration = defaultTo(options.inertiaDeceleration, PAN_INTERTIA_DECELERATION);
 
             let down = false;
             let lastPos = null;
@@ -68,7 +93,7 @@
                         positions.push(pos);
                         times.push(time);
                         // prevent array from getting too big
-                        if (time - times[0] > Const.PAN_CANCEL_DELAY) {
+                        if (time - times[0] > PAN_EXPIRY_MS) {
                             positions.shift();
                             times.shift();
                         }
@@ -106,7 +131,7 @@
                 const time = Date.now();
 
                 // strip any positions that are too old
-                while (time - times[0] > Const.PAN_CANCEL_DELAY) {
+                while (time - times[0] > PAN_EXPIRY_MS) {
                     positions.shift();
                     times.shift();
                 }

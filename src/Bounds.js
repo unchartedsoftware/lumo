@@ -2,8 +2,6 @@
 
     'use strict';
 
-    // Private Methods
-
     // Class / Public Methods
 
     class Bounds {

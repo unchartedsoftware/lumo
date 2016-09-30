@@ -2,8 +2,6 @@
 
     'use strict';
 
-    const Bounds = require('./Bounds');
-
     // Private Methods
 
     const hashCoord = function(coord) {
@@ -44,7 +42,7 @@
             }
             return coords;
         }
-        isParentOf(child) {
+        isAncestorOf(child) {
             if (this.z >= child.z) {
                 return false;
             }
@@ -57,43 +55,8 @@
             const y = Math.floor(child.y / scale);
             return this.y === y;
         }
-        isChildOf(parent) {
-            return parent.isParentOf(this);
-        }
-        getPixelBounds(tileSize, viewportZoom = this.z) {
-            // NOTE: bounds are INCLUSIVE
-            // scale the pixel bounds depending on the viewportZoom
-            const scale = Math.pow(2, viewportZoom - this.z);
-            const scaledTileSize = tileSize * scale;
-            const scaledX = this.x * scaledTileSize;
-            const scaledY = this.y * scaledTileSize;
-            return new Bounds(
-                Math.round(scaledX),
-                Math.round(scaledX + scaledTileSize - 1),
-                Math.round(scaledY),
-                Math.round(scaledY + scaledTileSize - 1));
-        }
-        getDescendantTileBounds(descendantZoom) {
-            // NOTE: bounds are INCLUSIVE
-            if (!Number.isInteger(descendantZoom)) {
-                throw `Zoom parameter of ${descendantZoom} is not an integer`;
-            }
-            if (descendantZoom <= this.z) {
-                throw `Zoom parameter is greater than Coord.z of ${this.z}`;
-            }
-            const scale = Math.pow(2, descendantZoom - this.z);
-            const scaledX = this.x * scale;
-            const scaledY = this.y * scale;
-            return new Bounds(
-                scaledX,
-                scaledX + scale - 1,
-                scaledY,
-                scaledY + scale - 1);
-        }
-        isInView(tileSize, zoom, viewport) {
-            const viewportBounds = viewport.getPixelBounds(zoom);
-            const tileBounds = this.getPixelBounds(tileSize, zoom);
-            return viewportBounds.overlaps(tileBounds);
+        isDescendantOf(parent) {
+            return parent.isAncestorOf(this);
         }
     }
 

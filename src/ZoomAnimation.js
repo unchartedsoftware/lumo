@@ -2,16 +2,12 @@
 
     'use strict';
 
-    const Const = require('./Const');
-
-    // Private Methods
-
     // Class / Public Methods
 
     class ZoomAnimation {
         constructor(spec = {}) {
             this.timestamp = Date.now();
-            this.duration = Const.ZOOM_ANIMATION_MS;
+            this.duration = spec.duration;
             this.zoomFrom = spec.zoomFrom;
             this.zoomTo = spec.zoomTo;
             this.targetPx = spec.targetPx;
@@ -26,7 +22,7 @@
             }
             // calc new zoom
             const range = this.zoomTo - this.zoomFrom;
-            const zoom = this.zoomFrom + range * t;
+            const zoom = this.zoomFrom + (range * t);
             // set new zoom
             plot.zoom = zoom;
             // calc new viewport position from prev
@@ -35,6 +31,8 @@
                 plot.prevZoom,
                 plot.zoom,
                 this.targetPx);
+            // emit zoom
+            plot.emit(Event.ZOOM);
         }
         done() {
             return this.finished;

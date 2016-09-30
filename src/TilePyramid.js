@@ -2,15 +2,29 @@
 
     'use strict';
 
+    const defaultTo = require('lodash/defaultTo');
     const LRU = require('lru-cache');
-    const Const = require('./Const');
     const Event = require('./Event');
     const Tile = require('./Tile');
+
+    // Constants
+
+    /**
+     * Number of the tiles held in the pyramid.
+     * @constant {Number}
+     */
+    const CACHE_SIZE = 256;
+
+    /**
+     * Number of persistant zoom levels held in the pyramids.
+     * @constant {Number}
+     */
+    const PERSISTANT_LEVELS = 5;
 
     // Private Methods
 
     const add = function(pyramid, tile) {
-        if (tile.coord.z <= Const.PERSISTANT_LEVELS) {
+        if (tile.coord.z < pyramid.persistantLevels) {
             // persistant tiles
             if (pyramid.persistants.has(tile.coord.hash)) {
                 throw `Tile of coord ${tile.coord.hash} already exists in the pyramid`;
@@ -33,7 +47,7 @@
     };
 
     const remove = function(pyramid, tile) {
-        if (tile.coord.z <= Const.PERSISTANT_LEVELS) {
+        if (tile.coord.z < pyramid.persistantLevels) {
             throw `Tile of coord ${tile.coord.hash} is flagged as persistant and cannot be removed`;
         }
         if (!pyramid.tiles.has(tile.coord.hash)) {
@@ -52,23 +66,25 @@
     // Class / Public Methods
 
     class TilePyramid {
-        constructor(layer) {
+        constructor(layer, options = {}) {
             if (!layer) {
                 throw 'No layer parameter provided';
             }
+            this.cacheSize = defaultTo(options.cacheSize, CACHE_SIZE);
+            this.persistantLevels = defaultTo(options.persistantLevels, PERSISTANT_LEVELS);
             this.layer = layer;
             this.levels = new Map();
             this.persistants = new Map();
             this.pending = new Map();
             this.tiles = new LRU({
-                max: Const.TILE_CACHE_SIZE,
+                max: this.cacheSize,
                 dispose: (key, tile) => {
                     remove(this, tile);
                 }
             });
         }
         has(coord) {
-            if (coord.z <= Const.PERSISTANT_LEVELS) {
+            if (coord.z < this.persistantLevels) {
                 return this.persistants.has(coord.hash);
             }
             return this.tiles.has(coord.hash);
@@ -77,7 +93,7 @@
             return this.pending.has(coord.hash);
         }
         get(coord) {
-            if (coord.z <= Const.PERSISTANT_LEVELS) {
+            if (coord.z < this.persistantLevels) {
                 return this.persistants.get(coord.hash);
             }
             return this.tiles.get(coord.hash);
@@ -90,7 +106,7 @@
                     // check existing tiles, this bounds the number of tiles
                     // that are required to be tested
                     tiles.forEach(tile => {
-                        if (coord.isParentOf(tile.coord)) {
+                        if (coord.isAncestorOf(tile.coord)) {
                             descendants.push(tile);
                         }
                     });
@@ -106,7 +122,7 @@
                     // check existing tiles, this bounds the number of tiles
                     // that are required to be tested
                     tiles.forEach(tile => {
-                        if (coord.isChildOf(tile.coord)) {
+                        if (coord.isDescendantOf(tile.coord)) {
                             ancestors.push(tile);
                         }
                     });

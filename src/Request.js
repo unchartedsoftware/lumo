@@ -2,8 +2,23 @@
 
     'use strict';
 
-    const Const = require('./Const');
     const throttle = require('lodash/throttle');
+
+    // Constants
+
+    /**
+     * Zoom request throttle in milliseconds.
+     * @constant {Number}
+     */
+    const ZOOM_REQUEST_THROTTLE_MS = 200;
+
+    /**
+     * Pan request throttle in milliseconds.
+     * @constant {Number}
+     */
+    const PAN_REQUEST_THROTTLE_MS = 50;
+
+    // Private
 
     const requestTiles = function(plot) {
         // get all visible coords in the target viewport
@@ -20,8 +35,8 @@
 
     module.exports = {
         requestTiles: requestTiles,
-        panRequest: throttle(requestTiles, Const.PAN_REQUEST_THROTTLE),
-        zoomRequest: throttle(requestTiles, Const.ZOOM_REQUEST_THROTTLE)
+        panRequest: throttle(requestTiles, PAN_REQUEST_THROTTLE_MS),
+        zoomRequest: throttle(requestTiles, ZOOM_REQUEST_THROTTLE_MS)
     };
 
 }());

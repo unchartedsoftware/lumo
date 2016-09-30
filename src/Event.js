@@ -9,6 +9,7 @@
         PAN_END: 'pan:end',
         // zoom
         ZOOM_START: 'zoom:start',
+        ZOOM: 'zoom',
         ZOOM_END: 'zoom:end',
         // resize
         RESIZE: 'resize',
