@@ -239,57 +239,90 @@
         plot.renderTexture.unbind();
     };
 
+    /**
+     * Class representing a renderer.
+     */
     class Renderer {
+
+        /**
+         * Instantiates a new Renderer object.
+         */
         constructor() {
+            this.gl = null;
             this.layer = null;
-            this.plot = null;
-            this.readyToDraw = false;
+            this.quad = null;
+            this.screen = null;
+            this.shaders = new Map();
         }
-        activate(layer) {
+
+        /**
+         * Executed when the renderer is attached to a layer.
+         *
+         * @param {Layer} layer - The layer to attach the renderer to.
+         *
+         * @returns {Renderer} The renderer object, for chaining.
+         */
+        onAdd(layer) {
             if (!layer) {
-                throw 'No layer provided';
+                throw 'No layer provided as argument';
             }
-            if (!layer.plot) {
-                throw 'Layer has no plot';
-            }
-            this.layer = layer;
-            this.plot = layer.plot;
             this.gl = esper.WebGLContext.get();
+            this.layer = layer;
             this.quad = createQuad(0, 1);
             this.screen = createQuad(-1, 1);
-            this.shaders = {
-                tile: new esper.Shader(shaders.tile),
-                layer: new esper.Shader(shaders.layer)
-            };
+            this.shaders.set('tile', new esper.Shader(shaders.tile));
+            this.shaders.set('layer', new esper.Shader(shaders.layer));
+            return this;
         }
-        deactivate() {
-            if (!this.layer) {
-                throw 'Renderer not attached to any layer';
+
+        /**
+         * Executed when the renderer is removed from a layer.
+         *
+         * @param {Layer} layer - The layer to remove the renderer from.
+         *
+         * @returns {Renderer} The renderer object, for chaining.
+         */
+        onRemove(layer) {
+            if (!layer) {
+                throw 'No layer provided as argument';
             }
-            this.layer = null;
-            this.plot = null;
             this.gl = null;
+            this.layer = null;
+            this.quad = null;
+            this.screen = null;
+            this.shaders.delete('tile');
+            this.shaders.delete('layer');
+            return this;
         }
+
+        /**
+         * The draw function that is executed per frame.
+         *
+         * @param {Number} timestamp - The frame timestamp.
+         *
+         * @returns {Renderer} The renderer object, for chaining.
+         */
         draw(timestamp) {
             // not ready to render
-            if (!this.gl) {
+            if (!this.gl || !this.layer || !this.layer.plot) {
                 return;
             }
             // render the tiles to the framebuffer
             renderTiles(
                 this.gl,
-                this.plot,
-                this.shaders.tile,
+                this.layer.plot,
+                this.shaders.get('tile'),
                 this.quad,
                 this.layer.pyramid,
                 timestamp);
             // render framebuffer to the backbuffer
             renderlayer(
                 this.gl,
-                this.plot,
+                this.layer.plot,
                 this.layer,
-                this.shaders.layer,
+                this.shaders.get('layer'),
                 this.screen);
+            return this;
         }
     }
 

@@ -42,50 +42,69 @@
         // update current viewport
         plot.viewport.x -= delta.x;
         plot.viewport.y -= delta.y;
-        // update target viewport
-        plot.targetViewport.x -= delta.x;
-        plot.targetViewport.y -= delta.y;
         // request tiles
         Request.panRequest(plot);
         // emit pan
         plot.emit(Event.PAN, delta);
     };
 
-    // Class / Public Methods
-
+    /**
+     * Class representing a pan handler.
+     */
     class PanHandler {
-        constructor(plot, options = {}) {
 
+        /**
+         * Instantiates a new PanHandler object.
+         *
+         * @param {Plot} plot - The plot to attach the handler to.
+         * @param {Object} options - The parameters of the animation.
+         * @param {Number} options.inertia - Whether or not pan inertia is enabled.
+         * @param {Number} options.inertiaEasing - The inertia easing factor.
+         * @param {Number} options.inertiaDeceleration - The inertia deceleration factor.
+         */
+        constructor(plot, options = {}) {
             this.inertia = defaultTo(options.inertia, PAN_INTERTIA);
             this.inertiaEasing = defaultTo(options.inertiaEasing, PAN_INTERTIA_EASING);
             this.inertiaDeceleration = defaultTo(options.inertiaDeceleration, PAN_INTERTIA_DECELERATION);
+            this.plot = plot;
+            this.enabled = false;
+        }
+
+        /**
+         * Enables the handler.
+         *
+         * @returns {PanHandler} The handler object, for chaining.
+         */
+        enable() {
+            if (this.enabled) {
+                throw 'Handler is already enabled';
+            }
 
             let down = false;
             let lastPos = null;
             let lastTime = null;
-
             let positions = [];
             let times = [];
 
-            plot.canvas.addEventListener('mousedown', event => {
+            this.mousedown = (event) => {
                 // flag as down
                 down = true;
                 // set position and timestamp
-                lastPos = plot.mouseToViewPx(event);
+                lastPos = this.plot.mouseToViewPx(event);
                 lastTime = Date.now();
                 if (this.inertia) {
                     // clear existing pan animation
-                    plot.panAnimation = null;
+                    this.plot.panAnimation = null;
                     // reset position and time arrays
                     positions = [];
                     times = [];
                 }
-            });
+            };
 
-            document.addEventListener('mousemove', event => {
+            this.mousemove = (event) => {
                 if (down) {
                     // get latest position and timestamp
-                    let pos = plot.mouseToViewPx(event);
+                    let pos = this.plot.mouseToViewPx(event);
                     let time = Date.now();
 
                     if (this.inertia) {
@@ -104,26 +123,23 @@
                         x: pos.x - lastPos.x,
                         y: pos.y - lastPos.y
                     };
-
                     // pan the plot
-                    pan(plot, delta);
-
+                    pan(this.plot, delta);
                     // update last position and time
                     lastTime = time;
                     lastPos = pos;
-
                     // emit pan
-                    plot.emit(Event.PAN, delta);
+                    this.plot.emit(Event.PAN, delta);
                 }
-            });
+            };
 
-            document.addEventListener('mouseup', () => {
+            this.mouseup = () => {
                 // flag as up
                 down = false;
 
                 if (!this.inertia) {
                     // exit early if no inertia
-                    plot.emit(Event.PAN_END);
+                    this.plot.emit(Event.PAN_END);
                     return;
                 }
 
@@ -138,7 +154,7 @@
 
                 if (times.length < 2) {
                     // exit early if no remaining positions
-                    plot.emit(Event.PAN_END);
+                    this.plot.emit(Event.PAN_END);
                     return;
                 }
 
@@ -171,23 +187,44 @@
                 };
                 // get current viewport x / y
                 const start = {
-                    x: plot.viewport.x,
-                    y: plot.viewport.y
+                    x: this.plot.viewport.x,
+                    y: this.plot.viewport.y
                 };
                 if (delta.x !== 0 && delta.y !== 0) {
                     // set pan animation
-                    plot.panAnimation = new PanAnimation({
+                    this.plot.panAnimation = new PanAnimation({
                         start: start,
                         delta: delta,
                         easing: easing,
                         duration: duration * 1000 // back to ms
                     });
                 } else {
-                    plot.emit(Event.PAN_END);
+                    this.plot.emit(Event.PAN_END);
                 }
+            };
 
-            });
+            this.plot.canvas.addEventListener('mousedown', this.mousedown);
+            document.addEventListener('mousemove', this.mousemove);
+            document.addEventListener('mouseup', this.mouseup);
+            this.enabled = true;
+        }
 
+        /**
+         * Disables the handler.
+         *
+         * @returns {PanHandler} The handler object, for chaining.
+         */
+        disable() {
+            if (!this.enabled) {
+                throw 'Handler is already disabled';
+            }
+            this.plot.canvas.removeEventListener('mousedown', this.mousedown);
+            document.removeEventListener('mousemove', this.mousemove);
+            document.removeEventListener('mouseup', this.mouseup);
+            this.mousedown = null;
+            this.mousemove = null;
+            this.mouseup = null;
+            this.enabled = false;
         }
     }
 

@@ -123,9 +123,6 @@
             });
         });
 
-        describe('#union()', () => {
-        });
-
         describe('#intersection()', () => {
             it('should return the intersection bounds, inclusive of edges', () => {
                 //  _ _ _ _ _ _ _ _ _ _ _
@@ -170,7 +167,7 @@
                 assert(b.intersection(d).equals(new Bounds(1.0, 1.0, 1.0, 1.0)));
                 assert(d.intersection(b).equals(new Bounds(1.0, 1.0, 1.0, 1.0)));
             });
-            it('should return null if there is no intersection', () => {
+            it('should return undefined if there is no intersection', () => {
                 //  _ _ _ _ _ _     _ _ _ _ _ _
                 // | d         |   |         c |
                 // |           |   |           |
@@ -188,18 +185,18 @@
                 const b = new Bounds(2, 3, 0, 1);
                 const c = new Bounds(2, 3, 2, 3);
                 const d = new Bounds(0, 1, 2, 3);
-                assert(a.intersection(b) === null);
-                assert(a.intersection(c) === null);
-                assert(a.intersection(d) === null);
-                assert(b.intersection(a) === null);
-                assert(b.intersection(c) === null);
-                assert(b.intersection(d) === null);
-                assert(c.intersection(a) === null);
-                assert(c.intersection(b) === null);
-                assert(c.intersection(d) === null);
-                assert(d.intersection(a) === null);
-                assert(d.intersection(b) === null);
-                assert(d.intersection(c) === null);
+                assert(a.intersection(b) === undefined);
+                assert(a.intersection(c) === undefined);
+                assert(a.intersection(d) === undefined);
+                assert(b.intersection(a) === undefined);
+                assert(b.intersection(c) === undefined);
+                assert(b.intersection(d) === undefined);
+                assert(c.intersection(a) === undefined);
+                assert(c.intersection(b) === undefined);
+                assert(c.intersection(d) === undefined);
+                assert(d.intersection(a) === undefined);
+                assert(d.intersection(b) === undefined);
+                assert(d.intersection(c) === undefined);
             });
         });
 

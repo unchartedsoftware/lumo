@@ -63,9 +63,19 @@
         pyramid.layer.emit(Event.TILE_REMOVE, tile);
     };
 
-    // Class / Public Methods
-
+    /**
+     * Class representing a pyramid of tiles.
+     */
     class TilePyramid {
+
+        /**
+         * Instantiates a new Bounds object.
+         *
+         * @param {Layer} layer - The layer object.
+         * @param {Object} options - The pyramid options.
+         * @param {Number} options.cacheSize - The size of the tile cache.
+         * @param {Number} options.persistantLevels - The number of persistant levels in the pyramid.
+         */
         constructor(layer, options = {}) {
             if (!layer) {
                 throw 'No layer parameter provided';
@@ -83,53 +93,55 @@
                 }
             });
         }
+
+        /**
+         * Test whether or not a coord is held in cache in the pyramid.
+         *
+         * @param {Coord} coord - The coord to test.
+         *
+         * @returns {boolean} Whether or not the coord exists in the pyramid.
+         */
         has(coord) {
             if (coord.z < this.persistantLevels) {
                 return this.persistants.has(coord.hash);
             }
             return this.tiles.has(coord.hash);
         }
+
+        /**
+         * Test whether or not a coord is currently pending.
+         *
+         * @param {Coord} coord - The coord to test.
+         *
+         * @returns {boolean} Whether or not the coord is currently pending.
+         */
         isPending(coord) {
             return this.pending.has(coord.hash);
         }
+
+        /**
+         * Returns the tile matching the provided coord. If the tile does not
+         * exist, returns undefined.
+         *
+         * @param {Coord} coord - The coord of the tile to return.
+         *
+         * @returns {Tile} The tile object.
+         */
         get(coord) {
             if (coord.z < this.persistantLevels) {
                 return this.persistants.get(coord.hash);
             }
             return this.tiles.get(coord.hash);
         }
-        getDescendants(coord) {
-            const descendants = [];
-            this.levels.forEach((tiles, level) => {
-                // only check levels that are descendants of the tile
-                if (level > coord.z) {
-                    // check existing tiles, this bounds the number of tiles
-                    // that are required to be tested
-                    tiles.forEach(tile => {
-                        if (coord.isAncestorOf(tile.coord)) {
-                            descendants.push(tile);
-                        }
-                    });
-                }
-            });
-            return descendants;
-        }
-        getAncestors(coord) {
-            const ancestors = [];
-            this.levels.forEach((tiles, level) => {
-                // only check levels that are ascendents of the tile
-                if (level < coord.z) {
-                    // check existing tiles, this bounds the number of tiles
-                    // that are required to be tested
-                    tiles.forEach(tile => {
-                        if (coord.isDescendantOf(tile.coord)) {
-                            ancestors.push(tile);
-                        }
-                    });
-                }
-            });
-            return ancestors;
-        }
+
+        /**
+         * Returns the closest ancestor of the provided coord. If no ancestor
+         * exists in the pyramid, returns undefined.
+         *
+         * @param {Coord} coord - The coord of the tile.
+         *
+         * @return {Tile} The closest ancestor of the provided coord.
+         */
         getClosestAncestor(coord) {
             // get ancestors levels, in descending order
             const levels = [...this.levels.keys()]
@@ -148,8 +160,15 @@
                     return ancestor;
                 }
             }
-            return null;
+            return undefined;
         }
+
+        /**
+         * Requests tiles for the provided coords. If the tiles already exist
+         * in the pyramid or is currently pending no request is made.
+         *
+         * @param {Array[Coord]} coords - The array of coords to request.
+         */
         requestTiles(coords) {
             // request tiles
             coords.forEach(coord => {

@@ -2,20 +2,39 @@
 
     'use strict';
 
-    // Class / Public Methods
-
+    /**
+     * Class representing a pan animation.
+     */
     class PanAnimation {
-        constructor(spec = {}) {
+
+        /**
+         * Instantiates a new PanAnimation object.
+         *
+         * @param {Object} params - The parameters of the animation.
+         * @param {Number} params.start - The start timestamp of the animation.
+         * @param {Number} params.delta - The positional delta of the animation.
+         * @param {Number} params.easing - The easing factor of the animation.
+         * @param {Number} params.duration - The duration of the animation.
+         */
+        constructor(params = {}) {
             this.timestamp = Date.now();
-            this.start = spec.start;
-            this.delta = spec.delta;
-            this.easing = spec.easing;
-            this.duration = spec.duration;
+            this.start = params.start;
+            this.delta = params.delta;
+            this.easing = params.easing;
+            this.duration = params.duration;
             this.finished = false;
         }
+
+        /**
+         * Updates the position of the plot based on the current state of the
+         * animation.
+         *
+         * @param {Plot} plot - The plot to apply the animation to.
+         * @param {Number} timestamp - The frame timestamp.
+         */
         updatePlot(plot, timestamp) {
-            const t = Math.min(1.0, (timestamp - this.timestamp) / this.duration);
-            if (t >= 1) {
+            const t = Math.min(1.0, (timestamp - this.timestamp) / (this.duration || 1));
+            if (t === 1) {
                 this.finished = true;
             }
             // calculate the progress of the animation
@@ -28,12 +47,16 @@
             // set the viewport positions
             plot.viewport.x = pos.x;
             plot.viewport.y = pos.y;
-            plot.targetViewport.x = pos.x;
-            plot.targetViewport.y = pos.y;
             // emit pan
             plot.emit(Event.PAN);
         }
-        done() {
+
+        /**
+         * Return whether or not the animation has finished.
+         *
+         * @returns {boolean} Whether or not the animation has finished.
+         */
+        isFinished() {
             return this.finished;
         }
     }

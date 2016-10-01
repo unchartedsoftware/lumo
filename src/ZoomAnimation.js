@@ -2,39 +2,68 @@
 
     'use strict';
 
-    // Class / Public Methods
-
+    /**
+     * Class representing a zoom animation.
+     */
     class ZoomAnimation {
-        constructor(spec = {}) {
+
+        /**
+         * Instantiates a new ZoomAnimation object.
+         *
+         * @param {Object} params - The parameters of the animation.
+         * @param {Number} params.prevZoom - The starting zoom of the animation.
+         * @param {Number} params.targetZoom - The target zoom of the animation.
+         * @param {Number} params.prevViewport - The starting viewport of the animation.
+         * @param {Number} params.targetViewport - The target viewport of the animation.
+         * @param {Number} params.targetPx - The target pixel of the animation.
+         * @param {Number} params.duration - The duration of the animation.
+         */
+        constructor(params = {}) {
             this.timestamp = Date.now();
-            this.duration = spec.duration;
-            this.zoomFrom = spec.zoomFrom;
-            this.zoomTo = spec.zoomTo;
-            this.targetPx = spec.targetPx;
+            this.duration = params.duration;
+            this.prevZoom = params.prevZoom;
+            this.targetZoom = params.targetZoom;
+            this.prevViewport = params.prevViewport;
+            this.targetViewport = params.targetViewport;
+            this.targetPx = params.targetPx;
             this.finished = false;
         }
+
+        /**
+         * Updates the zoom of the plot based on the current state of the
+         * animation.
+         *
+         * @param {Plot} plot - The plot to apply the animation to.
+         * @param {Number} timestamp - The frame timestamp.
+         */
         updatePlot(plot, timestamp) {
             // get t value
-            const t = Math.min(1.0, (timestamp - this.timestamp) / this.duration);
+            const t = Math.min(1.0, (timestamp - this.timestamp) / (this.duration || 1));
             // check if animation is finished
-            if (t >= 1) {
+            if (t === 1) {
                 this.finished = true;
             }
             // calc new zoom
-            const range = this.zoomTo - this.zoomFrom;
-            const zoom = this.zoomFrom + (range * t);
+            const range = this.targetZoom - this.prevZoom;
+            const zoom = this.prevZoom + (range * t);
             // set new zoom
             plot.zoom = zoom;
             // calc new viewport position from prev
-            plot.viewport = plot.prevViewport.zoomFromPlotPx(
+            plot.viewport = this.prevViewport.zoomFromPlotPx(
                 plot.tileSize,
-                plot.prevZoom,
+                this.prevZoom,
                 plot.zoom,
                 this.targetPx);
             // emit zoom
             plot.emit(Event.ZOOM);
         }
-        done() {
+
+        /**
+         * Return whether or not the animation has finished.
+         *
+         * @returns {boolean} Whether or not the animation has finished.
+         */
+        isFinished() {
             return this.finished;
         }
     }

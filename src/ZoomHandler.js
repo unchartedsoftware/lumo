@@ -2,7 +2,9 @@
 
     'use strict';
 
+    const clamp = require('lodash/clamp');
     const defaultTo = require('lodash/defaultTo');
+    const Browser = require('./Browser');
     const Request = require('./Request');
     const Viewport = require('./Viewport');
     const ZoomAnimation = require('./ZoomAnimation');
@@ -39,72 +41,90 @@
      */
     const CONTINUOUS_ZOOM = true;
 
-    /**
-     * Continuous zoom smoothing factor.
-     * @constant {Number}
-     */
-    const CONTINUOUS_ZOOM_SMOOTH = 2;
-
     // Private Methods
 
-    const zoom = function(handler, plot, targetPx, wheelDelta) {
-        // map the delta with a sigmoid function
-        let zoomDelta = wheelDelta / handler.zoomWheelDelta;
-        // snap value if not continuous zoom
-        if (!handler.continuousZoom) {
+    const skipInterpolation = function(delta) {
+        return delta !== 0 && Math.abs(delta) < 4;
+    };
+
+    const computeZoomDelta = function(wheelDelta, continuousZoom, deltaPerZoom, maxZooms) {
+        let zoomDelta = wheelDelta / deltaPerZoom;
+        if (!continuousZoom) {
+            // snap value if not continuous zoom
             if (wheelDelta > 0) {
                 zoomDelta = Math.ceil(zoomDelta);
             } else {
                 zoomDelta = Math.floor(zoomDelta);
             }
         }
-        // clamp zoom delta
-        zoomDelta = Math.min(zoomDelta, handler.maxConcurrentZooms);
-        zoomDelta = Math.max(zoomDelta, -handler.maxConcurrentZooms);
-        // calculate the target zoom level
-        let targetZoom = plot.targetZoom + zoomDelta;
-        targetZoom = Math.max(plot.minZoom, targetZoom);
-        targetZoom = Math.min(plot.maxZoom, targetZoom);
+        // clamp zoom delta to max concurrent zooms
+        return clamp(zoomDelta, -maxZooms, maxZooms);
+    };
+
+    const computeTargetZoom = function(zoomDelta, currentZoom, currentAnimation, minZoom, maxZoom) {
+        let targetZoom;
+        if (currentAnimation) {
+            // append to existing animation target
+            targetZoom = currentAnimation.targetZoom + zoomDelta;
+        } else {
+            targetZoom = currentZoom + zoomDelta;
+        }
+        // clamp the target zoom to min and max zoom level of plot
+        return clamp(targetZoom, minZoom, maxZoom);
+    };
+
+    const zoom = function(handler, plot, targetPx, wheelDelta, continuousZoom) {
+        // calculate zoom delta
+        const zoomDelta = computeZoomDelta(
+            wheelDelta,
+            continuousZoom,
+            handler.deltaPerZoom,
+            handler.maxConcurrentZooms);
+        // calculate target zoom level
+        const targetZoom = computeTargetZoom(
+            zoomDelta,
+            plot.zoom,
+            plot.zoomAnimation,
+            plot.minZoom,
+            plot.maxZoom);
         // check if we need to zoom
-        if (targetZoom !== plot.targetZoom) {
-            // set target zoom
-            plot.targetZoom = targetZoom;
+        if (zoomDelta !== 0 && targetZoom !== plot.zoom) {
             // set target viewport
-            plot.targetViewport = plot.viewport.zoomFromPlotPx(
+            const targetViewport = plot.viewport.zoomFromPlotPx(
                 plot.tileSize,
                 plot.zoom,
-                plot.targetZoom,
+                targetZoom,
                 targetPx);
             // clear pan animation
             plot.panAnimation = null;
             // get duration
             let duration = handler.zoomDuration;
-            if (handler.continuousZoom) {
-                // scale duration by amount zoomed, this allows trackpads to
-                // have proper inertia
-                duration = Math.abs(handler.zoomDuration * zoomDelta) * CONTINUOUS_ZOOM_SMOOTH;
+            if (continuousZoom && skipInterpolation(wheelDelta)) {
+                // skip animation interpolation
+                duration = 0;
             }
             // set zoom animation
             plot.zoomAnimation = new ZoomAnimation({
                 duration: duration,
-                zoomFrom: plot.zoom,
-                zoomTo: plot.targetZoom,
+                prevZoom: plot.zoom,
+                targetZoom: targetZoom,
+                prevViewport: new Viewport(plot.viewport),
+                targetViewport: targetViewport,
                 targetPx: targetPx
             });
-            // store prev zoom
-            plot.prevZoom = plot.zoom;
-            // store prev viewport
-            plot.prevViewport = new Viewport(plot.viewport);
+            // request tiles
+            Request.zoomRequest(plot, targetViewport, targetZoom);
+            // emit zoom start
+            plot.emit(Event.ZOOM_START, plot);
         }
-        // request tiles
-        Request.zoomRequest(plot);
-        // emit zoom start
-        plot.emit(Event.ZOOM_START, plot);
     };
 
     const getWheelDelta = function(event) {
         if (event.deltaMode === 0) {
             // pixels
+            if (Browser.firefox) {
+                return -event.deltaY / window.devicePixelRatio;
+            }
             return -event.deltaY;
         } else if (event.deltaMode === 1) {
             // lines
@@ -114,62 +134,109 @@
         return -event.deltaY * 60;
     };
 
-    // Class / Public Methods
-
+    /**
+     * Class representing a zoom handler.
+     */
     class ZoomHandler {
-        constructor(plot, options = {}) {
 
+        /**
+         * Instantiates a new ZoomHandler object.
+         *
+         * @param {Plot} plot - The plot to attach the handler to.
+         * @param {Object} options - The parameters of the animation.
+         * @param {Number} options.continuousZoom - Whether or not continuous zoom is enabled.
+         * @param {Number} options.zoomDuration - The duration of the zoom animation.
+         * @param {Number} options.maxConcurrentZooms - The maximum concurrent zooms in a single batch.
+         * @param {Number} options.deltaPerZoom - The scroll delta required per zoom level.
+         * @param {Number} options.zoomDebounce - The debounce duration of the zoom in ms.
+         */
+        constructor(plot, options = {}) {
             this.continuousZoom = defaultTo(options.continuousZoom, CONTINUOUS_ZOOM);
             this.zoomDuration = defaultTo(options.zoomDuration, ZOOM_ANIMATION_MS);
             this.maxConcurrentZooms = defaultTo(options.maxConcurrentZooms, MAX_CONCURRENT_ZOOMS);
-            this.zoomWheelDelta = defaultTo(options.zoomWheelDelta, ZOOM_WHEEL_DELTA);
+            this.deltaPerZoom = defaultTo(options.deltaPerZoom, ZOOM_WHEEL_DELTA);
             this.zoomDebounce = defaultTo(options.zoomDebounce, ZOOM_DEBOUNCE_MS);
+            this.plot = plot;
+            this.enabled = false;
+        }
+
+        /**
+         * Enables the handler.
+         *
+         * @returns {PanHandler} The handler object, for chaining.
+         */
+        enable() {
+            if (this.enabled) {
+                throw 'Handler is already enabled';
+            }
 
             let wheelDelta = 0;
             let timeout = null;
             let evt = null;
 
-            plot.canvas.addEventListener('dblclick', () => {
+            this.dblclick = () => {
                 // get mouse position
-                const targetPx = plot.mouseToPlotPx(event);
-                zoom(this, plot, targetPx, this.zoomWheelDelta);
-            });
+                const targetPx = this.plot.mouseToPlotPx(event);
+                zoom(this, this.plot, targetPx, this.deltaPerZoom, false);
+            };
 
-            plot.canvas.addEventListener('wheel', event => {
+            this.wheel = (event) => {
                 // increment wheel delta
                 wheelDelta += getWheelDelta(event);
                 // check zoom type
                 if (this.continuousZoom) {
                     // get target pixel from mouse position
-                    const targetPx = plot.mouseToPlotPx(event);
+                    const targetPx = this.plot.mouseToPlotPx(event);
                     // process continuous zoom immediately
-                    zoom(this, plot, targetPx, wheelDelta);
+                    zoom(this, this.plot, targetPx, wheelDelta, true);
                     // reset wheel delta
                     wheelDelta = 0;
                 } else {
+                    // set event
+                    evt = event;
                     // debounce discrete zoom
                     if (!timeout) {
                         timeout = setTimeout(() => {
                             // get target pixel from mouse position
-                            // NOTE: this is called inside to closure to ensure
-                            // that we used the current viewport of the plot to
+                            // NOTE: this is called inside the closure to ensure
+                            // that we use the current viewport of the plot to
                             // convert from mouse to plot pixels
-                            const targetPx = plot.mouseToPlotPx(evt);
+                            const targetPx = this.plot.mouseToPlotPx(evt);
                             // process zoom event
-                            zoom(this, plot, targetPx, wheelDelta);
+                            zoom(this, this.plot, targetPx, wheelDelta, false);
                             // reset wheel delta
                             wheelDelta = 0;
                             // clear timeout
                             timeout = null;
+                            // clear event
                             evt = null;
                         }, this.zoomDebounce);
                     }
-                    evt = event;
                 }
                 // prevent default behavior and stop propagationa
                 event.preventDefault();
                 event.stopPropagation();
-            });
+            };
+
+            this.plot.canvas.addEventListener('dblclick', this.dblclick);
+            this.plot.canvas.addEventListener('wheel', this.wheel);
+            this.enabled = true;
+        }
+
+        /**
+         * Disables the handler.
+         *
+         * @returns {PanHandler} The handler object, for chaining.
+         */
+        removeFrom() {
+            if (this.enabled) {
+                throw 'Handler is already disabled';
+            }
+            this.plot.canvas.removeEventListener('dblclick', this.dblclick);
+            this.plot.canvas.removeEventListener('wheel', this.wheel);
+            this.dblclick = null;
+            this.wheel = null;
+            this.enabled = false;
         }
     }
 

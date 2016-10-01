@@ -2,9 +2,16 @@
 
     'use strict';
 
-    // Class / Public Methods
-
+    /**
+     * Class representing a tile.
+     */
     class Tile {
+
+        /**
+         * Instantiates a new Bounds object.
+         *
+         * @param {Coord} coord - The coord of the tile.
+         */
         constructor(coord) {
             this.coord = coord;
             this.data = null;

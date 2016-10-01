@@ -20,12 +20,12 @@
 
     // Private
 
-    const requestTiles = function(plot) {
+    const requestTiles = function(plot, viewport = plot.viewport, zoom = plot.zoom) {
         // get all visible coords in the target viewport
-        const coords = plot.targetViewport.getVisibleCoords(
+        const coords = viewport.getVisibleCoords(
             plot.tileSize,
-            plot.targetZoom,
-            Math.round(plot.targetZoom));
+            zoom,
+            Math.round(zoom));
         // for each layer
         plot.layers.forEach(layer => {
             // request tiles
