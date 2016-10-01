@@ -44,7 +44,7 @@
         }
     }, RESIZE_THROTTLE_MS);
 
-    const render = function(plot) {
+    const frame = function(plot) {
         // update size
         resize(plot);
         // get timestamp
@@ -86,9 +86,9 @@
             plot.panAnimation = null;
             plot.emit(Event.PAN_END, plot);
         }
-        // request newxt animation frame
-        plot.renderQuest = requestAnimationFrame(() => {
-            render(plot);
+        // request next frame
+        plot.frameRequest = requestAnimationFrame(() => {
+            frame(plot);
         });
     };
 
@@ -162,14 +162,14 @@
                 handler.enable();
             });
 
-            // render loop
-            this.renderRequest = null;
-
             // layers
             this.layers = [];
 
-            // being render loop
-            render(this);
+            // frame request
+            this.frameRequest = null;
+
+            // being frame loop
+            frame(this);
         }
 
         /**
@@ -180,8 +180,8 @@
          */
         destroy() {
             // stop animation loop
-            cancelAnimationFrame(this.renderRequest);
-            this.renderRequest = null;
+            cancelAnimationFrame(this.frameRequest);
+            this.frameRequest = null;
             // destroy context
             esper.WebGLContext.remove(this.canvas);
             this.gl = null;
