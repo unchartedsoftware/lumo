@@ -44,6 +44,7 @@
 
         /**
          * Returns the pixel bounds of the viewport. Bounds edges are inclusive.
+         * NOTE: this includes wraparound coordinates
          *
          * @param {Number} tileSize - The dimension in pixels of the tiles.
          * @param {Number} viewportZoom - The zoom of the viewport.
@@ -59,14 +60,12 @@
             //         tiles will be 25% of there normal size compared to the
             //         viewport.
             const scale = Math.pow(2, viewportZoom - tileZoom);
-            const dim = Math.pow(2, tileZoom);
             const scaledTileSize = tileSize * scale;
-            // TODO: add wrap-around logic
             return new Bounds(
-                Math.max(0, Math.floor(this.x / scaledTileSize)),
-                Math.min(dim - 1, Math.ceil(((this.x + this.width) / scaledTileSize) - 1)),
-                Math.max(0, Math.floor(this.y / scaledTileSize)),
-                Math.min(dim - 1, Math.ceil(((this.y + this.height) / scaledTileSize) - 1)));
+                Math.floor(this.x / scaledTileSize),
+                Math.ceil(((this.x + this.width) / scaledTileSize) - 1),
+                Math.floor(this.y / scaledTileSize),
+                Math.ceil(((this.y + this.height) / scaledTileSize) - 1));
         }
 
         /**
@@ -75,15 +74,37 @@
          * @param {Number} tileSize - The dimension in pixels of the tiles.
          * @param {Number} viewportZoom - The zoom of the viewport.
          * @param {Number} tileZoom - The zoom of the tiles within the viewport. Optional.
+         * @param {boolean} wraparound - The if the horizontal axis should wraparound. Optional.
          *
          * @returns {Array[Coord]} The array of visible tile coords.
          */
-        getVisibleCoords(tileSize, viewportZoom, tileZoom = viewportZoom) {
+        getVisibleCoords(tileSize, viewportZoom, tileZoom = viewportZoom, wraparound = false) {
             const bounds = this.getTileBounds(tileSize, viewportZoom, tileZoom);
+            // min / max tile coords
+            const dim = Math.pow(2, tileZoom);
+            const min = 0;
+            const max = dim - 1;
+            // get the bounds of the zoom level
+            const layerBounds = new Bounds(
+                wraparound ? -Infinity : min,
+                wraparound ? Infinity : max,
+                min,
+                max);
+            // check if the layer is within the viewport
+            if (!bounds.overlaps(layerBounds)) {
+                // there is no overlap
+                return [];
+            }
+            // clamp horizontal bounds if there is no wraparound
+            const left = wraparound ? bounds.left : Math.max(min, bounds.left);
+            const right = wraparound ? bounds.right : Math.min(max, bounds.right);
+            // clamp vertical bounds
+            const bottom = Math.max(min, bounds.bottom);
+            const top = Math.min(max, bounds.top);
             // TODO: pre-allocate this and index
             let coords = [];
-            for (let x=bounds.left; x<=bounds.right; x++) {
-                for (let y=bounds.bottom; y<=bounds.top; y++) {
+            for (let x=left; x<=right; x++) {
+                for (let y=bottom; y<=top; y++) {
                     coords.push(new Coord(tileZoom, x, y));
                 }
             }
@@ -155,6 +176,18 @@
                 y: this.y + change + scaledDiff.y
             });
             return viewport;
+        }
+
+        /**
+         * Centers the viewport on a given plot pixel coordinate.
+         *
+         * @param {Object} px - The plot pixel to center the viewport on.
+         *
+         * @returns {Viewport} The viewport object, for chaining.
+         */
+        centerOn(px) {
+            this.x = px.x - this.width / 2;
+            this.y = px.y - this.height / 2;
         }
     }
 

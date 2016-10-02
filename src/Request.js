@@ -25,7 +25,8 @@
         const coords = viewport.getVisibleCoords(
             plot.tileSize,
             zoom,
-            Math.round(zoom));
+            Math.round(zoom),
+            plot.wraparound);
         // for each layer
         plot.layers.forEach(layer => {
             // request tiles

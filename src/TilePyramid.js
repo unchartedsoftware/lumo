@@ -172,20 +172,23 @@
         requestTiles(coords) {
             // request tiles
             coords.forEach(coord => {
+                // get normalized coord, we use normalized coords for requests
+                // so that we do not track / request the same tiles
+                const ncoord = coord.normalize();
                 // we already have the tile, or it's currently pending
-                if (this.has(coord) || this.isPending(coord)) {
+                if (this.has(ncoord) || this.isPending(ncoord)) {
                     return;
                 }
                 // create the new tile
-                const tile = new Tile(coord);
+                const tile = new Tile(ncoord);
                 // add tile to pending array
-                this.pending.set(coord.hash, tile);
+                this.pending.set(ncoord.hash, tile);
                 // emit request
                 this.layer.emit(Event.TILE_REQUEST, tile);
                 // request tile
-                this.layer.requestTile(coord, (err, data) => {
+                this.layer.requestTile(ncoord, (err, data) => {
                     // remove tile from pending
-                    this.pending.delete(coord.hash);
+                    this.pending.delete(ncoord.hash);
                     // check err
                     if (err !== null) {
                         // add err

@@ -146,27 +146,29 @@
         const coords = plot.viewport.getVisibleCoords(
             plot.tileSize,
             plot.zoom,
-            Math.round(plot.zoom)); // get tiles closest to current zoom
+            Math.round(plot.zoom),
+            plot.wraparound); // get tiles closest to current zoom
 
         // assemble all renderables
         const renderables = [];
         coords.forEach(coord => {
+            const ncoord = coord.normalize();
             // check if we have the tile
-            if (pyramid.has(coord)) {
+            if (pyramid.has(ncoord)) {
                 renderables.push({
                     coord: coord,
-                    tile: pyramid.get(coord),
+                    tile: pyramid.get(ncoord),
                     offset: [ 0, 0, 1, 1 ]
                 });
                 return;
             }
             // if not, take the closest ancestor
-            const ancestor = pyramid.getClosestAncestor(coord);
+            const ancestor = pyramid.getClosestAncestor(ncoord);
             if (ancestor) {
                 renderables.push({
                     coord: coord,
                     tile: pyramid.get(ancestor),
-                    offset: getOffset(coord, ancestor)
+                    offset: getOffset(ncoord, ancestor)
                 });
             }
         });

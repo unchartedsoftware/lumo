@@ -44,6 +44,35 @@
         }
     }, RESIZE_THROTTLE_MS);
 
+    const reset = function(plot) {
+        if (!plot.wraparound) {
+            // if there is no wraparound, do not reset
+            return;
+        }
+        // resets the position of the viewport relative to the layer such that
+        // the layer native coordinate range is within the viewports bounds.
+        // NOTE: This does not have any observable effect.
+        const dim = Math.pow(2, plot.zoom);
+        const layerWidth = dim * plot.tileSize;
+        const layerSpans = Math.ceil(plot.viewport.width / layerWidth);
+        const layerLeft = 0;
+        const layerRight = layerWidth - 1;
+        // layer is past the left bound of the viewport
+        if (plot.viewport.x > layerRight) {
+            plot.viewport.x -= layerWidth * layerSpans;
+            if (plot.panAnimation) {
+                plot.panAnimation.start.x -= layerWidth * layerSpans;
+            }
+        }
+        // layer is past the right bound of the viewport
+        if (plot.viewport.x + plot.viewport.width < layerLeft) {
+            plot.viewport.x += layerWidth * layerSpans;
+            if (plot.panAnimation) {
+                plot.panAnimation.start.x += layerWidth * layerSpans;
+            }
+        }
+    };
+
     const frame = function(plot) {
         // update size
         resize(plot);
@@ -86,6 +115,8 @@
             plot.panAnimation = null;
             plot.emit(Event.PAN_END, plot);
         }
+        // reset viewport / plot
+        reset(plot);
         // request next frame
         plot.frameRequest = requestAnimationFrame(() => {
             frame(plot);
@@ -106,10 +137,17 @@
          * @param {Number} options.zoom - The zoom of the plot.
          * @param {Number} options.minZoom - The minimum zoom of the plot.
          * @param {Number} options.maxZoom - The maximum zoom of the plot.
+         * @param {boolean} options.wraparound - Whether or not the plot wraps around.
          *
          * @param {Number} options.inertia - Whether or not pan inertia is enabled.
          * @param {Number} options.inertiaEasing - The inertia easing factor.
          * @param {Number} options.inertiaDeceleration - The inertia deceleration factor.
+         *
+         * @param {Number} options.continuousZoom - Whether or not continuous zoom is enabled.
+         * @param {Number} options.zoomDuration - The duration of the zoom animation.
+         * @param {Number} options.maxConcurrentZooms - The maximum concurrent zooms in a single batch.
+         * @param {Number} options.deltaPerZoom - The scroll delta required per zoom level.
+         * @param {Number} options.zoomDebounce - The debounce duration of the zoom in ms.
          */
         constructor(selector, options = {}) {
             super();
@@ -153,6 +191,16 @@
             // current zoom of the plot
             this.zoom = defaultTo(options.zoom, 0);
             this.zoom = clamp(this.zoom, this.minZoom, this.maxZoom);
+
+            // center the plot
+            const center = Math.pow(2, this.zoom) * this.tileSize / 2;
+            this.viewport.centerOn({
+                x: center,
+                y: center
+            });
+
+            // wraparound
+            this.wraparound = defaultTo(options.wraparound, false);
 
             // create and enable handlers
             this.handlers = new Map();
