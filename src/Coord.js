@@ -8,6 +8,10 @@
         return `${coord.z}-${coord.x}-${coord.y}`;
     };
 
+    const mod = function(n, m) {
+        return ((n % m) + m) % m;
+    };
+
     /**
      * Class representing a tile coordinate.
      */
@@ -106,6 +110,19 @@
          */
         isDescendantOf(parent) {
             return parent.isAncestorOf(this);
+        }
+
+        /**
+         * Returns the normalized coord.
+         *
+         * @returns {Coord} The normalized coord.
+         */
+        normalize() {
+            const dim = Math.pow(2, this.z);
+            return new Coord(
+                this.z,
+                mod(this.x, dim),
+                mod(this.y, dim));
         }
     }
 
