@@ -39,7 +39,7 @@
      * Continuous zoom enabled.
      * @constant {boolean}
      */
-    const CONTINUOUS_ZOOM = true;
+    const CONTINUOUS_ZOOM = false;
 
     // Private Methods
 

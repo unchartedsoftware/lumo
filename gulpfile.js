@@ -27,7 +27,7 @@
     };
 
     function handleError(err) {
-        console.log(err);
+        console.error(err);
         this.emit('end');
     }
 
@@ -49,7 +49,7 @@
             .pipe(jshint.reporter('jshint-stylish'));
     });
 
-    gulp.task('build-source', () => {
+    gulp.task('build-source', [ 'lint' ], () => {
         return browserify(paths.root, {
                 debug: true,
                 standalone: project
@@ -77,7 +77,7 @@
 
     gulp.task('build', done => {
         runSequence(
-            [ 'clean', 'lint' ],
+            [ 'clean' ],
             [ 'build-source', 'build-styles' ],
             [ 'copy-index' ],
             done);
