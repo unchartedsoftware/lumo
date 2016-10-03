@@ -5,7 +5,7 @@
     // Private Methods
 
     const hashCoord = function(coord) {
-        return `${coord.z}-${coord.x}-${coord.y}`;
+        return `${coord.z}:${coord.x}:${coord.y}`;
     };
 
     const mod = function(n, m) {
