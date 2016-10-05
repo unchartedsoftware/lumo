@@ -23,6 +23,20 @@
 
     // Private Methods
 
+    const getLODOffset = function(descendant, ancestor) {
+        const scale = Math.pow(2, descendant.z - ancestor.z);
+        const step = 1 / scale;
+        const root = {
+            x: ancestor.x * scale,
+            y: ancestor.y * scale
+        };
+        return {
+            x: (descendant.x - root.x) * step,
+            y: (descendant.y - root.y) * step,
+            extent: step
+        };
+    };
+
     const add = function(pyramid, tile) {
         if (tile.coord.z < pyramid.persistantLevels) {
             // persistant tiles
@@ -203,6 +217,39 @@
                     add(this, tile);
                 });
             });
+        }
+
+        /**
+         * If the tile exists in the pyramid, return it. Otherwise return the
+         * closest available tile, along with the offset and relative scale. If
+         * no ancestor exists, return undefined.
+         *
+         * @return {Tile} The tile that closest matches the provided coord.
+         */
+        getAvailableLOD(coord) {
+            const ncoord = coord.normalize();
+            // check if we have the tile
+            if (this.has(ncoord)) {
+                return {
+                    coord: coord,
+                    tile: this.get(ncoord),
+                    offset: {
+                        x: 0,
+                        y: 0,
+                        extent: 1
+                    }
+                };
+            }
+            // if not, take the closest ancestor
+            const ancestor = this.getClosestAncestor(ncoord);
+            if (ancestor) {
+                return {
+                    coord: coord,
+                    tile: this.get(ancestor),
+                    offset: getLODOffset(ncoord, ancestor)
+                };
+            }
+            return undefined;
         }
     }
 
