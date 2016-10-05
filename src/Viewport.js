@@ -46,7 +46,7 @@
          * Returns the pixel bounds of the viewport. Bounds edges are inclusive.
          * NOTE: this includes wraparound coordinates
          *
-         * @param {Number} tileSize - The dimension in pixels of the tiles.
+         * @param {Number} tileSize - The dimension of the tiles, in pixels.
          * @param {Number} viewportZoom - The zoom of the viewport.
          * @param {Number} tileZoom - The zoom of the tiles within the viewport. Optional.
          *
@@ -71,7 +71,7 @@
         /**
          * Returns the coordinates that are visible in the viewport.
          *
-         * @param {Number} tileSize - The dimension in pixels of the tiles.
+         * @param {Number} tileSize - The dimension of the tiles, in pixels.
          * @param {Number} viewportZoom - The zoom of the viewport.
          * @param {Number} tileZoom - The zoom of the tiles within the viewport. Optional.
          * @param {boolean} wraparound - The if the horizontal axis should wraparound. Optional.
@@ -114,7 +114,7 @@
         /**
          * Returns a viewport that has been zoomed around it's center.
          *
-         * @param {Number} tileSize - The dimension in pixels of the tiles.
+         * @param {Number} tileSize - The dimension of the tiles, in pixels.
          * @param {Number} zoom - The current zoom of the viewport.
          * @param {Number} targetZoom - The target zoom of the viewport.
          *
@@ -140,7 +140,7 @@
         /**
          * Returns a viewport that has been zoomed around a provided plot pixel.
          *
-         * @param {Number} tileSize - The dimension in pixels of the tiles.
+         * @param {Number} tileSize - The dimension of the tiles, in pixels.
          * @param {Number} zoom - The current zoom of the viewport.
          * @param {Number} targetZoom - The target zoom of the viewport.
          * @param {Object} targetPx - The target pixel to zoom around.

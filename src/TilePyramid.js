@@ -140,7 +140,7 @@
          *
          * @param {Coord} coord - The coord of the tile.
          *
-         * @return {Tile} The closest ancestor of the provided coord.
+         * @return {Coord} The closest available ancestor of the provided coord.
          */
         getClosestAncestor(coord) {
             // get ancestors levels, in descending order
