@@ -76,15 +76,14 @@
     const frame = function(plot) {
         // update size
         resize(plot);
+
         // get timestamp
         const timestamp = Date.now();
         const gl = plot.gl;
 
         // clear the backbuffer
         gl.clearColor(0, 0, 0, 0);
-
-        // enable blending
-        gl.enable(gl.BLEND);
+        gl.clear(gl.COLOR_BUFFER_BIT);
 
         // set the viewport
         gl.viewport(
@@ -177,8 +176,8 @@
 
             // set viewport
             this.viewport = new Viewport({
-                width: this.canvas.width,
-                height: this.canvas.height
+                width: this.canvas.offsetWidth,
+                height: this.canvas.offsetHeight
             });
 
             // tile size in pixels
