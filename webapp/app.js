@@ -2,8 +2,9 @@
 
     'use strict';
 
-    let esper = require('esper');
-    let caleida = require('../src/exports');
+    const esper = require('esper');
+    const Stats = require('stats.js');
+    const caleida = require('../src/exports');
 
     const SUBDOMAINS = [
         'a', 'b', 'c',
@@ -17,10 +18,25 @@
         'y', 'z'
     ];
 
+    // const normalizePoints = function(points, coord) {
+    //     const tileSpan = 4294967296 / Math.pow(2, coord.z);
+    //     const xOffset = coord.x * tileSpan;
+    //     const yOffset = coord.y * tileSpan;
+    //     const buffer = new Float32Array(points.length);
+    //     for (let i=0; i<points.length; i+=2) {
+    //         buffer[i] = points[i] - xOffset;
+    //         buffer[i+1] = points[i+1] - yOffset;
+    //     }
+    //     return buffer;
+    // };
+
     window.start = function() {
 
+
         let plot = new caleida.Plot('#plot-canvas', {
-            continuousZoom: false
+            continuousZoom: false,
+            inertia: true,
+            wraparound: true
         });
 
         // plot.on('pan', () => {
@@ -37,7 +53,7 @@
         // });
 
         let base = new caleida.Layer({
-            renderer: new caleida.Renderer()
+            renderer: new caleida.TextureRenderer()
         });
 
         base.requestTile = (coord, done) => {
@@ -73,23 +89,13 @@
 
         // base.opacity = 0.5;
 
-        plot.add(base);
+        // plot.addLayer(base);
 
-        let layer = new caleida.Layer({
-            renderer: new caleida.Renderer()
+        let mandlebrot = new caleida.Layer({
+            renderer: new caleida.TextureRenderer()
         });
 
-        // layer.on('tile:request', tile => {
-        //     console.log(`request: ${tile.coord.hash}`);
-        // });
-        // layer.on('tile:add', tile => {
-        //     console.log(`add: ${tile.coord.hash}, ${layer.pyramid.tiles.length} total tiles`);
-        // });
-        // layer.on('tile:remove', tile => {
-        //     console.log(`remove: ${tile.coord.hash}, ${base.pyramid.tiles.length} total tiles`);
-        // });
-
-        layer.requestTile = (coord, done) => {
+        mandlebrot.requestTile = (coord, done) => {
             const req = new XMLHttpRequest();
             req.open('GET', `mandelbrot/${coord.z}/${coord.x}/${coord.y}`, true);
             req.responseType = 'arraybuffer';
@@ -99,7 +105,7 @@
                     const bytes = new Uint8Array(arraybuffer);
                     const resolution = Math.sqrt(bytes.length / 4);
                     done(null, new esper.ColorTexture2D({
-                        src: new Uint8Array(arraybuffer),
+                        src: bytes,
                         width: resolution,
                         height: resolution,
                         filter: 'LINEAR',
@@ -112,9 +118,39 @@
             req.send(null);
         };
 
-        // layer.opacity = 0.5;
+        // mandlebrot.opacity = 0.5;
 
-        // plot.add(layer);
+        // plot.addLayer(mandlebrot);
+
+        let point = new caleida.Layer({
+            renderer: new caleida.PointRenderer()
+        });
+
+        point.requestTile = (coord, done) => {
+            const numPoints = 256 * 16;
+            const buffer = new Float32Array((2 + 1) * numPoints);
+            for (let i=0; i<numPoints; i++) {
+                buffer[i*3] = Math.random() * 256; // x
+                buffer[i*3+1] = Math.random() * 256; // y
+                buffer[i*3+2] = (Math.random() * 4) + 1; // radius
+            }
+            done(null, buffer);
+        };
+
+        plot.addLayer(point);
+
+        // Debug performance tracking
+
+        const stats = new Stats();
+        document.body.appendChild(stats.dom);
+
+        plot.on('frame:start', () => {
+            stats.begin();
+        });
+
+        plot.on('frame:end', () => {
+            stats.end();
+        });
     };
 
 }());

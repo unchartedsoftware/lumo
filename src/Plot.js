@@ -74,6 +74,9 @@
     };
 
     const frame = function(plot) {
+        // emit start frame
+        plot.emit(Event.FRAME_START);
+
         // update size
         resize(plot);
 
@@ -116,6 +119,8 @@
         }
         // reset viewport / plot
         reset(plot);
+        // emit frame end
+        plot.emit(Event.FRAME_END);
         // request next frame
         plot.frameRequest = requestAnimationFrame(() => {
             frame(plot);
