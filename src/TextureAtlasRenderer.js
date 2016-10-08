@@ -4,6 +4,7 @@
 
     const esper = require('esper');
     const Renderer = require('./Renderer');
+    const TextureAtlas = require('./TextureAtlas');
 
     const shader = {
         vert:
@@ -75,7 +76,27 @@
             });
     };
 
-    const getRenderables = function(plot, pyramid) {
+    const getRenderable = function(atlas, coord, zoom, tile, offset) {
+        const ncoord = tile.coord.normalize();
+        if (!atlas.has(ncoord.hash)) {
+            // data is not in texture yet, buffer it
+            atlas.set(ncoord.hash, tile.data);
+        }
+        const chunk = atlas.get(ncoord.hash);
+        const scale = Math.pow(2, zoom - coord.z);
+        return {
+            coord: coord,
+            scale: scale,
+            offset: [
+                chunk.xOffset + (chunk.xExtent * offset.x),
+                chunk.yOffset + (chunk.yExtent * offset.y),
+                chunk.xExtent * offset.extent,
+                chunk.yExtent * offset.extent
+            ]
+        };
+    };
+
+    const getRenderables = function(plot, pyramid, atlas) {
 
         // get all currently visible tile coords
         const coords = plot.viewport.getVisibleCoords(
@@ -89,17 +110,12 @@
             // check if we have any tile LOD available
             const lod = pyramid.getAvailableLOD(coord);
             if (lod) {
-                const renderable = {
-                    coord: coord,
-                    tile: lod.tile,
-                    scale: Math.pow(2, plot.zoom - coord.z),
-                    offset: [
-                        lod.offset.x,
-                        lod.offset.y,
-                        lod.offset.extent,
-                        lod.offset.extent
-                    ]
-                };
+                const renderable = getRenderable(
+                    atlas,
+                    coord,
+                    plot.zoom,
+                    lod.tile,
+                    lod.offset);
                 renderables.push(renderable);
             }
         });
@@ -107,29 +123,37 @@
         return renderables;
     };
 
-    const renderTiles = function(gl, shader, quad, plot, pyramid) {
-        // update projection
+    const renderTiles = function(gl, shader, quad, atlas, plot, pyramid) {
+        // get projection
         const proj = plot.viewport.getOrthoMatrix();
 
         // bind shader
         shader.use();
+
         // set uniforms
         shader.setUniform('uProjectionMatrix', proj);
+
         // set texture sampler unit
         shader.setUniform('uTextureSampler', 0);
 
         // bind quad
         quad.bind();
 
-        // get the renderables
-        const renderables = getRenderables(plot, pyramid);
+        // get view offset
+        const viewOffset = [
+            plot.viewport.x,
+            plot.viewport.y
+        ];
+
+        // bind texture atlas
+        atlas.bind(0);
+
+        // get renderables
+        const renderables = getRenderables(plot, pyramid, atlas);
 
         // for each renderable
         renderables.forEach(renderable => {
-            const tile = renderable.tile;
             const coord = renderable.coord;
-            // bind texture
-            tile.data.bind(0);
             // set tile opacity
             shader.setUniform('uTextureCoordOffset', renderable.offset);
             // set tile scale
@@ -139,11 +163,6 @@
                 coord.x * renderable.scale * plot.tileSize,
                 coord.y * renderable.scale * plot.tileSize
             ];
-            // get view offset
-            const viewOffset = [
-                plot.viewport.x,
-                plot.viewport.y
-            ];
             const offset = [
                 tileOffset[0] - viewOffset[0],
                 tileOffset[1] - viewOffset[1]
@@ -151,25 +170,28 @@
             shader.setUniform('uTileOffset', offset);
             // draw
             quad.draw();
-            // no need to unbind texture
         });
 
         // unbind quad
         quad.unbind();
+
+        // unbind texture atlas
+        atlas.unbind();
     };
 
     /**
-     * Class representing a renderer.
+     * Class representing a texture atlas renderer.
      */
-    class ScreenRenderer extends Renderer {
+    class TextureAtlasRenderer extends Renderer {
 
         /**
-         * Instantiates a new ScreenRenderer object.
+         * Instantiates a new Renderer object.
          */
         constructor() {
             super();
             this.quad = null;
             this.shader = null;
+            this.atlas = null;
         }
 
         /**
@@ -183,6 +205,7 @@
             super.onAdd(layer);
             this.quad = createQuad(0, layer.plot.tileSize);
             this.shader = new esper.Shader(shader);
+            this.atlas = new TextureAtlas(layer.plot.tileSize);
             return this;
         }
 
@@ -197,6 +220,7 @@
             super.onRemove(layer);
             this.quad = null;
             this.shader = null;
+            this.atlas = null;
             return this;
         }
 
@@ -208,17 +232,18 @@
          * @returns {Renderer} The renderer object, for chaining.
          */
         draw() {
-            // render the tiles to the framebuffer
+            // render the tiles
             renderTiles(
                 this.gl,
                 this.shader,
                 this.quad,
+                this.atlas,
                 this.layer.plot,
                 this.layer.pyramid);
             return this;
         }
     }
 
-    module.exports = ScreenRenderer;
+    module.exports = TextureAtlasRenderer;
 
 }());
