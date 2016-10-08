@@ -173,6 +173,14 @@
                 this.chunkSize,
                 this.chunkSize);
         }
+
+        bind(unit = 0) {
+            this.texture.bind(unit);
+        }
+
+        unbind() {
+            this.texture.unbind();
+        }
     }
 
     module.exports = TextureAtlas;
