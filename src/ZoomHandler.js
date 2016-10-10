@@ -15,7 +15,7 @@
      * Amount of scroll pixels per zoom level.
      * @constant {Number}
      */
-    const ZOOM_WHEEL_DELTA = 200;
+    const ZOOM_WHEEL_DELTA = 300;
 
     /**
      * Length of zoom animation in milliseconds.
@@ -43,8 +43,36 @@
 
     // Private Methods
 
-    const skipInterpolation = function(delta) {
-        return delta !== 0 && Math.abs(delta) < 4;
+    let last = Date.now();
+    const skipInterpolation = function(animation, delta) {
+        // NOTE: attempt to determine if the scroll device is a mouse or a
+        // trackpad. Mouse scrolling creates large infrequent deltas while
+        // trackpads create tons of very small deltas. We want to interpolate
+        // between wheel events, but not between trackpad events.
+        const now = Date.now();
+        const tdelta = now - last;
+        last = now;
+        if (delta % 4.000244140625 === 0) {
+            // definitely a wheel, interpolate
+            return false;
+        }
+        if (Math.abs(delta) < 4) {
+            // definitely track pad, do not interpolate
+            return true;
+        }
+        if (animation && animation.duration !== 0) {
+            // current animation has interpolation, should probably interpolate
+            // the next animation too.
+            // NOTE: without this, rapid wheel scrolling will trigger the skip
+            // below
+            return false;
+        }
+        if (tdelta < 40) {
+            // events are close enough together that we should probably
+            // not interpolate
+            return true;
+        }
+        return false;
     };
 
     const computeZoomDelta = function(wheelDelta, continuousZoom, deltaPerZoom, maxZooms) {
@@ -99,7 +127,7 @@
             plot.panAnimation = null;
             // get duration
             let duration = handler.zoomDuration;
-            if (continuousZoom && skipInterpolation(wheelDelta)) {
+            if (continuousZoom && skipInterpolation(plot.zoomAnimation, wheelDelta)) {
                 // skip animation interpolation
                 duration = 0;
             }
