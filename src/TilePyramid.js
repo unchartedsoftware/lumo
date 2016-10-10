@@ -13,13 +13,13 @@
      * Number of the tiles held in the pyramid.
      * @constant {Number}
      */
-    const CACHE_SIZE = 256;
+    const CACHE_SIZE = 128;
 
     /**
      * Number of persistant zoom levels held in the pyramids.
      * @constant {Number}
      */
-    const PERSISTANT_LEVELS = 5;
+    const PERSISTANT_LEVELS = 4;
 
     // Private Methods
 
@@ -77,6 +77,10 @@
         pyramid.layer.emit(Event.TILE_REMOVE, tile);
     };
 
+    const sumPowerOfFour = function(n) {
+        return (1/3) * (Math.pow(4, n) - 1);
+    };
+
     /**
      * Class representing a pyramid of tiles.
      */
@@ -96,6 +100,7 @@
             }
             this.cacheSize = defaultTo(options.cacheSize, CACHE_SIZE);
             this.persistantLevels = defaultTo(options.persistantLevels, PERSISTANT_LEVELS);
+            this.totalCapacity = this.cacheSize + sumPowerOfFour(this.persistantLevels);
             this.layer = layer;
             this.levels = new Map();
             this.persistants = new Map();

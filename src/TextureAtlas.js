@@ -3,7 +3,6 @@
     'use strict';
 
     const esper = require('esper');
-    const LRU = require('lru-cache');
     const defaultTo = require('lodash/defaultTo');
 
     // Constants
@@ -55,6 +54,24 @@
         return padBuffer(arg);
     };
 
+    const nextHighestPowerOfTwo = function(num) {
+        if (num !== 0) {
+            num = num-1;
+        }
+        num |= num >> 1;
+        num |= num >> 2;
+        num |= num >> 4;
+        num |= num >> 8;
+        num |= num >> 16;
+        return num + 1;
+    };
+
+    const calcAtlasSize = function(numChunks, paddedSize) {
+        const size = Math.ceil(Math.sqrt(numChunks));
+        const pixelSize = size * paddedSize;
+        return Math.ceil(nextHighestPowerOfTwo(pixelSize) / paddedSize);
+    };
+
     /**
      * Class representing a texture atlas.
      */
@@ -65,15 +82,16 @@
          *
          * @param {Number} tileSize - The size of a tile, in pixels.
          * @param {Object} options - The parameters of the animation.
-         * @param {Number} options.xSize - The horizontal size of the atlas, in tiles.
-         * @param {Number} options.ySize - The vertical size of the atlas, in tiles.
+         * @param {Number} options.numChunks - The size of the atlas, in tiles.
          * @param {boolean} options.alreadyPadded - Whether or not the tiles have already been padded.
          */
-        constructor(tileSize, options = {}) {
+        constructor(tileSize = 256, options = {}) {
             // get context
             const gl = this.gl = esper.WebGLContext.get();
-            this.xSize = defaultTo(options.xSize, 16);
-            this.ySize = defaultTo(options.ySize, 16);
+            this.numChunks = defaultTo(options.numChunks, 256);
+            this.chunkSize = tileSize + (CHUNK_PADDING * 2);
+            this.xSize = calcAtlasSize(this.numChunks, this.chunkSize);
+            this.ySize = this.xSize;
             this.alreadyPadded = defaultTo(options.alreadyPadded, false);
             // set texture properties
             this.format = defaultTo(options.format, 'RGBA');
@@ -81,8 +99,6 @@
             this.filter = defaultTo(options.filter, 'LINEAR');
             this.invertY = defaultTo(options.invertY, true);
             this.premultiplyAlpha = defaultTo(options.premultiplyAlpha, false);
-            // set chunksize
-            this.chunkSize = tileSize + (CHUNK_PADDING * 2);
             // set dimensions
             this.width = this.chunkSize * this.xSize;
             this.height = this.chunkSize * this.ySize;
@@ -103,13 +119,7 @@
                     };
                 }
             }
-            this.used = new LRU({
-                max: this.xSize * this.ySize,
-                dispose: (key, chunk) => {
-                    // flag the chunk as available
-                    this.available.push(chunk);
-                }
-            });
+            this.used = new Map();
             // create texture
             this.texture = gl.createTexture();
             gl.bindTexture(gl.TEXTURE_2D, this.texture);
@@ -166,28 +176,14 @@
             if (this.has(key)) {
                 throw `Tile of coord ${key} already exists in the atlas`;
             }
-            const gl = this.gl;
-            // first create chunk
-            const chunk = {
-                xPixelOffset: 0,
-                yPixelOffset: 0,
-                xOffset: 0,
-                yOffset: 0,
-                xExtent: 0,
-                yExtent: 0
-            };
-            // add to cache, this guarentees we have an available chunk
-            this.used.set(key, chunk);
+            if (this.available.length === 0) {
+                throw 'No available texture chunks in atlas';
+            }
             // get an available chunk
-            const available = this.available.pop();
-            // copy over the attributes
-            chunk.xPixelOffset = available.xPixelOffset;
-            chunk.yPixelOffset = available.yPixelOffset;
-            chunk.xOffset = available.xOffset;
-            chunk.yOffset = available.yOffset;
-            chunk.xExtent = available.xExtent;
-            chunk.yExtent = available.yExtent;
+            const chunk = this.available.pop();
             // buffer the data
+            const gl = this.gl;
+            gl.bindTexture(gl.TEXTURE_2D, this.texture);
             if (data.width && data.height) {
                 // canvas type
                 gl.texSubImage2D(
@@ -211,16 +207,52 @@
                     gl[this.type],
                     this.alreadyPadded ? data : padTexture(data));
             }
+            // add to used
+            this.used.set(key, chunk);
         }
 
+        /**
+         * Flags the chunk matching the provided key as unused in the atlas.
+         *
+         * @param {String} key - The key of the chunk to free.
+         *
+         * @returns {TextureAtlas} The TextureAtlas object, for chaining.
+         */
+        delete(key) {
+            if (!this.has(key)) {
+                throw `Tile of coord ${key} does not exist in the atlas`;
+            }
+            // get chunk
+            const chunk = this.used.get(key);
+            // remove from used
+            this.used.delete(key);
+            // add to available
+            this.available.push(chunk);
+            return this;
+        }
+
+        /**
+         * Binds the texture atlas to the provided texture unit.
+         *
+         * @param {String} key - The texture unit to activate. Optional.
+         *
+         * @returns {TextureAtlas} The TextureAtlas object, for chaining.
+         */
         bind(location = 0) {
             const gl = this.gl;
             gl.activeTexture(gl[`TEXTURE${location}`]);
             gl.bindTexture(gl.TEXTURE_2D, this.texture);
+            return this;
         }
 
+        /**
+         * Unbinds the texture atlas.
+         *
+         * @returns {TextureAtlas} The TextureAtlas object, for chaining.
+         */
         unbind() {
             // no-op
+            return this;
         }
     }
 

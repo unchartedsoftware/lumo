@@ -3,7 +3,6 @@
     'use strict';
 
     const esper = require('esper');
-    const LRU = require('lru-cache');
     const defaultTo = require('lodash/defaultTo');
     const forIn = require('lodash/forIn');
 
@@ -16,36 +15,13 @@
         FLOAT: 4
     };
 
-    // const X = [ 0, 1 ];
-    // const Y = [ 0, 2 ];
-    // for (let i = 4; i < 0xFFFF; i <<= 2) {
-    //     for (let j = 0, l = X.length; j < l; j++) {
-    //         X.push((X[j] | i));
-    //         Y.push((X[j] | i) << 1);
-    //     }
-    // }
-    //
-    // const morton = function(x, y) {
-    //     return (Y[y & 0xFF] | X[x & 0xFF]) +
-    //            (Y[(y >> 8) & 0xFF] | X[(x >> 8) & 0xFF]) * 0x10000 +
-    //            (Y[(y >> 16) & 0xFF] | X[(x >> 16) & 0xFF]) * 0x100000000;
-    // };
-    //
-    // const partitionBuffer = function(points) {
-    //     //  _ _ _ _ _ _ _ _
-    //     // |       |       |
-    //     // |   2   |   3   |
-    //     // |       |       |
-    //     //  _ _ _ _ _ _ _ _
-    //     // |       |       |
-    //     // |   0   |   1   |
-    //     // |       |       |
-    //     //  _ _ _ _ _ _ _ _
-    //     points.sort((a, b) => {
-    //         return morton(a.x, a.y) - morton(b.x, b.y);
-    //     });
-    //     return points;
-    // };
+    // LOD vertex spec:
+    // Tile contains vertex data + LOD offsets
+    // Sort vertices by morton codes
+    // create offset array of size sqrdPOTSums(LOD)
+    // index into offset array: sqrdPOTSums(LOD) + quadrant * 4 + child
+    // byteOffset = offsets[index]
+    // count = (offsets[index+1] - offsets[index]) / byteStride
 
     const calcChunkByteSize = function(pointers, chunkSize) {
         let byteSize = 0;
@@ -86,7 +62,7 @@
             if (!this.ext) {
                 throw 'ANGLE_instanced_arrays WebGL extension is not supported';
             }
-            this.numChunks = defaultTo(options.numChunks, 128);
+            this.numChunks = defaultTo(options.numChunks, 256);
             this.chunkSize = defaultTo(options.chunkSize, 128 * 128);
             // set the pointers of the atlas
             this.pointers = new Map();
@@ -117,13 +93,7 @@
                 // add chunk
                 this.available[i] = available;
             }
-            this.used = new LRU({
-                max: this.numChunks,
-                dispose: (key, chunk) => {
-                    // flag the chunk as available
-                    this.available.push(chunk);
-                }
-            });
+            this.used = new Map();
             // create buffer
             this.buffer = gl.createBuffer();
             // calc total size of the buffer
@@ -167,27 +137,49 @@
             if (this.has(key)) {
                 throw `Tile of coord ${key} already exists in the atlas`;
             }
-            const gl = this.gl;
-            // first create chunk
-            const chunk = {
-                count: 0,
-                byteOffsets: null,
-                byteStride: 0,
-                chunkByteOffset: 0
-            };
-            // add to cache, this guarentees we have an available chunk
-            this.used.set(key, chunk);
+            if (this.available.length === 0) {
+                throw 'No available vertex chunks in atlas';
+            }
             // get an available chunk
-            const available = this.available.pop();
-            // copy over the attributes
+            const chunk = this.available.pop();
+            // update chunk count
             chunk.count = count;
-            chunk.byteOffsets = available.byteOffsets;
-            chunk.byteStride = available.byteStride;
-            chunk.chunkByteOffset = available.chunkByteOffset;
             // buffer the data
+            const gl = this.gl;
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
             gl.bufferSubData(gl.ARRAY_BUFFER, chunk.chunkByteOffset, data);
+            // add to used
+            this.used.set(key, chunk);
         }
 
+        /**
+         * Flags the chunk matching the provided key as unused in the atlas.
+         *
+         * @param {String} key - The key of the chunk to free.
+         *
+         * @returns {VertexAtlas} The VertexAtlas object, for chaining.
+         */
+        delete(key) {
+            if (!this.has(key)) {
+                throw `Tile of coord ${key} does not exist in the atlas`;
+            }
+            // get chunk
+            const chunk = this.used.get(key);
+            // remove from used
+            this.used.delete(key);
+            // add to available
+            this.available.push(chunk);
+            return this;
+        }
+
+        /**
+         * Binds the vertex atlas and activates the attribute arrays for
+         * instancing.
+         *
+         * @param {String} key - The texture unit to activate. Optional.
+         *
+         * @returns {VertexAtlas} The TextureAtlas object, for chaining.
+         */
         bind() {
             const gl = this.gl;
             const ext = this.ext;
@@ -199,18 +191,27 @@
                 // enable instancing this attribute
                 ext.vertexAttribDivisorANGLE(index, 1);
             });
+            return this;
         }
 
+        /**
+         * Unbinds the vertex atlas and disables the vertex arrays.
+         *
+         * @returns {TextureAtlas} The TextureAtlas object, for chaining.
+         */
         unbind() {
             const gl = this.gl;
             const ext = this.ext;
             // for each attribute pointer
             this.pointers.forEach((pointer, index) => {
-                // disable attribute index
-                gl.disableVertexAttribArray(index);
+                if (index !== 0) {
+                    // disable attribute index
+                    gl.disableVertexAttribArray(index);
+                }
                 // disable instancing this attribute
                 ext.vertexAttribDivisorANGLE(index, 0);
             });
+            return this;
         }
 
         draw(key, mode, count) {

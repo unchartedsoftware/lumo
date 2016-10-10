@@ -3,10 +3,11 @@
     'use strict';
 
     const esper = require('esper');
+    const Event = require('./Event');
     const Renderer = require('./Renderer');
     const VertexAtlas = require('./VertexAtlas');
 
-    const CIRCLE_SLICES = 64;
+    const CIRCLE_SLICES = 32;
     const CIRCLE_RADIUS = 1;
 
     const shader = {
@@ -104,18 +105,12 @@
 
     const getRenderable = function(atlas, coord, zoom, tile, offset) {
         const ncoord = tile.coord.normalize();
-        if (!atlas.has(ncoord.hash)) {
-            // data is not in texture yet, buffer it
-            const count = tile.data.length / 3;
-            atlas.set(ncoord.hash, tile.data, count);
-        }
-        // const chunk = atlas.get(ncoord.hash);
         const scale = Math.pow(2, zoom - coord.z);
         return {
             coord: coord,
             scale: scale,
             hash: ncoord.hash,
-            offset: (offset.extent !== 1) ? null : offset
+            offset: (offset.extent === 1) ? null : offset
         };
     };
 
@@ -160,14 +155,14 @@
         // bind circle
         circle.bind();
 
+        // binds the buffer to instance
+        atlas.bind();
+
         // get view offset
         const viewOffset = [
             plot.viewport.x,
             plot.viewport.y
         ];
-
-        // binds the buffer to instance
-        atlas.bind();
 
         // get renderables
         const renderables = getRenderables(plot, pyramid, atlas);
@@ -195,8 +190,8 @@
             //     gl.scissor(
             //         offset[0],
             //         offset[1],
-            //         renderable.scale * plot.tileSize,
-            //         renderable.scale * plot.tileSize);
+            //         (1/renderable.scale) * plot.tileSize,
+            //         (1/renderable.scale) * plot.tileSize);
             // } else {
             //     gl.disable(gl.SCISSOR_TEST);
             // }
@@ -204,6 +199,8 @@
             // draw the instances
             atlas.draw(renderable.hash, circle.mode, circle.count);
         });
+
+        // gl.disable(gl.SCISSOR_TEST);
 
         // unbind
         atlas.unbind();
@@ -252,7 +249,18 @@
                     size: 1,
                     type: 'FLOAT'
                 }
+            }, {
+                // set num chunks to be able to fit the capacity of the pyramid
+                numChunks: layer.pyramid.totalCapacity
             });
+            this.tileAdd = tile => {
+                this.atlas.set(tile.coord.hash, tile.data, tile.data.length / 3);
+            };
+            this.tileRemove = tile => {
+                this.atlas.delete(tile.coord.hash);
+            };
+            layer.on(Event.TILE_ADD, this.tileAdd);
+            layer.on(Event.TILE_REMOVE, this.tileRemove);
             return this;
         }
 
@@ -264,11 +272,15 @@
          * @returns {Renderer} The renderer object, for chaining.
          */
         onRemove(layer) {
-            super.onRemove(layer);
+            this.layer.removeListener(this.add);
+            this.layer.removeListener(this.remove);
+            this.tileAdd = null;
+            this.tileRemove = null;
             this.circleFill = null;
             this.circleOutline = null;
             this.shader = null;
             this.atlas = null;
+            super.onRemove(layer);
             return this;
         }
 
@@ -296,7 +308,6 @@
 
             // render the outlines
             gl.lineWidth(1);
-            //gl.disable(gl.BLEND);
             renderTiles(
                 this.gl,
                 this.atlas,

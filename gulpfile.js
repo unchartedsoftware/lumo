@@ -4,7 +4,6 @@
 
     const babel = require('babelify');
     const browserify = require('browserify');
-    const buffer = require('vinyl-buffer');
     const concat = require('gulp-concat');
     const csso = require('gulp-csso');
     const del = require('del');
@@ -59,7 +58,6 @@
             .bundle()
             .on('error', handleError)
             .pipe(source(project + '.js'))
-            .pipe(buffer())
             .pipe(gulp.dest(paths.build));
     });
 

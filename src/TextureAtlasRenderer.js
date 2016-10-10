@@ -3,6 +3,7 @@
     'use strict';
 
     const esper = require('esper');
+    const Event = require('./Event');
     const Renderer = require('./Renderer');
     const TextureAtlas = require('./TextureAtlas');
 
@@ -78,10 +79,6 @@
 
     const getRenderable = function(atlas, coord, zoom, tile, offset) {
         const ncoord = tile.coord.normalize();
-        if (!atlas.has(ncoord.hash)) {
-            // data is not in texture yet, buffer it
-            atlas.set(ncoord.hash, tile.data);
-        }
         const chunk = atlas.get(ncoord.hash);
         const scale = Math.pow(2, zoom - coord.z);
         return {
@@ -205,7 +202,18 @@
             super.onAdd(layer);
             this.quad = createQuad(0, layer.plot.tileSize);
             this.shader = new esper.Shader(shader);
-            this.atlas = new TextureAtlas(layer.plot.tileSize);
+            this.atlas = new TextureAtlas(layer.plot.tileSize, {
+                // set num chunks to be able to fit the capacity of the pyramid
+                numChunks: layer.pyramid.totalCapacity
+            });
+            this.tileAdd = tile => {
+                this.atlas.set(tile.coord.hash, tile.data);
+            };
+            this.tileRemove = tile => {
+                this.atlas.delete(tile.coord.hash);
+            };
+            layer.on(Event.TILE_ADD, this.tileAdd);
+            layer.on(Event.TILE_REMOVE, this.tileRemove);
             return this;
         }
 
@@ -217,10 +225,14 @@
          * @returns {Renderer} The renderer object, for chaining.
          */
         onRemove(layer) {
-            super.onRemove(layer);
+            this.layer.removeListener(this.add);
+            this.layer.removeListener(this.remove);
+            this.tileAdd = null;
+            this.tileRemove = null;
             this.quad = null;
             this.shader = null;
             this.atlas = null;
+            super.onRemove(layer);
             return this;
         }
 

@@ -6,7 +6,10 @@
         Event: require('./Event'),
         Plot: require('./Plot'),
         Layer: require('./Layer'),
-        Renderer: require('./Renderer')
+        Renderer: require('./Renderer'),
+        PointRenderer: require('./PointRenderer'),
+        TextureRenderer: require('./TextureRenderer'),
+        TextureAtlasRenderer: require('./TextureAtlasRenderer')
     };
 
 }());
