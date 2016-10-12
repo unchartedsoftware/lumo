@@ -112,6 +112,21 @@
         }
 
         /**
+         * Returns whether or not the provided coord is within the viewport.
+         *
+         * @param {Number} tileSize - The dimension of the tiles, in pixels.
+         * @param {Coord} coord - The coord.
+         * @param {Number} viewportZoom - The zoom of the viewport.
+         *
+         * @return {boolean} Whether or not the coord is in view.
+         */
+        isInView(tileSize, coord, zoom) {
+            const viewportBounds = this.getPixelBounds();
+            const tileBounds = coord.getPixelBounds(tileSize, zoom);
+            return viewportBounds.overlaps(tileBounds);
+        }
+
+        /**
          * Returns a viewport that has been zoomed around it's center.
          *
          * @param {Number} tileSize - The dimension of the tiles, in pixels.

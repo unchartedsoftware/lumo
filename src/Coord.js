@@ -2,6 +2,8 @@
 
     'use strict';
 
+    const Bounds = require('./Bounds');
+
     // Private Methods
 
     const hashCoord = function(coord) {
@@ -123,6 +125,28 @@
                 this.z,
                 mod(this.x, dim),
                 mod(this.y, dim));
+        }
+
+        /**
+         * Returns the pixel bounds of the coord. Bounds edges are inclusive.
+         *
+         * @param {Number} tileSize - The dimension of the tiles, in pixels.
+         * @param {Number} viewportZoom - The zoom of the viewport.
+         *
+         * @returns {Bounds} The pixel bounds of the viewport.
+         */
+        getPixelBounds(tileSize, viewportZoom = this.z) {
+            // NOTE: bounds are INCLUSIVE
+            // scale the pixel bounds depending on the viewportZoom
+            const scale = Math.pow(2, viewportZoom - this.z);
+            const scaledTileSize = tileSize * scale;
+            const scaledX = this.x * scaledTileSize;
+            const scaledY = this.y * scaledTileSize;
+            return new Bounds(
+                Math.round(scaledX),
+                Math.round(scaledX + scaledTileSize - 1),
+                Math.round(scaledY),
+                Math.round(scaledY + scaledTileSize - 1));
         }
     }
 
