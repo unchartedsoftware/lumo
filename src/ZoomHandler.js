@@ -246,8 +246,8 @@
                 event.stopPropagation();
             };
 
-            this.plot.canvas.addEventListener('dblclick', this.dblclick);
-            this.plot.canvas.addEventListener('wheel', this.wheel);
+            this.plot.container.addEventListener('dblclick', this.dblclick);
+            this.plot.container.addEventListener('wheel', this.wheel);
             this.enabled = true;
         }
 
@@ -260,8 +260,8 @@
             if (this.enabled) {
                 throw 'Handler is already disabled';
             }
-            this.plot.canvas.removeEventListener('dblclick', this.dblclick);
-            this.plot.canvas.removeEventListener('wheel', this.wheel);
+            this.plot.container.removeEventListener('dblclick', this.dblclick);
+            this.plot.container.removeEventListener('wheel', this.wheel);
             this.dblclick = null;
             this.wheel = null;
             this.enabled = false;

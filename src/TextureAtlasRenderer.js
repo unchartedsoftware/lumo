@@ -4,7 +4,7 @@
 
     const esper = require('esper');
     const Event = require('./Event');
-    const Renderer = require('./Renderer');
+    const WebGLRenderer = require('./WebGLRenderer');
     const TextureAtlas = require('./TextureAtlas');
 
     const shader = {
@@ -30,9 +30,11 @@
             `
             precision highp float;
             uniform sampler2D uTextureSampler;
+            uniform float uOpacity;
             varying vec2 vTextureCoord;
             void main() {
-                gl_FragColor = texture2D(uTextureSampler, vTextureCoord);
+                vec4 color = texture2D(uTextureSampler, vTextureCoord);
+                gl_FragColor = vec4(color.rgb, color.a * uOpacity);
             }
             `
     };
@@ -120,18 +122,22 @@
         return renderables;
     };
 
-    const renderTiles = function(gl, shader, quad, atlas, plot, pyramid) {
+    const renderTiles = function(gl, shader, quad, atlas, plot, pyramid, opacity) {
         // get projection
         const proj = plot.viewport.getOrthoMatrix();
 
         // bind shader
         shader.use();
 
-        // set uniforms
+        // set projection
         shader.setUniform('uProjectionMatrix', proj);
-
         // set texture sampler unit
         shader.setUniform('uTextureSampler', 0);
+        // set opacity
+        shader.setUniform('uOpacity', opacity);
+
+        // set blending func
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
         // bind quad
         quad.bind();
@@ -179,10 +185,10 @@
     /**
      * Class representing a texture atlas renderer.
      */
-    class TextureAtlasRenderer extends Renderer {
+    class TextureAtlasRenderer extends WebGLRenderer {
 
         /**
-         * Instantiates a new Renderer object.
+         * Instantiates a new TextureAtlasRenderer object.
          */
         constructor() {
             super();
@@ -251,7 +257,8 @@
                 this.quad,
                 this.atlas,
                 this.layer.plot,
-                this.layer.pyramid);
+                this.layer.pyramid,
+                this.layer.opacity);
             return this;
         }
     }

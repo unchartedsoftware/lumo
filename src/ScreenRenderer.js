@@ -3,38 +3,62 @@
     'use strict';
 
     const esper = require('esper');
-    const WebGLRenderer = require('./WebGLRenderer');
+    const Renderer = require('./Renderer');
 
-    const shader = {
-        vert:
-            `
-            precision highp float;
-            attribute vec2 aPosition;
-            attribute vec2 aTextureCoord;
-            uniform vec4 uTextureCoordOffset;
-            uniform vec2 uTileOffset;
-            uniform float uTileScale;
-            uniform mat4 uProjectionMatrix;
-            varying vec2 vTextureCoord;
-            void main() {
-                vTextureCoord = vec2(
-                    uTextureCoordOffset.x + (aTextureCoord.x * uTextureCoordOffset.z),
-                    uTextureCoordOffset.y + (aTextureCoord.y * uTextureCoordOffset.w));
-                vec2 wPosition = (aPosition * uTileScale) + uTileOffset;
-                gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
-            }
-            `,
-        frag:
-            `
-            precision highp float;
-            uniform sampler2D uTextureSampler;
-            uniform float uOpacity;
-            varying vec2 vTextureCoord;
-            void main() {
-                vec4 color = texture2D(uTextureSampler, vTextureCoord);
-                gl_FragColor = vec4(color.rgb, color.a * uOpacity);
-            }
-            `
+    const shaders = {
+        tile: {
+            vert:
+                `
+                precision highp float;
+                attribute vec2 aPosition;
+                attribute vec2 aTextureCoord;
+                uniform vec4 uTextureCoordOffset;
+                uniform vec2 uTileOffset;
+                uniform float uTileScale;
+                uniform mat4 uProjectionMatrix;
+                varying vec2 vTextureCoord;
+                void main() {
+                    vTextureCoord = vec2(
+                        uTextureCoordOffset.x + (aTextureCoord.x * uTextureCoordOffset.z),
+                        uTextureCoordOffset.y + (aTextureCoord.y * uTextureCoordOffset.w));
+                    vec2 wPosition = (aPosition * uTileScale) + uTileOffset;
+                    gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
+                }
+                `,
+            frag:
+                `
+                precision highp float;
+                uniform sampler2D uTextureSampler;
+                varying vec2 vTextureCoord;
+                void main() {
+                    gl_FragColor = texture2D(uTextureSampler, vTextureCoord);
+                }
+                `
+        },
+        layer: {
+            vert:
+                `
+                precision highp float;
+                attribute vec3 aVertexPosition;
+                attribute vec2 aTextureCoord;
+                varying vec2 vTextureCoord;
+                void main(void) {
+                    vTextureCoord = aTextureCoord;
+                    gl_Position = vec4(aVertexPosition, 1.0);
+                }
+                `,
+            frag:
+                `
+                precision highp float;
+                uniform float uOpacity;
+                uniform sampler2D uTextureSampler;
+                varying vec2 vTextureCoord;
+                void main(void) {
+                    vec4 color = texture2D(uTextureSampler, vTextureCoord);
+                    gl_FragColor = vec4(color.rgb, color.a * uOpacity);
+                }
+                `
+        }
     };
 
     const createQuad = function(min, max) {
@@ -109,21 +133,29 @@
         return renderables;
     };
 
-    const renderTiles = function(gl, shader, quad, plot, pyramid, opacity) {
+    const renderTiles = function(gl, plot, shader, quad, pyramid) {
         // update projection
         const proj = plot.viewport.getOrthoMatrix();
 
+        // bind render target
+        plot.renderBuffer.bind();
+
+        // clear viewport
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        // set blending func
+        gl.blendFuncSeparate(
+            gl.SRC_ALPHA,
+            gl.ONE_MINUS_SRC_ALPHA,
+            gl.ONE,
+            gl.ONE_MINUS_SRC_ALPHA);
+
         // bind shader
         shader.use();
-        // set projection
+        // set uniforms
         shader.setUniform('uProjectionMatrix', proj);
         // set texture sampler unit
         shader.setUniform('uTextureSampler', 0);
-        // set opacity
-        shader.setUniform('uOpacity', opacity);
-
-        // set blending func
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
         // bind quad
         quad.bind();
@@ -158,25 +190,54 @@
             shader.setUniform('uTileOffset', offset);
             // draw
             quad.draw();
-            // no need to unbind texture
+            // unbind
+            tile.data.unbind();
         });
 
         // unbind quad
         quad.unbind();
+
+        // unbind render target
+        plot.renderBuffer.unbind();
+    };
+
+    const renderlayer = function(gl, plot, layer, shader, quad) {
+
+        // bind shader
+        shader.use();
+
+        // set blending func
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+        // set uniforms
+        shader.setUniform('uOpacity', layer.opacity);
+        // bind texture
+        plot.renderTexture.bind(0);
+        // set texture sampler unit
+        shader.setUniform('uTextureSampler', 0);
+
+        // draw quad
+        quad.bind();
+        quad.draw();
+        quad.unbind();
+
+        // unbind texture
+        plot.renderTexture.unbind();
     };
 
     /**
      * Class representing a renderer.
      */
-    class TextureRenderer extends WebGLRenderer {
+    class ScreenRenderer extends Renderer {
 
         /**
-         * Instantiates a new TextureRenderer object.
+         * Instantiates a new ScreenRenderer object.
          */
         constructor() {
             super();
             this.quad = null;
-            this.shader = null;
+            this.screen = null;
+            this.shaders = new Map();
         }
 
         /**
@@ -189,7 +250,9 @@
         onAdd(layer) {
             super.onAdd(layer);
             this.quad = createQuad(0, layer.plot.tileSize);
-            this.shader = new esper.Shader(shader);
+            this.screen = createQuad(-1, 1);
+            this.shaders.set('tile', new esper.Shader(shaders.tile));
+            this.shaders.set('layer', new esper.Shader(shaders.layer));
             return this;
         }
 
@@ -203,7 +266,9 @@
         onRemove(layer) {
             super.onRemove(layer);
             this.quad = null;
-            this.shader = null;
+            this.screen = null;
+            this.shaders.delete('tile');
+            this.shaders.delete('layer');
             return this;
         }
 
@@ -218,15 +283,21 @@
             // render the tiles to the framebuffer
             renderTiles(
                 this.gl,
-                this.shader,
-                this.quad,
                 this.layer.plot,
-                this.layer.pyramid,
-                this.layer.opacity);
+                this.shaders.get('tile'),
+                this.quad,
+                this.layer.pyramid);
+            // render framebuffer to the backbuffer
+            renderlayer(
+                this.gl,
+                this.layer.plot,
+                this.layer,
+                this.shaders.get('layer'),
+                this.screen);
             return this;
         }
     }
 
-    module.exports = TextureRenderer;
+    module.exports = ScreenRenderer;
 
 }());

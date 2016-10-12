@@ -203,7 +203,7 @@
                 }
             };
 
-            this.plot.canvas.addEventListener('mousedown', this.mousedown);
+            this.plot.container.addEventListener('mousedown', this.mousedown);
             document.addEventListener('mousemove', this.mousemove);
             document.addEventListener('mouseup', this.mouseup);
             this.enabled = true;
@@ -218,7 +218,7 @@
             if (!this.enabled) {
                 throw 'Handler is already disabled';
             }
-            this.plot.canvas.removeEventListener('mousedown', this.mousedown);
+            this.plot.container.removeEventListener('mousedown', this.mousedown);
             document.removeEventListener('mousemove', this.mousemove);
             document.removeEventListener('mouseup', this.mouseup);
             this.mousedown = null;

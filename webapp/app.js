@@ -32,11 +32,10 @@
 
     window.start = function() {
 
-
-        let plot = new caleida.Plot('#plot-canvas', {
+        let plot = new caleida.Plot('#plot', {
             continuousZoom: false,
             inertia: true,
-            wraparound: true
+            wraparound: false
         });
 
         // plot.on('pan', () => {
@@ -59,6 +58,7 @@
         base.requestTile = (coord, done) => {
             let image = new Image();
             image.onload = () => {
+                //done(null, image);
                 done(null, new esper.ColorTexture2D({
                     src: image,
                     filter: 'LINEAR',
@@ -89,7 +89,7 @@
 
         // base.opacity = 0.5;
 
-        // plot.addLayer(base);
+        plot.addLayer(base);
 
         let mandlebrot = new caleida.Layer({
             renderer: new caleida.TextureRenderer()
@@ -118,7 +118,7 @@
             req.send(null);
         };
 
-        // mandlebrot.opacity = 0.5;
+        mandlebrot.opacity = 0.5;
 
         // plot.addLayer(mandlebrot);
 
@@ -127,17 +127,86 @@
         });
 
         point.requestTile = (coord, done) => {
-            const numPoints = 256 * 16;
-            const buffer = new Float32Array((2 + 1) * numPoints);
+            const numPoints = 256 * 8;
+            const buffer = new Float32Array(3 * numPoints);
             for (let i=0; i<numPoints; i++) {
                 buffer[i*3] = Math.random() * 256; // x
                 buffer[i*3+1] = Math.random() * 256; // y
-                buffer[i*3+2] = (Math.random() * 4) + 1; // radius
+                buffer[i*3+2] = (Math.random() * 3) + 1; // radius
             }
             done(null, buffer);
+            // setTimeout(()=> {
+            //     const dim = 32;
+            //     const span = 256 / dim;
+            //     const buffer = new Float32Array((2 + 1) * dim * 2);
+            //     for (let i=0; i<dim; i++) {
+            //         buffer[i*3] = i * span;
+            //         buffer[i*3+1] = i * span;
+            //         buffer[i*3+2] = 4;
+            //     }
+            //     for (let i=0; i<dim; i++) {
+            //         buffer[dim*3 + i*3] = i * span;
+            //         buffer[dim*3 + i*3 +1] = 256 - (i * span);
+            //         buffer[dim*3 + i*3 +2] = 4;
+            //     }
+            //     done(null, buffer);
+            // }, 2000);
         };
 
-        plot.addLayer(point);
+        // plot.addLayer(point);
+
+        let htmlRenderer = new caleida.HTMLRenderer();
+
+        htmlRenderer.drawTile = function(element, tile) {
+            const html = document.createElement('div');
+            html.style.position = 'absolute';
+            html.style.top = '128px';
+            html.style.width = '256px';
+            html.style['text-align'] = 'center';
+            html.style.font = '14px "Helvetica Neue", sans-serif';
+            html.innerHTML = `HTML Tile ${tile.coord.hash}`;
+            element.appendChild(html);
+        };
+
+        let html = new caleida.Layer({
+            renderer: htmlRenderer
+        });
+
+        html.requestTile = (coord, done) => {
+            done(null, {});
+        };
+
+        // plot.addLayer(html);
+
+        let svgRenderer = new caleida.SVGRenderer();
+
+        svgRenderer.drawTile = function(element) {
+            const SVG_NS = 'http://www.w3.org/2000/svg';
+            const circle = document.createElementNS(SVG_NS, 'circle');
+            circle.setAttribute('cx', 128);
+            circle.setAttribute('cy', 128);
+            circle.setAttribute('r',  64);
+            circle.setAttribute('fill', 'green');
+            const rect = document.createElementNS(SVG_NS, 'rect');
+            rect.setAttribute('x', 0);
+            rect.setAttribute('y', 0);
+            rect.setAttribute('width', 256);
+            rect.setAttribute('height', 256);
+            rect.setAttribute('fill', 'green');
+            rect.setAttribute('opacity', 0.5);
+            element.appendChild(rect);
+            element.appendChild(circle);
+        };
+
+        let svg = new caleida.Layer({
+            renderer: svgRenderer
+        });
+
+        svg.requestTile = (coord, done) => {
+            done(null, {});
+        };
+
+        plot.addLayer(svg);
 
         // Debug performance tracking
 

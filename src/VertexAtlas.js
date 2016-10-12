@@ -15,14 +15,6 @@
         FLOAT: 4
     };
 
-    // LOD vertex spec:
-    // Tile contains vertex data + LOD offsets
-    // Sort vertices by morton codes
-    // create offset array of size sqrdPOTSums(LOD)
-    // index into offset array: sqrdPOTSums(LOD) + quadrant * 4 + child
-    // byteOffset = offsets[index]
-    // count = (offsets[index+1] - offsets[index]) / byteStride
-
     const calcChunkByteSize = function(pointers, chunkSize) {
         let byteSize = 0;
         pointers.forEach(pointer => {

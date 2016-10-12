@@ -4,7 +4,7 @@
 
     const esper = require('esper');
     const Event = require('./Event');
-    const Renderer = require('./Renderer');
+    const WebGLRenderer = require('./WebGLRenderer');
     const VertexAtlas = require('./VertexAtlas');
 
     const CIRCLE_SLICES = 32;
@@ -29,8 +29,9 @@
             `
             precision highp float;
             uniform vec4 uColor;
+            uniform float uOpacity;
             void main() {
-                gl_FragColor = uColor;
+                gl_FragColor = vec4(uColor.rgb, uColor.a * uOpacity);
             }
             `
     };
@@ -103,18 +104,7 @@
             });
     };
 
-    const getRenderable = function(atlas, coord, zoom, tile, offset) {
-        const ncoord = tile.coord.normalize();
-        const scale = Math.pow(2, zoom - coord.z);
-        return {
-            coord: coord,
-            scale: scale,
-            hash: ncoord.hash,
-            offset: (offset.extent === 1) ? null : offset
-        };
-    };
-
-    const getRenderables = function(plot, pyramid, atlas) {
+    const getRenderables = function(plot, pyramid) {
 
         // get all currently visible tile coords
         const coords = plot.viewport.getVisibleCoords(
@@ -123,34 +113,39 @@
             Math.round(plot.zoom), // get tiles closest to current zoom
             plot.wraparound);
 
+        // get available renderables
         const renderables = [];
         coords.forEach(coord => {
-            // check if we have any tile LOD available
-            const lod = pyramid.getAvailableLOD(coord);
-            if (lod) {
-                const renderable = getRenderable(
-                    atlas,
-                    coord,
-                    plot.zoom,
-                    lod.tile,
-                    lod.offset);
+            const ncoord = coord.normalize();
+            // check if we have the tile
+            if (pyramid.has(ncoord)) {
+                const renderable = {
+                    coord: coord,
+                    scale: Math.pow(2, plot.zoom - coord.z),
+                    hash: ncoord.hash
+                };
                 renderables.push(renderable);
             }
         });
-
         return renderables;
     };
 
-    const renderTiles = function(gl, atlas, circle, shader, plot, pyramid, color) {
+    const renderTiles = function(gl, atlas, circle, shader, plot, pyramid, opacity, color) {
         // get projection
         const proj = plot.viewport.getOrthoMatrix();
 
         // bind shader
         shader.use();
 
-        // set uniforms
+        // set projection
         shader.setUniform('uProjectionMatrix', proj);
+        // set color
         shader.setUniform('uColor', color);
+        // set opacity
+        shader.setUniform('uOpacity', opacity);
+
+        // set blending func
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
         // bind circle
         circle.bind();
@@ -165,7 +160,7 @@
         ];
 
         // get renderables
-        const renderables = getRenderables(plot, pyramid, atlas);
+        const renderables = getRenderables(plot, pyramid);
 
         // for each renderable
         renderables.forEach(renderable => {
@@ -182,25 +177,9 @@
                 tileOffset[1] - viewOffset[1]
             ];
             shader.setUniform('uTileOffset', offset);
-
-            // if (renderable.offset) {
-            //     // enable scissor test
-            //     gl.enable(gl.SCISSOR_TEST);
-            //     // set the scissor rectangle
-            //     gl.scissor(
-            //         offset[0],
-            //         offset[1],
-            //         (1/renderable.scale) * plot.tileSize,
-            //         (1/renderable.scale) * plot.tileSize);
-            // } else {
-            //     gl.disable(gl.SCISSOR_TEST);
-            // }
-
             // draw the instances
             atlas.draw(renderable.hash, circle.mode, circle.count);
         });
-
-        // gl.disable(gl.SCISSOR_TEST);
 
         // unbind
         atlas.unbind();
@@ -213,10 +192,10 @@
     /**
      * Class representing a pointer renderer.
      */
-    class PointRenderer extends Renderer {
+    class PointRenderer extends WebGLRenderer {
 
         /**
-         * Instantiates a new Renderer object.
+         * Instantiates a new PointRenderer object.
          */
         constructor() {
             super();
@@ -295,8 +274,6 @@
             const gl = this.gl;
 
             // render the fill
-            gl.enable(gl.BLEND);
-            gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
             renderTiles(
                 this.gl,
                 this.atlas,
@@ -304,6 +281,7 @@
                 this.shader,
                 this.layer.plot,
                 this.layer.pyramid,
+                this.layer.opacity,
                 [ 1.0, 0.4, 0.1, 1.0]);
 
             // render the outlines
@@ -315,6 +293,7 @@
                 this.shader,
                 this.layer.plot,
                 this.layer.pyramid,
+                this.layer.opacity,
                 [ 0.0, 0.0, 0.0, 1.0]);
             return this;
         }

@@ -5,7 +5,6 @@
     const esper = require('esper');
     const clamp = require('lodash/clamp');
     const defaultTo = require('lodash/defaultTo');
-    const throttle = require('lodash/throttle');
     const EventEmitter = require('events');
     const Event = require('./Event');
     const Request = require('./Request');
@@ -13,21 +12,15 @@
     const PanHandler = require('./PanHandler');
     const ZoomHandler = require('./ZoomHandler');
 
-    // Constants
-
-    /**
-     * Resize request throttle in milliseconds.
-     * @constant {Number}
-     */
-    const RESIZE_THROTTLE_MS = 200;
-
     // Private Methods
 
-    const resize = throttle(function(plot) {
-        const width = plot.canvas.offsetWidth;
-        const height = plot.canvas.offsetHeight;
+    const resize = function(plot) {
+        const width = plot.container.offsetWidth;
+        const height = plot.container.offsetHeight;
         if (plot.viewport.width !== width || plot.viewport.height !== height) {
             // resize canvas
+            plot.canvas.style.width = width + 'px';
+            plot.canvas.style.height = height + 'px';
             plot.canvas.width = width * window.devicePixelRatio;
             plot.canvas.height = height * window.devicePixelRatio;
             // resize render target
@@ -42,7 +35,7 @@
             // emit resize
             plot.emit(Event.RESIZE, {});
         }
-    }, RESIZE_THROTTLE_MS);
+    };
 
     const reset = function(plot) {
         if (!plot.wraparound) {
@@ -87,6 +80,9 @@
         // clear the backbuffer
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);
+
+        // enable blending
+        gl.enable(gl.BLEND);
 
         // set the viewport
         gl.viewport(
@@ -155,19 +151,27 @@
          */
         constructor(selector, options = {}) {
             super();
-            this.canvas = document.querySelector(selector);
-            if (!this.canvas) {
+            this.container = document.querySelector(selector);
+            if (!this.container) {
                 throw `Element could not be found for selector ${selector}`;
             }
+
+            // create canvas element
+            this.canvas = document.createElement('canvas');
+            this.canvas.style.width = this.container.offsetWidth + 'px';
+            this.canvas.style.height = this.container.offsetHeight + 'px';
+            this.canvas.width = this.container.offsetWidth * window.devicePixelRatio;
+            this.canvas.height = this.container.offsetHeight * window.devicePixelRatio;
+            this.container.appendChild(this.canvas);
+
+            // get WebGL context
             try {
                 this.gl = esper.WebGLContext.get(this.canvas);
             } catch(err) {
                 throw `Unable to create a WebGLRenderingContext, please ensure your browser supports WebGL`;
             }
-            this.canvas.width = this.canvas.offsetWidth * window.devicePixelRatio;
-            this.canvas.height = this.canvas.offsetHeight * window.devicePixelRatio;
 
-            // set render target
+            // create render target
             this.renderTexture = new esper.ColorTexture2D({
                 width: this.canvas.width,
                 height: this.canvas.height,
@@ -238,6 +242,7 @@
             esper.WebGLContext.remove(this.canvas);
             this.gl = null;
             this.canvas = null;
+            this.container = null;
             // disable handlers
             this.handlers.forEach(handler => {
                 handler.disable();
