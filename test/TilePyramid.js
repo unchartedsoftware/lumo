@@ -3,9 +3,9 @@
     'use strict';
 
     const assert = require('assert');
-    const Coord = require('../src/Coord');
-    const Layer = require('../src/Layer');
-    const TilePyramid = require('../src/TilePyramid');
+    const Coord = require('../src/core/Coord');
+    const Layer = require('../src/layer/Layer');
+    const TilePyramid = require('../src/layer/TilePyramid');
 
     let layer;
 

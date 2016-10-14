@@ -3,14 +3,14 @@
     'use strict';
 
     const esper = require('esper');
-    const Event = require('./Event');
+    const Event = require('../../core/Event');
     const WebGLRenderer = require('./WebGLRenderer');
     const VertexAtlas = require('./VertexAtlas');
 
-    const CIRCLE_SLICES = 32;
+    const CIRCLE_SLICES = 64;
     const CIRCLE_RADIUS = 1;
 
-    const shader = {
+    const tileShader = {
         vert:
             `
             precision highp float;
@@ -29,46 +29,38 @@
             `
             precision highp float;
             uniform vec4 uColor;
-            uniform float uOpacity;
             void main() {
-                gl_FragColor = vec4(uColor.rgb, uColor.a * uOpacity);
+                gl_FragColor = uColor;
             }
             `
     };
 
-    const createCircleOutline = function() {
-        const theta = (2 * Math.PI) / CIRCLE_SLICES;
-        // precalculate sine and cosine
-        const c = Math.cos(theta);
-        const s = Math.sin(theta);
-        // start at angle = 0
-        let x = CIRCLE_RADIUS;
-        let y = 0;
-        let t;
-        const positions = new Float32Array(CIRCLE_SLICES * 2);
-        for (let i=0; i<CIRCLE_SLICES; i++) {
-            positions[i*2] = x;
-            positions[i*2+1] = y;
-            // apply the rotation
-            t = x;
-            x = c * x - s * y;
-            y = s * t + c * y;
-        }
-        return new esper.VertexBuffer(
-            positions,
-            {
-                0: {
-                    size: 2,
-                    type: 'FLOAT'
-                }
-            },
-            {
-                mode: 'LINE_LOOP',
-                count: positions.length / 2
-            });
+    const layerShader = {
+        vert:
+            `
+            precision highp float;
+            attribute vec3 aVertexPosition;
+            attribute vec2 aTextureCoord;
+            varying vec2 vTextureCoord;
+            void main(void) {
+                vTextureCoord = aTextureCoord;
+                gl_Position = vec4(aVertexPosition, 1.0);
+            }
+            `,
+        frag:
+            `
+            precision highp float;
+            uniform float uOpacity;
+            uniform sampler2D uTextureSampler;
+            varying vec2 vTextureCoord;
+            void main(void) {
+                vec4 color = texture2D(uTextureSampler, vTextureCoord);
+                gl_FragColor = vec4(color.rgb, color.a * uOpacity);
+            }
+            `
     };
 
-    const createCircleFill = function() {
+    const createCircle = function() {
         const theta = (2 * Math.PI) / CIRCLE_SLICES;
         // precalculate sine and cosine
         const c = Math.cos(theta);
@@ -76,7 +68,6 @@
         // start at angle = 0
         let x = CIRCLE_RADIUS;
         let y = 0;
-        let t;
         const positions = new Float32Array((CIRCLE_SLICES + 2) * 2);
         positions[0] = 0;
         positions[1] = 0;
@@ -86,7 +77,7 @@
             positions[(i+1)*2] = x;
             positions[(i+1)*2+1] = y;
             // apply the rotation
-            t = x;
+            const t = x;
             x = c * x - s * y;
             y = s * t + c * y;
         }
@@ -101,6 +92,42 @@
             {
                 mode: 'TRIANGLE_FAN',
                 count: positions.length / 2
+            });
+    };
+
+    const createQuad = function(min, max) {
+        const vertices = new Float32Array(24);
+        // positions
+        vertices[0] = min;      vertices[1] = min;
+        vertices[2] = max;      vertices[3] = min;
+        vertices[4] = max;      vertices[5] = max;
+        vertices[6] = min;      vertices[7] = min;
+        vertices[8] = max;      vertices[9] = max;
+        vertices[10] = min;     vertices[11] = max;
+        // uvs
+        vertices[12] = 0;       vertices[13] = 0;
+        vertices[14] = 1;       vertices[15] = 0;
+        vertices[16] = 1;       vertices[17] = 1;
+        vertices[18] = 0;       vertices[19] = 0;
+        vertices[20] = 1;       vertices[21] = 1;
+        vertices[22] = 0;       vertices[23] = 1;
+        // create quad buffer
+        return new esper.VertexBuffer(
+            vertices,
+            {
+                0: {
+                    size: 2,
+                    type: 'FLOAT',
+                    byteOffset: 0
+                },
+                1: {
+                    size: 2,
+                    type: 'FLOAT',
+                    byteOffset: 2 * 6 * 4
+                }
+            },
+            {
+                count: 6,
             });
     };
 
@@ -130,9 +157,18 @@
         return renderables;
     };
 
-    const renderTiles = function(gl, atlas, circle, shader, plot, pyramid, opacity, color) {
+    const renderTiles = function(gl, atlas, circle, shader, plot, pyramid, color) {
         // get projection
         const proj = plot.viewport.getOrthoMatrix();
+
+        // bind render target
+        plot.renderBuffer.bind();
+
+        // clear viewport
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        // set blending func
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
         // bind shader
         shader.use();
@@ -141,17 +177,12 @@
         shader.setUniform('uProjectionMatrix', proj);
         // set color
         shader.setUniform('uColor', color);
-        // set opacity
-        shader.setUniform('uOpacity', opacity);
-
-        // set blending func
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
         // bind circle
         circle.bind();
 
         // binds the buffer to instance
-        atlas.bind();
+        atlas.bindInstanced();
 
         // get view offset
         const viewOffset = [
@@ -178,15 +209,42 @@
             ];
             shader.setUniform('uTileOffset', offset);
             // draw the instances
-            atlas.draw(renderable.hash, circle.mode, circle.count);
+            atlas.drawInstanced(renderable.hash, circle.mode, circle.count);
         });
 
         // unbind
-        atlas.unbind();
+        atlas.unbindInstanced();
 
         // unbind quad
         circle.unbind();
 
+        // unbind render target
+        plot.renderBuffer.unbind();
+    };
+
+    const renderlayer = function(gl, plot, opacity, shader, quad) {
+
+        // bind shader
+        shader.use();
+
+        // set blending func
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+        // set uniforms
+        shader.setUniform('uOpacity', opacity);
+        // set texture sampler unit
+        shader.setUniform('uTextureSampler', 0);
+
+        // bind texture
+        plot.renderTexture.bind(0);
+
+        // draw quad
+        quad.bind();
+        quad.draw();
+        quad.unbind();
+
+        // unbind texture
+        plot.renderTexture.unbind();
     };
 
     /**
@@ -199,9 +257,9 @@
          */
         constructor() {
             super();
-            this.circleFill = null;
-            this.circleOutline = null;
-            this.shader = null;
+            this.circle = null;
+            this.quad = null;
+            this.shaders = null;
             this.atlas = null;
         }
 
@@ -214,9 +272,12 @@
          */
         onAdd(layer) {
             super.onAdd(layer);
-            this.circleFill = createCircleFill();
-            this.circleOutline = createCircleOutline();
-            this.shader = new esper.Shader(shader);
+            this.circle = createCircle();
+            this.quad = createQuad(-1, 1);
+            this.shaders = new Map([
+                ['tile', new esper.Shader(tileShader)],
+                ['layer', new esper.Shader(layerShader)]
+            ]);
             this.atlas = new VertexAtlas({
                 // offset
                 1: {
@@ -255,9 +316,9 @@
             this.layer.removeListener(this.remove);
             this.tileAdd = null;
             this.tileRemove = null;
-            this.circleFill = null;
-            this.circleOutline = null;
-            this.shader = null;
+            this.circle = null;
+            this.quad = null;
+            this.shaders = null;
             this.atlas = null;
             super.onRemove(layer);
             return this;
@@ -272,29 +333,24 @@
          */
         draw() {
             const gl = this.gl;
-
-            // render the fill
+            // enable blending
+            gl.enable(gl.BLEND);
+            // render the tiles
             renderTiles(
                 this.gl,
                 this.atlas,
-                this.circleFill,
-                this.shader,
+                this.circle,
+                this.shaders.get('tile'),
                 this.layer.plot,
                 this.layer.pyramid,
-                this.layer.opacity,
-                [ 1.0, 0.4, 0.1, 1.0]);
-
-            // render the outlines
-            gl.lineWidth(1);
-            renderTiles(
+                [ 1.0, 0.4, 0.1, 0.8]);
+            // render framebuffer to the backbuffer
+            renderlayer(
                 this.gl,
-                this.atlas,
-                this.circleOutline,
-                this.shader,
                 this.layer.plot,
-                this.layer.pyramid,
                 this.layer.opacity,
-                [ 0.0, 0.0, 0.0, 1.0]);
+                this.shaders.get('layer'),
+                this.quad);
             return this;
         }
     }

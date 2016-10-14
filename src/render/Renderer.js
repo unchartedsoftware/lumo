@@ -2,8 +2,6 @@
 
     'use strict';
 
-    const esper = require('esper');
-
     /**
      * Class representing a renderer.
      */
@@ -13,7 +11,6 @@
          * Instantiates a new Renderer object.
          */
         constructor() {
-            this.gl = null;
             this.layer = null;
         }
 
@@ -28,7 +25,6 @@
             if (!layer) {
                 throw 'No layer provided as argument';
             }
-            this.gl = esper.WebGLContext.get(layer.plot.canvas);
             this.layer = layer;
             return this;
         }
@@ -44,7 +40,6 @@
             if (!layer) {
                 throw 'No layer provided as argument';
             }
-            this.gl = null;
             this.layer = null;
             return this;
         }

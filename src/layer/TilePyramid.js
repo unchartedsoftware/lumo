@@ -4,8 +4,8 @@
 
     const defaultTo = require('lodash/defaultTo');
     const LRU = require('lru-cache');
-    const Event = require('./Event');
-    const Tile = require('./Tile');
+    const Event = require('../core/Event');
+    const Tile = require('../core/Tile');
 
     // Constants
 

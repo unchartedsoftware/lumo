@@ -3,7 +3,7 @@
     'use strict';
 
     const esper = require('esper');
-    const Renderer = require('./Renderer');
+    const Renderer = require('../Renderer');
 
     const shaders = {
         tile: {
@@ -144,6 +144,7 @@
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         // set blending func
+        gl.enable(gl.BLEND);
         gl.blendFuncSeparate(
             gl.SRC_ALPHA,
             gl.ONE_MINUS_SRC_ALPHA,

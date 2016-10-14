@@ -3,8 +3,8 @@
     'use strict';
 
     const EventEmitter = require('events');
-    const Bounds = require('./Bounds');
-    const Coord = require('./Coord');
+    const Bounds = require('../core/Bounds');
+    const Coord = require('../core/Coord');
 
     /**
      * Class representing a viewport.

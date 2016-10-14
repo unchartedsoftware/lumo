@@ -38,10 +38,6 @@
     };
 
     const createQuad = function(min, max) {
-        const BYTES_PER_FLOAT = 4;
-        const NUM_VERTICES = 6;
-        const COMPONENTS_PER_VERTEX = 2;
-        const BYTE_LENGTH = COMPONENTS_PER_VERTEX * NUM_VERTICES * BYTES_PER_FLOAT;
         const vertices = new Float32Array(24);
         // positions
         vertices[0] = min;      vertices[1] = min;
@@ -62,18 +58,18 @@
             vertices,
             {
                 0: {
-                    size: COMPONENTS_PER_VERTEX,
+                    size: 2,
                     type: 'FLOAT',
                     byteOffset: 0
                 },
                 1: {
-                    size: COMPONENTS_PER_VERTEX,
+                    size: 2,
                     type: 'FLOAT',
-                    byteOffset: BYTE_LENGTH
+                    byteOffset: 2 * 6 * 4
                 }
             },
             {
-                count: NUM_VERTICES,
+                count: 6,
             });
     };
 
@@ -123,6 +119,7 @@
         shader.setUniform('uOpacity', opacity);
 
         // set blending func
+        gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
         // bind quad

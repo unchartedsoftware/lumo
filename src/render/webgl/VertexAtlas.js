@@ -29,7 +29,26 @@
             chunk.byteOffsets[location] = chunkByteOffset + byteOffset;
             byteOffset += BYTES_PER_TYPE[pointer.type] * pointer.size;
         });
-        chunk.byteStride = byteOffset;
+    };
+
+    const parseAttributePointers = function(pointers) {
+        const attributePointers = new Map();
+        let byteOffset = 0;
+        // convert to map
+        forIn(pointers, (pointer, index) => {
+            attributePointers.set(index, {
+                type: pointer.type,
+                size: pointer.size,
+                byteOffset: byteOffset,
+                byteStride: 0
+            });
+            byteOffset += BYTES_PER_TYPE[pointer.type] * pointer.size;
+        });
+        // add byteStride
+        attributePointers.forEach(pointer => {
+            pointer.byteStride = byteOffset;
+        });
+        return attributePointers;
     };
 
     /**
@@ -57,10 +76,7 @@
             this.numChunks = defaultTo(options.numChunks, 256);
             this.chunkSize = defaultTo(options.chunkSize, 128 * 128);
             // set the pointers of the atlas
-            this.pointers = new Map();
-            forIn(pointers, (pointer, index) => {
-                this.pointers.set(index, pointer);
-            });
+            this.pointers = parseAttributePointers(pointers);
             // create available chunks
             this.available = new Array(this.numChunks);
             // calc the chunk byte size
@@ -69,12 +85,13 @@
                 this.chunkSize);
             // for each chunk
             for (let i=0; i<this.numChunks; i++) {
+                const chunkOffset = i * this.chunkSize;
                 const chunkByteOffset = i * chunkByteSize;
                 const available = {
                     count: 0,
+                    chunkOffset: chunkOffset,
                     chunkByteOffset: chunkByteOffset,
-                    byteOffsets: {},
-                    byteStride: 0
+                    byteOffsets: {}
                 };
                 // calculate interleaved offsets / stride, this only needs
                 // to be done once
@@ -165,16 +182,40 @@
         }
 
         /**
-         * Binds the vertex atlas and activates the attribute arrays for
-         * instancing.
+         * Binds the vertex atlas and activates the attribute arrays.
          *
-         * @param {String} key - The texture unit to activate. Optional.
-         *
-         * @returns {VertexAtlas} The TextureAtlas object, for chaining.
+         * @returns {VertexAtlas} The VertexAtlas object, for chaining.
          */
         bind() {
             const gl = this.gl;
+            // bind the buffer
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+            // for each attribute pointer
+            this.pointers.forEach((pointer, index) => {
+                // enable attribute index
+                gl.enableVertexAttribArray(index);
+                // set attribute pointer
+                gl.vertexAttribPointer(
+                    index,
+                    pointer.size,
+                    gl[pointer.type],
+                    false,
+                    pointer.byteStride,
+                    pointer.byteOffset);
+            });
+            return this;
+        }
+
+        /**
+         * Binds the vertex atlas and activates the attribute arrays for
+         * instancing.
+         *
+         * @returns {VertexAtlas} The VertexAtlas object, for chaining.
+         */
+        bindInstanced() {
+            const gl = this.gl;
             const ext = this.ext;
+            // bind the buffer
             gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
             // for each attribute pointer
             this.pointers.forEach((pointer, index) => {
@@ -189,24 +230,48 @@
         /**
          * Unbinds the vertex atlas and disables the vertex arrays.
          *
-         * @returns {TextureAtlas} The TextureAtlas object, for chaining.
+         * @returns {VertexAtlas} The VertexAtlas object, for chaining.
          */
         unbind() {
+            const gl = this.gl;
+            // for each attribute pointer
+            this.pointers.forEach((pointer, index) => {
+                // disable attribute index
+                gl.disableVertexAttribArray(index);
+            });
+            return this;
+        }
+
+        /**
+         * Unbinds the vertex atlas and disables the vertex arrays for
+         * instancing.
+         *
+         * @returns {VertexAtlas} The VertexAtlas object, for chaining.
+         */
+        unbindInstanced() {
             const gl = this.gl;
             const ext = this.ext;
             // for each attribute pointer
             this.pointers.forEach((pointer, index) => {
-                if (index !== 0) {
-                    // disable attribute index
-                    gl.disableVertexAttribArray(index);
-                }
+                // disable attribute index
+                gl.disableVertexAttribArray(index);
                 // disable instancing this attribute
                 ext.vertexAttribDivisorANGLE(index, 0);
             });
             return this;
         }
 
-        draw(key, mode, count) {
+        draw(key, mode) {
+            if (!this.has(key)) {
+                throw `Tile of coord ${key} does not exist in the atlas`;
+            }
+            const gl = this.gl;
+            const chunk = this.used.get(key);
+            // draw the chunk
+            gl.drawArrays(gl[mode], chunk.chunkOffset, chunk.count);
+        }
+
+        drawInstanced(key, mode, count) {
             if (!this.has(key)) {
                 throw `Tile of coord ${key} does not exist in the atlas`;
             }
@@ -221,7 +286,7 @@
                     pointer.size,
                     gl[pointer.type],
                     false,
-                    chunk.byteStride,
+                    pointer.byteStride,
                     chunk.byteOffsets[index]);
             });
             // draw the bound vertex array

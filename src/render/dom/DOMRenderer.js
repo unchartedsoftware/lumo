@@ -2,7 +2,7 @@
 
     'use strict';
 
-    const Renderer = require('./Renderer');
+    const Renderer = require('../Renderer');
 
     const getRenderables = function(plot, pyramid) {
         // get all currently visible tile coords
@@ -45,7 +45,7 @@
          *
          * @param {Layer} layer - The layer to attach the renderer to.
          *
-         * @returns {Renderer} The renderer object, for chaining.
+         * @returns {DOMRenderer} The renderer object, for chaining.
          */
         onAdd(layer) {
             super.onAdd(layer);
@@ -60,7 +60,7 @@
          *
          * @param {Layer} layer - The layer to remove the renderer from.
          *
-         * @returns {Renderer} The renderer object, for chaining.
+         * @returns {DOMRenderer} The renderer object, for chaining.
          */
         onRemove(layer) {
             this.layer.plot.container.removeChild(this.container);

@@ -4,10 +4,11 @@
 
     const clamp = require('lodash/clamp');
     const defaultTo = require('lodash/defaultTo');
-    const Browser = require('./Browser');
-    const Request = require('./Request');
-    const Viewport = require('./Viewport');
-    const ZoomAnimation = require('./ZoomAnimation');
+    const Browser = require('../../core/Browser');
+    const Event = require('../../core/Event');
+    const ZoomAnimation = require('../animation/ZoomAnimation');
+    const Request = require('../Request');
+    const Viewport = require('../Viewport');
 
     // Constants
 

@@ -18,18 +18,6 @@
         'y', 'z'
     ];
 
-    // const normalizePoints = function(points, coord) {
-    //     const tileSpan = 4294967296 / Math.pow(2, coord.z);
-    //     const xOffset = coord.x * tileSpan;
-    //     const yOffset = coord.y * tileSpan;
-    //     const buffer = new Float32Array(points.length);
-    //     for (let i=0; i<points.length; i+=2) {
-    //         buffer[i] = points[i] - xOffset;
-    //         buffer[i+1] = points[i+1] - yOffset;
-    //     }
-    //     return buffer;
-    // };
-
     window.start = function() {
 
         let plot = new caleida.Plot('#plot', {
@@ -38,18 +26,7 @@
             wraparound: false
         });
 
-        // plot.on('pan', () => {
-        //     console.log(`pan: ${plot.viewport.x}, ${plot.viewport.y}`);
-        // });
-        // plot.on('resize', () => {
-        //     console.log(`resize: ${plot.viewport.width}, ${plot.viewport.height}`);
-        // });
-        // plot.on('zoom:start', () => {
-        //     console.log(`zoom start: ${plot.zoom}`);
-        // });
-        // plot.on('zoom:end', () => {
-        //     console.log(`zoom end: ${plot.zoom}`);
-        // });
+        // WebGL Image Texture
 
         let base = new caleida.Layer({
             renderer: new caleida.TextureRenderer()
@@ -77,19 +54,11 @@
             image.src = `http://${s}.basemaps.cartocdn.com/dark_nolabels/${coord.z}/${coord.x}/${dim - 1 - coord.y}.png`;
         };
 
-        // base.on('tile:request', tile => {
-        //     console.log(`request: ${tile.coord.hash}`);
-        // });
-        // base.on('tile:add', tile => {
-        //     console.log(`add: ${tile.coord.hash}, ${base.pyramid.tiles.length} total tiles`);
-        // });
-        // base.on('tile:remove', tile => {
-        //     console.log(`remove: ${tile.coord.hash}, ${base.pyramid.tiles.length} total tiles`);
-        // });
-
         // base.opacity = 0.5;
 
-        plot.addLayer(base);
+        // plot.addLayer(base);
+
+        // WebGL Buffer Texture
 
         let mandlebrot = new caleida.Layer({
             renderer: new caleida.TextureRenderer()
@@ -122,6 +91,8 @@
 
         // plot.addLayer(mandlebrot);
 
+        // WebGL Point
+
         let point = new caleida.Layer({
             renderer: new caleida.PointRenderer()
         });
@@ -132,28 +103,38 @@
             for (let i=0; i<numPoints; i++) {
                 buffer[i*3] = Math.random() * 256; // x
                 buffer[i*3+1] = Math.random() * 256; // y
-                buffer[i*3+2] = (Math.random() * 3) + 1; // radius
+                buffer[i*3+2] = (Math.random() * 4) + 2; // radius
             }
             done(null, buffer);
-            // setTimeout(()=> {
-            //     const dim = 32;
-            //     const span = 256 / dim;
-            //     const buffer = new Float32Array((2 + 1) * dim * 2);
-            //     for (let i=0; i<dim; i++) {
-            //         buffer[i*3] = i * span;
-            //         buffer[i*3+1] = i * span;
-            //         buffer[i*3+2] = 4;
-            //     }
-            //     for (let i=0; i<dim; i++) {
-            //         buffer[dim*3 + i*3] = i * span;
-            //         buffer[dim*3 + i*3 +1] = 256 - (i * span);
-            //         buffer[dim*3 + i*3 +2] = 4;
-            //     }
-            //     done(null, buffer);
-            // }, 2000);
         };
 
-        // plot.addLayer(point);
+        plot.addLayer(point);
+
+        // SVG
+
+        let svgRenderer = new caleida.SVGRenderer();
+
+        svgRenderer.drawTile = function(element) {
+            const SVG_NS = 'http://www.w3.org/2000/svg';
+            const circle = document.createElementNS(SVG_NS, 'circle');
+            circle.setAttribute('cx', 128);
+            circle.setAttribute('cy', 128);
+            circle.setAttribute('r',  64);
+            circle.setAttribute('fill', 'green');
+            element.appendChild(circle);
+        };
+
+        let svg = new caleida.Layer({
+            renderer: svgRenderer
+        });
+
+        svg.requestTile = (coord, done) => {
+            done(null, {});
+        };
+
+        // plot.addLayer(svg);
+
+        // HTML
 
         let htmlRenderer = new caleida.HTMLRenderer();
 
@@ -177,36 +158,6 @@
         };
 
         // plot.addLayer(html);
-
-        let svgRenderer = new caleida.SVGRenderer();
-
-        svgRenderer.drawTile = function(element) {
-            const SVG_NS = 'http://www.w3.org/2000/svg';
-            const circle = document.createElementNS(SVG_NS, 'circle');
-            circle.setAttribute('cx', 128);
-            circle.setAttribute('cy', 128);
-            circle.setAttribute('r',  64);
-            circle.setAttribute('fill', 'green');
-            const rect = document.createElementNS(SVG_NS, 'rect');
-            rect.setAttribute('x', 0);
-            rect.setAttribute('y', 0);
-            rect.setAttribute('width', 256);
-            rect.setAttribute('height', 256);
-            rect.setAttribute('fill', 'green');
-            rect.setAttribute('opacity', 0.5);
-            element.appendChild(rect);
-            element.appendChild(circle);
-        };
-
-        let svg = new caleida.Layer({
-            renderer: svgRenderer
-        });
-
-        svg.requestTile = (coord, done) => {
-            done(null, {});
-        };
-
-        plot.addLayer(svg);
 
         // Debug performance tracking
 

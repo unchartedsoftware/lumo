@@ -2,6 +2,8 @@
 
     'use strict';
 
+    const Event = require('../../core/Event');
+
     /**
      * Class representing a pan animation.
      */

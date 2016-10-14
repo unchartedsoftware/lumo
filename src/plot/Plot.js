@@ -6,11 +6,11 @@
     const clamp = require('lodash/clamp');
     const defaultTo = require('lodash/defaultTo');
     const EventEmitter = require('events');
-    const Event = require('./Event');
+    const Event = require('../core/Event');
     const Request = require('./Request');
     const Viewport = require('./Viewport');
-    const PanHandler = require('./PanHandler');
-    const ZoomHandler = require('./ZoomHandler');
+    const PanHandler = require('./handler/PanHandler');
+    const ZoomHandler = require('./handler/ZoomHandler');
 
     // Private Methods
 
@@ -80,9 +80,6 @@
         // clear the backbuffer
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);
-
-        // enable blending
-        gl.enable(gl.BLEND);
 
         // set the viewport
         gl.viewport(

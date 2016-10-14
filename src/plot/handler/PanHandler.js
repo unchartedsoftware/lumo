@@ -3,8 +3,9 @@
     'use strict';
 
     const defaultTo = require('lodash/defaultTo');
-    const PanAnimation = require('./PanAnimation');
-    const Request = require('./Request');
+    const PanAnimation = require('../animation/PanAnimation');
+    const Event = require('../../core/Event');
+    const Request = require('./../Request');
 
     // Constants
 

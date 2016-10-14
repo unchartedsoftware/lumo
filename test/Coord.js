@@ -3,8 +3,7 @@
     'use strict';
 
     const assert = require('assert');
-    const Coord = require('../src/Coord');
-    const Viewport = require('../src/Viewport');
+    const Coord = require('../src/core/Coord');
 
     describe('Coord', () => {
 
