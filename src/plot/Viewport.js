@@ -2,14 +2,13 @@
 
     'use strict';
 
-    const EventEmitter = require('events');
     const Bounds = require('../core/Bounds');
     const Coord = require('../core/Coord');
 
     /**
      * Class representing a viewport.
      */
-    class Viewport extends EventEmitter {
+    class Viewport {
 
         /**
          * Instantiates a new Viewport object.
@@ -21,7 +20,6 @@
          * @param {Number} params.height - The height of the viewport.
          */
         constructor(params = {}) {
-            super();
             this.x = params.x ? params.x : 0;
             this.y = params.y ? params.y : 0;
             this.width = params.width ? Math.round(params.width) : 0;
