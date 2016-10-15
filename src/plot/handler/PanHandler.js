@@ -49,6 +49,10 @@
         plot.emit(Event.PAN, delta);
     };
 
+    const isRightButton = function(event) {
+        return (event.which) ? event.which === 3 : event.button === 2;
+    };
+
     /**
      * Class representing a pan handler.
      */
@@ -88,6 +92,10 @@
             let times = [];
 
             this.mousedown = (event) => {
+                // ignore if right-button
+                if (isRightButton(event)) {
+                    return;
+                }
                 // flag as down
                 down = true;
                 // set position and timestamp
@@ -135,6 +143,11 @@
             };
 
             this.mouseup = () => {
+                // ignore if right-button
+                if (isRightButton(event)) {
+                    return;
+                }
+
                 // flag as up
                 down = false;
 
