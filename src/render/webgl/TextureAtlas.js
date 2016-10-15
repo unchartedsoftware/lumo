@@ -234,7 +234,7 @@
         /**
          * Binds the texture atlas to the provided texture unit.
          *
-         * @param {String} key - The texture unit to activate. Optional.
+         * @param {String} location - The texture unit to activate. Optional.
          *
          * @returns {TextureAtlas} The TextureAtlas object, for chaining.
          */

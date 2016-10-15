@@ -3,7 +3,9 @@
     'use strict';
 
     const esper = require('esper');
+    const Event = require('../../core/Event');
     const WebGLRenderer = require('./WebGLRenderer');
+    const TextureArray = require('./TextureArray');
 
     const shader = {
         vert:
@@ -89,7 +91,7 @@
             if (lod) {
                 const renderable = {
                     coord: coord,
-                    tile: lod.tile,
+                    hash: lod.tile.coord.hash,
                     scale: Math.pow(2, plot.zoom - coord.z),
                     offset: [
                         lod.offset.x,
@@ -105,7 +107,7 @@
         return renderables;
     };
 
-    const renderTiles = function(gl, shader, quad, plot, pyramid, opacity) {
+    const renderTiles = function(gl, shader, quad, array, plot, pyramid, opacity) {
         // update projection
         const proj = plot.viewport.getOrthoMatrix();
 
@@ -130,10 +132,10 @@
 
         // for each renderable
         renderables.forEach(renderable => {
-            const tile = renderable.tile;
+            const hash = renderable.hash;
             const coord = renderable.coord;
             // bind texture
-            tile.data.bind(0);
+            array.bind(hash, 0);
             // set tile opacity
             shader.setUniform('uTextureCoordOffset', renderable.offset);
             // set tile scale
@@ -174,6 +176,14 @@
             super();
             this.quad = null;
             this.shader = null;
+            // NOTE: we use a TextureArray rather than a TextureAtlas because of
+            // the sub-pixel bleeding that occurs in the atlas when textures are
+            // not padded. Due to the overhead of padding clientside, the
+            // frequency of load load events, and the average number of tiles on
+            // the screen at any one time, binding individual tile textures
+            // provides a less volatile frame rate and padding textures and
+            // using an atlas.
+            this.array = null;
         }
 
         /**
@@ -187,6 +197,18 @@
             super.onAdd(layer);
             this.quad = createQuad(0, layer.plot.tileSize);
             this.shader = new esper.Shader(shader);
+            this.array = new TextureArray(layer.plot.tileSize, {
+                // set num chunks to be able to fit the capacity of the pyramid
+                numChunks: layer.pyramid.totalCapacity
+            });
+            this.tileAdd = tile => {
+                this.array.set(tile.coord.hash, tile.data);
+            };
+            this.tileRemove = tile => {
+                this.array.delete(tile.coord.hash);
+            };
+            layer.on(Event.TILE_ADD, this.tileAdd);
+            layer.on(Event.TILE_REMOVE, this.tileRemove);
             return this;
         }
 
@@ -198,9 +220,14 @@
          * @returns {Renderer} The renderer object, for chaining.
          */
         onRemove(layer) {
-            super.onRemove(layer);
+            this.layer.removeListener(this.add);
+            this.layer.removeListener(this.remove);
+            this.tileAdd = null;
+            this.tileRemove = null;
             this.quad = null;
             this.shader = null;
+            this.array = null;
+            super.onRemove(layer);
             return this;
         }
 
@@ -217,6 +244,7 @@
                 this.gl,
                 this.shader,
                 this.quad,
+                this.array,
                 this.layer.plot,
                 this.layer.pyramid,
                 this.layer.opacity);
