@@ -263,7 +263,9 @@
             }
             this.layers.push(layer);
             layer.onAdd(this);
-            // request tiles
+            // request base tile, this ensures we at least have the lowest LOD
+            Request.requestBaseTile(this, layer);
+            // request tiles for current viewport
             Request.requestTiles(this, this.viewport, this.zoom);
             return this;
         }
