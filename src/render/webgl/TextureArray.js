@@ -125,8 +125,8 @@
                     gl.TEXTURE_2D,
                     0, // mip-map level
                     gl[this.format], // webgl requires format === internalFormat
-                    this.size,
-                    this.size,
+                    this.chunkSize,
+                    this.chunkSize,
                     0, // border, must be 0
                     gl[this.format],
                     gl[this.type],
