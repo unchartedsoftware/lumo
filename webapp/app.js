@@ -2,7 +2,6 @@
 
     'use strict';
 
-    const esper = require('esper');
     const Stats = require('stats.js');
     const caleida = require('../src/exports');
 
@@ -18,12 +17,47 @@
         'y', 'z'
     ];
 
+    const loadImage = function(url, done) {
+        let image = new Image();
+        image.onload = () => {
+            done(null, image);
+        };
+        image.onerror = (event) => {
+            const err = `Unable to load image from URL: \`${event.path[0].currentSrc}\``;
+            done(err, null);
+        };
+        image.crossOrigin = 'anonymous';
+        image.src = url;
+    };
+
+    const loadArrayBuffer = function(url, done) {
+        const req = new XMLHttpRequest();
+        req.open('GET', url, true);
+        req.responseType = 'arraybuffer';
+        req.onload = () => {
+            const arraybuffer = req.response;
+            if (arraybuffer) {
+                const bytes = new Uint8Array(arraybuffer);
+                done(null, bytes);
+            } else {
+                const err = `Unable to load ArrayBuffer from URL: \`${event.path[0].currentSrc}\``;
+                done(err, null);
+            }
+        };
+        req.onerror = (event) => {
+            const err = `Unable to load ArrayBuffer from URL: \`${event.path[0].currentSrc}\``;
+            done(err, null);
+        };
+        req.send(null);
+    };
+
     window.start = function() {
 
         let plot = new caleida.Plot('#plot', {
             continuousZoom: false,
             inertia: true,
-            wraparound: false
+            wraparound: false,
+            zoom: 3
         });
 
         // WebGL Image Texture
@@ -33,30 +67,13 @@
         });
 
         base.requestTile = (coord, done) => {
-            let image = new Image();
-            image.onload = () => {
-                //done(null, image);
-                done(null, new esper.ColorTexture2D({
-                    src: image,
-                    filter: 'LINEAR',
-                    wrap: 'CLAMP_TO_EDGE',
-                    mipMap: false,
-                    premultiplyAlpha: false
-                }));
-            };
-            image.onerror = (event) => {
-                const err = `Unable to load image from URL: \`${event.path[0].currentSrc}\``;
-                done(err, null);
-            };
-            image.crossOrigin = 'anonymous';
             const dim = Math.pow(2, coord.z);
             const s = SUBDOMAINS[(coord.x + coord.y + coord.z) % SUBDOMAINS.length];
-            image.src = `http://${s}.basemaps.cartocdn.com/dark_nolabels/${coord.z}/${coord.x}/${dim - 1 - coord.y}.png`;
+            const url = `http://${s}.basemaps.cartocdn.com/dark_nolabels/${coord.z}/${coord.x}/${dim - 1 - coord.y}.png`;
+            loadImage(url, done);
         };
 
-        // base.opacity = 0.5;
-
-        // plot.addLayer(base);
+        plot.addLayer(base);
 
         // WebGL Buffer Texture
 
@@ -65,31 +82,13 @@
         });
 
         mandlebrot.requestTile = (coord, done) => {
-            const req = new XMLHttpRequest();
-            req.open('GET', `mandelbrot/${coord.z}/${coord.x}/${coord.y}`, true);
-            req.responseType = 'arraybuffer';
-            req.onload = () => {
-                const arraybuffer = req.response;
-                if (arraybuffer) {
-                    const bytes = new Uint8Array(arraybuffer);
-                    const resolution = Math.sqrt(bytes.length / 4);
-                    done(null, new esper.ColorTexture2D({
-                        src: bytes,
-                        width: resolution,
-                        height: resolution,
-                        filter: 'LINEAR',
-                        wrap: 'CLAMP_TO_EDGE',
-                        mipMap: false,
-                        premultiplyAlpha: false
-                    }));
-                }
-            };
-            req.send(null);
+            const url = `mandelbrot/${coord.z}/${coord.x}/${coord.y}`;
+            loadArrayBuffer(url, done);
         };
 
         mandlebrot.opacity = 0.5;
 
-        // plot.addLayer(mandlebrot);
+        plot.addLayer(mandlebrot);
 
         // WebGL Point
 
@@ -108,7 +107,7 @@
             done(null, buffer);
         };
 
-        plot.addLayer(point);
+        // plot.addLayer(point);
 
         // SVG
 
@@ -163,13 +162,10 @@
 
         const stats = new Stats();
         document.body.appendChild(stats.dom);
-
-        plot.on('frame:start', () => {
-            stats.begin();
-        });
-
-        plot.on('frame:end', () => {
+        stats.begin();
+        plot.on('frame', () => {
             stats.end();
+            stats.begin();
         });
     };
 
