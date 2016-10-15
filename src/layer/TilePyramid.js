@@ -186,9 +186,10 @@
          * Requests tiles for the provided coords. If the tiles already exist
          * in the pyramid or is currently pending no request is made.
          *
+         * @param {Plot} plot - The plot object.
          * @param {Array[Coord]} coords - The array of coords to request.
          */
-        requestTiles(coords) {
+        requestTiles(plot, coords) {
             // request tiles
             coords.forEach(coord => {
                 // get normalized coord, we use normalized coords for requests
@@ -214,6 +215,15 @@
                         tile.err = err;
                         // emit failure
                         this.layer.emit(Event.TILE_FAILURE, tile);
+                        return;
+                    }
+                    // check if tile is still in view
+                    if (!plot.viewport.isInView(
+                        plot.tileSize,
+                        coord,
+                        plot.zoom)) {
+                        // emit discard
+                        this.layer.emit(Event.TILE_DISCARD, tile);
                         return;
                     }
                     // add data

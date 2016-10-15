@@ -120,9 +120,9 @@
          *
          * @return {boolean} Whether or not the coord is in view.
          */
-        isInView(tileSize, coord, zoom) {
+        isInView(tileSize, coord, viewportZoom) {
             const viewportBounds = this.getPixelBounds();
-            const tileBounds = coord.getPixelBounds(tileSize, zoom);
+            const tileBounds = coord.getPixelBounds(tileSize, viewportZoom);
             return viewportBounds.overlaps(tileBounds);
         }
 
