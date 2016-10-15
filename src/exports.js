@@ -3,7 +3,6 @@
     'use strict';
 
     module.exports = {
-        Event: require('./core/Event'),
         Plot: require('./plot/Plot'),
         Layer: require('./layer/Layer'),
         Renderer: require('./render/Renderer'),
@@ -11,8 +10,7 @@
         SVGRenderer: require('./render/dom/SVGRenderer'),
         PointRenderer: require('./render/webgl/PointRenderer'),
         ShapeRenderer: require('./render/webgl/ShapeRenderer'),
-        TextureRenderer: require('./render/webgl/TextureRenderer'),
-        TextureAtlasRenderer: require('./render/webgl/TextureAtlasRenderer')
+        TextureRenderer: require('./render/webgl/TextureRenderer')
     };
 
 }());

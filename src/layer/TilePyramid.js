@@ -4,8 +4,9 @@
 
     const defaultTo = require('lodash/defaultTo');
     const LRU = require('lru-cache');
-    const Event = require('../core/Event');
     const Tile = require('../core/Tile');
+    const EventType = require('../event/EventType');
+    const TileEvent = require('../event/TileEvent');
 
     // Constants
 
@@ -57,7 +58,7 @@
         }
         pyramid.levels.get(tile.coord.z).push(tile);
         // emit add
-        pyramid.layer.emit(Event.TILE_ADD, tile);
+        pyramid.layer.emit(EventType.TILE_ADD, new TileEvent(pyramid.layer, tile));
     };
 
     const remove = function(pyramid, tile) {
@@ -74,7 +75,7 @@
             pyramid.levels.delete(tile.coord.z);
         }
         // emit remove
-        pyramid.layer.emit(Event.TILE_REMOVE, tile);
+        pyramid.layer.emit(EventType.TILE_REMOVE, new TileEvent(pyramid.layer, tile));
     };
 
     const sumPowerOfFour = function(n) {
@@ -183,6 +184,23 @@
         }
 
         /**
+         * Returns true if the coordinate is no in the current or target
+         * viewport.
+         *
+         * @param {Plot} plot - The plot object.
+         * @param {Coord} coord - The coord to test.
+         *
+         * @returns {boolean} Whether or not the tile is stale.
+         */
+        isStale(plot, coord) {
+            // if zooming, use target zoom, if not use current zoom
+            const animation = plot.zoomAnimation;
+            const viewport = animation ? animation.targetViewport : plot.viewport;
+            const zoom = animation ? animation.targetZoom : plot.zoom;
+            return !viewport.isInView(plot.tileSize, coord, zoom);
+        }
+
+        /**
          * Requests tiles for the provided coords. If the tiles already exist
          * in the pyramid or is currently pending no request is made.
          *
@@ -204,7 +222,7 @@
                 // add tile to pending array
                 this.pending.set(ncoord.hash, tile);
                 // emit request
-                this.layer.emit(Event.TILE_REQUEST, tile);
+                this.layer.emit(EventType.TILE_REQUEST, new TileEvent(this.layer, tile));
                 // request tile
                 this.layer.requestTile(ncoord, (err, data) => {
                     // remove tile from pending
@@ -214,20 +232,17 @@
                         // add err
                         tile.err = err;
                         // emit failure
-                        this.layer.emit(Event.TILE_FAILURE, tile);
+                        this.layer.emit(EventType.TILE_FAILURE, new TileEvent(this.layer, tile));
                         return;
                     }
-                    // check if tile is still in view
-                    if (!plot.viewport.isInView(
-                        plot.tileSize,
-                        coord,
-                        plot.zoom)) {
-                        // emit discard
-                        this.layer.emit(Event.TILE_DISCARD, tile);
-                        return;
-                    }
-                    // add data
+                    // add data to the tile
                     tile.data = data;
+                    // check if tile is stale
+                    if (this.isStale(plot, coord)) {
+                        // emit discard
+                        this.layer.emit(EventType.TILE_DISCARD, new TileEvent(this.layer, tile));
+                        return;
+                    }
                     // add to tile pyramid
                     add(this, tile);
                 });

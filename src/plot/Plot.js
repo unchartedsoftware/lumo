@@ -6,34 +6,44 @@
     const clamp = require('lodash/clamp');
     const defaultTo = require('lodash/defaultTo');
     const EventEmitter = require('events');
-    const Event = require('../core/Event');
+    const EventType = require('../event/EventType');
+    const FrameEvent = require('../event/FrameEvent');
+    const ResizeEvent = require('../event/ResizeEvent');
     const Request = require('./Request');
     const Viewport = require('./Viewport');
+    const ClickHandler = require('./handler/ClickHandler');
+    const MouseHandler = require('./handler/MouseHandler');
     const PanHandler = require('./handler/PanHandler');
     const ZoomHandler = require('./handler/ZoomHandler');
 
     // Private Methods
 
     const resize = function(plot) {
-        const width = plot.container.offsetWidth;
-        const height = plot.container.offsetHeight;
-        if (plot.viewport.width !== width || plot.viewport.height !== height) {
+        const current = {
+            width: plot.container.offsetWidth,
+            height: plot.container.offsetHeight
+        };
+        const prev = {
+            width: plot.viewport.width,
+            height: plot.viewport.height
+        };
+        if (prev.width !== current.width || prev.height !== current.height) {
             // resize canvas
-            plot.canvas.style.width = width + 'px';
-            plot.canvas.style.height = height + 'px';
-            plot.canvas.width = width * window.devicePixelRatio;
-            plot.canvas.height = height * window.devicePixelRatio;
+            plot.canvas.style.width = current.width + 'px';
+            plot.canvas.style.height = current.height + 'px';
+            plot.canvas.width = current.width * window.devicePixelRatio;
+            plot.canvas.height = current.height * window.devicePixelRatio;
             // resize render target
             plot.renderBuffer.resize(
-                width * window.devicePixelRatio,
-                height * window.devicePixelRatio);
+                current.width * window.devicePixelRatio,
+                current.height * window.devicePixelRatio);
             // update viewport
-            plot.viewport.width = width;
-            plot.viewport.height = height;
+            plot.viewport.width = current.width;
+            plot.viewport.height = current.height;
             // request tiles
             Request.requestTiles(plot);
             // emit resize
-            plot.emit(Event.RESIZE, {});
+            plot.emit(EventType.RESIZE, new ResizeEvent(plot, prev, current));
         }
     };
 
@@ -67,14 +77,16 @@
     };
 
     const frame = function(plot) {
+
+        // get frame timestamp
+        const timestamp = Date.now();
+
         // emit start frame
-        plot.emit(Event.FRAME_START);
+        plot.emit(EventType.FRAME, new FrameEvent(timestamp));
 
         // update size
         resize(plot);
 
-        // get timestamp
-        const timestamp = Date.now();
         const gl = plot.gl;
 
         // clear the backbuffer
@@ -91,29 +103,21 @@
         if (plot.zoomAnimation) {
             plot.zoomAnimation.updatePlot(plot, timestamp);
         }
+
         // apply the pan animation
         if (plot.panAnimation) {
             plot.panAnimation.updatePlot(plot, timestamp);
             Request.panRequest(plot);
         }
+
+        // reset viewport / plot
+        reset(plot);
+
         // render each layer
         plot.layers.forEach(layer => {
             layer.draw(timestamp);
         });
-        // remove zoom animation once complete
-        if (plot.zoomAnimation && plot.zoomAnimation.isFinished()) {
-            plot.zoomAnimation = null;
-            plot.emit(Event.ZOOM_END, plot);
-        }
-        // remove pan animation once complete
-        if (plot.panAnimation && plot.panAnimation.isFinished()) {
-            plot.panAnimation = null;
-            plot.emit(Event.PAN_END, plot);
-        }
-        // reset viewport / plot
-        reset(plot);
-        // emit frame end
-        plot.emit(Event.FRAME_END);
+
         // request next frame
         plot.frameRequest = requestAnimationFrame(() => {
             frame(plot);
@@ -209,6 +213,8 @@
 
             // create and enable handlers
             this.handlers = new Map();
+            this.handlers.set('click', new ClickHandler(this, options));
+            this.handlers.set('mouse', new MouseHandler(this, options));
             this.handlers.set('pan', new PanHandler(this, options));
             this.handlers.set('zoom', new ZoomHandler(this, options));
             this.handlers.forEach(handler => {

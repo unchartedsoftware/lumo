@@ -5,7 +5,8 @@
     const clamp = require('lodash/clamp');
     const defaultTo = require('lodash/defaultTo');
     const Browser = require('../../core/Browser');
-    const Event = require('../../core/Event');
+    const EventType = require('../../event/EventType');
+    const ZoomEvent = require('../../event/ZoomEvent');
     const ZoomAnimation = require('../animation/ZoomAnimation');
     const Request = require('../Request');
     const Viewport = require('../Viewport');
@@ -144,7 +145,7 @@
             // request tiles
             Request.zoomRequest(plot, targetViewport, targetZoom);
             // emit zoom start
-            plot.emit(Event.ZOOM_START, plot);
+            plot.emit(EventType.ZOOM_START, new ZoomEvent(plot, plot.zoom, plot.zoom, targetZoom));
         }
     };
 
@@ -192,7 +193,7 @@
         /**
          * Enables the handler.
          *
-         * @returns {PanHandler} The handler object, for chaining.
+         * @returns {ZoomHandler} The handler object, for chaining.
          */
         enable() {
             if (this.enabled) {
@@ -255,9 +256,9 @@
         /**
          * Disables the handler.
          *
-         * @returns {PanHandler} The handler object, for chaining.
+         * @returns {ZoomHandler} The handler object, for chaining.
          */
-        removeFrom() {
+        disable() {
             if (this.enabled) {
                 throw 'Handler is already disabled';
             }

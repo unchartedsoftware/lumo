@@ -3,7 +3,7 @@
     'use strict';
 
     const esper = require('esper');
-    const Event = require('../../core/Event');
+    const EventType = require('../../event/EventType');
     const WebGLRenderer = require('./WebGLRenderer');
     const VertexAtlas = require('./VertexAtlas');
 
@@ -260,14 +260,16 @@
                 // set num chunks to be able to fit the capacity of the pyramid
                 numChunks: layer.pyramid.totalCapacity
             });
-            this.tileAdd = tile => {
+            this.tileAdd = event => {
+                const tile = event.tile;
                 this.atlas.set(tile.coord.hash, tile.data, tile.data.length / 3);
             };
-            this.tileRemove = tile => {
+            this.tileRemove = event => {
+                const tile = event.tile;
                 this.atlas.delete(tile.coord.hash);
             };
-            layer.on(Event.TILE_ADD, this.tileAdd);
-            layer.on(Event.TILE_REMOVE, this.tileRemove);
+            layer.on(EventType.TILE_ADD, this.tileAdd);
+            layer.on(EventType.TILE_REMOVE, this.tileRemove);
             return this;
         }
 

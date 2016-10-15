@@ -2,8 +2,9 @@
 
     'use strict';
 
-    const Event = require('../../core/Event');
-    
+    const EventType = require('../../event/EventType');
+    const ZoomEvent = require('../../event/ZoomEvent');
+
     /**
      * Class representing a zoom animation.
      */
@@ -28,7 +29,6 @@
             this.prevViewport = params.prevViewport;
             this.targetViewport = params.targetViewport;
             this.targetPx = params.targetPx;
-            this.finished = false;
         }
 
         /**
@@ -41,10 +41,6 @@
         updatePlot(plot, timestamp) {
             // get t value
             const t = Math.min(1.0, (timestamp - this.timestamp) / (this.duration || 1));
-            // check if animation is finished
-            if (t === 1) {
-                this.finished = true;
-            }
             // calc new zoom
             const range = this.targetZoom - this.prevZoom;
             const zoom = this.prevZoom + (range * t);
@@ -56,17 +52,16 @@
                 this.prevZoom,
                 plot.zoom,
                 this.targetPx);
-            // emit zoom
-            plot.emit(Event.ZOOM);
-        }
-
-        /**
-         * Return whether or not the animation has finished.
-         *
-         * @returns {boolean} Whether or not the animation has finished.
-         */
-        isFinished() {
-            return this.finished;
+            // create zoom event
+            const event = new ZoomEvent(plot, this.prevZoom, plot.zoom, this.targetZoom);
+            // check if animation is finished
+            if (t < 1) {
+                plot.emit(EventType.ZOOM, event);
+            } else {
+                plot.emit(EventType.ZOOM_END, event);
+                // remove self from plot
+                plot.zoomAnimation = null;
+            }
         }
     }
 

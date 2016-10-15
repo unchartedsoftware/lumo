@@ -2,7 +2,8 @@
 
     'use strict';
 
-    const Event = require('../../core/Event');
+    const EventType = require('../../event/EventType');
+    const PanEvent = require('../../event/PanEvent');
 
     /**
      * Class representing a pan animation.
@@ -22,9 +23,12 @@
             this.timestamp = Date.now();
             this.start = params.start;
             this.delta = params.delta;
+            this.end = {
+                x: this.start.x + this.delta.x,
+                y: this.start.y + this.delta.y,
+            };
             this.easing = params.easing;
             this.duration = params.duration;
-            this.finished = false;
         }
 
         /**
@@ -36,30 +40,30 @@
          */
         updatePlot(plot, timestamp) {
             const t = Math.min(1.0, (timestamp - this.timestamp) / (this.duration || 1));
-            if (t === 1) {
-                this.finished = true;
-            }
             // calculate the progress of the animation
             const progress = 1 - Math.pow(1 - t, 1 / this.easing);
             // caclulate the current position along the pan
-            const pos = {
+            const prev = {
+                x: plot.viewport.x,
+                y: plot.viewport.y
+            };
+            const current = {
                 x: this.start.x + this.delta.x * progress,
                 y: this.start.y + this.delta.y * progress
             };
             // set the viewport positions
-            plot.viewport.x = pos.x;
-            plot.viewport.y = pos.y;
-            // emit pan
-            plot.emit(Event.PAN);
-        }
-
-        /**
-         * Return whether or not the animation has finished.
-         *
-         * @returns {boolean} Whether or not the animation has finished.
-         */
-        isFinished() {
-            return this.finished;
+            plot.viewport.x = current.x;
+            plot.viewport.y = current.y;
+            // create pan event
+            const event = new PanEvent(plot, prev, current);
+            // check if animation is finished
+            if (t < 1) {
+                plot.emit(EventType.PAN, event);
+            } else {
+                plot.emit(EventType.PAN_END, event);
+                // remove self from plot
+                plot.panAnimation = null;
+            }
         }
     }
 

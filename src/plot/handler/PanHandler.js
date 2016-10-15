@@ -4,7 +4,8 @@
 
     const defaultTo = require('lodash/defaultTo');
     const PanAnimation = require('../animation/PanAnimation');
-    const Event = require('../../core/Event');
+    const EventType = require('../../event/EventType');
+    const PanEvent = require('../../event/PanEvent');
     const Request = require('./../Request');
 
     // Constants
@@ -40,13 +41,21 @@
             // no panning while zooming
             return;
         }
+        const prev = {
+            x: plot.viewport.x,
+            y: plot.viewport.y
+        };
+        const current = {
+            x: prev.x -= delta.x,
+            y: prev.y -= delta.y
+        };
         // update current viewport
-        plot.viewport.x -= delta.x;
-        plot.viewport.y -= delta.y;
+        plot.viewport.x = current.x;
+        plot.viewport.y = current.y;
         // request tiles
         Request.panRequest(plot);
         // emit pan
-        plot.emit(Event.PAN, delta);
+        plot.emit(EventType.PAN, new PanEvent(plot, prev, current));
     };
 
     const isRightButton = function(event) {
@@ -85,6 +94,7 @@
                 throw 'Handler is already enabled';
             }
 
+            const plot = this.plot;
             let down = false;
             let lastPos = null;
             let lastTime = null;
@@ -99,11 +109,11 @@
                 // flag as down
                 down = true;
                 // set position and timestamp
-                lastPos = this.plot.mouseToViewPx(event);
+                lastPos = plot.mouseToViewPx(event);
                 lastTime = Date.now();
                 if (this.inertia) {
                     // clear existing pan animation
-                    this.plot.panAnimation = null;
+                    plot.panAnimation = null;
                     // reset position and time arrays
                     positions = [];
                     times = [];
@@ -113,8 +123,15 @@
             this.mousemove = (event) => {
                 if (down) {
                     // get latest position and timestamp
-                    let pos = this.plot.mouseToViewPx(event);
+                    let pos = plot.mouseToViewPx(event);
                     let time = Date.now();
+
+                    if (positions.length === 0) {
+                        // emit pan start
+                        const prev = { x: lastPos.x, y: lastPos.y };
+                        const current = { x: pos.x, y: pos.y };
+                        plot.emit(EventType.PAN_START, new PanEvent(plot, prev, current));
+                    }
 
                     if (this.inertia) {
                         // add to position and time arrays
@@ -133,27 +150,28 @@
                         y: pos.y - lastPos.y
                     };
                     // pan the plot
-                    pan(this.plot, delta);
+                    pan(plot, delta);
                     // update last position and time
                     lastTime = time;
                     lastPos = pos;
-                    // emit pan
-                    this.plot.emit(Event.PAN, delta);
                 }
             };
 
             this.mouseup = () => {
+
+                // flag as up
+                down = false;
+
                 // ignore if right-button
                 if (isRightButton(event)) {
                     return;
                 }
 
-                // flag as up
-                down = false;
-
-                if (!this.inertia) {
-                    // exit early if no inertia
-                    this.plot.emit(Event.PAN_END);
+                if (!this.inertia || positions.length === 0) {
+                    // exit early if no inertia or no movement
+                    const prev = { x: plot.viewport.x, y: plot.viewport.y };
+                    const current = { x: plot.viewport.x, y: plot.viewport.y };
+                    plot.emit(EventType.PAN_END, new PanEvent(plot, prev, current));
                     return;
                 }
 
@@ -168,7 +186,9 @@
 
                 if (times.length < 2) {
                     // exit early if no remaining positions
-                    this.plot.emit(Event.PAN_END);
+                    const prev = { x: plot.viewport.x, y: plot.viewport.y };
+                    const current = { x: plot.viewport.x, y: plot.viewport.y };
+                    plot.emit(EventType.PAN_END, new PanEvent(plot, prev, current));
                     return;
                 }
 
@@ -201,20 +221,16 @@
                 };
                 // get current viewport x / y
                 const start = {
-                    x: this.plot.viewport.x,
-                    y: this.plot.viewport.y
+                    x: plot.viewport.x,
+                    y: plot.viewport.y
                 };
-                if (delta.x !== 0 && delta.y !== 0) {
-                    // set pan animation
-                    this.plot.panAnimation = new PanAnimation({
-                        start: start,
-                        delta: delta,
-                        easing: easing,
-                        duration: duration * 1000 // back to ms
-                    });
-                } else {
-                    this.plot.emit(Event.PAN_END);
-                }
+                // set pan animation
+                plot.panAnimation = new PanAnimation({
+                    start: start,
+                    delta: delta,
+                    easing: easing,
+                    duration: duration * 1000 // back to ms
+                });
             };
 
             this.plot.container.addEventListener('mousedown', this.mousedown);
