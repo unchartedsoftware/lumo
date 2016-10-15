@@ -11,7 +11,9 @@
     const port = 8080;
     const build = path.normalize(__dirname + '/../build');
 
-    app.use(compression());
+    app.use(compression({
+        filter: () => { return true; } // compress all types
+    }));
     app.use(express.static(build));
     app.get('/mandelbrot/:z/:x/:y', (req, res) => {
         const coord = {
