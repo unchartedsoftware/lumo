@@ -157,7 +157,7 @@
                 }
             };
 
-            this.mouseup = () => {
+            this.mouseup = (event) => {
 
                 // flag as up
                 down = false;

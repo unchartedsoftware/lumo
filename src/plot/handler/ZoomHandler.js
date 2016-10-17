@@ -204,7 +204,7 @@
             let timeout = null;
             let evt = null;
 
-            this.dblclick = () => {
+            this.dblclick = (event) => {
                 // get mouse position
                 const targetPx = this.plot.mouseToPlotPx(event);
                 zoom(this, this.plot, targetPx, this.deltaPerZoom, false);
