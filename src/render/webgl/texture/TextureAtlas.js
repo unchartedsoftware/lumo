@@ -2,7 +2,6 @@
 
     'use strict';
 
-    const esper = require('esper');
     const defaultTo = require('lodash/defaultTo');
 
     // Constants
@@ -14,6 +13,7 @@
     const CHUNK_PADDING = 1;
 
     // Private Methods
+    
     const padImage = function(image) {
         const canvas = document.createElement('canvas');
         const width = image.width;
@@ -80,14 +80,14 @@
         /**
          * Instantiates a new TextureAtlas object.
          *
+         * @param {WebGLRenderingContext} gl - The WebGL context.
          * @param {Number} tileSize - The size of a tile, in pixels.
          * @param {Object} options - The parameters of the animation.
          * @param {Number} options.numChunks - The size of the atlas, in tiles.
          * @param {boolean} options.alreadyPadded - Whether or not the tiles have already been padded.
          */
-        constructor(tileSize = 256, options = {}) {
-            // get context
-            const gl = this.gl = esper.WebGLContext.get();
+        constructor(gl, tileSize = 256, options = {}) {
+            this.gl = gl;
             this.numChunks = defaultTo(options.numChunks, 256);
             this.chunkSize = tileSize + (CHUNK_PADDING * 2);
             this.xSize = calcAtlasSize(this.numChunks, this.chunkSize);

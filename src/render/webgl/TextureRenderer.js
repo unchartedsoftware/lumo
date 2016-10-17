@@ -2,10 +2,11 @@
 
     'use strict';
 
-    const esper = require('esper');
     const EventType = require('../../event/EventType');
+    const Shader = require('./shader/Shader');
+    const TextureArray = require('./texture/TextureArray');
+    const VertexBuffer = require('./vertex/VertexBuffer');
     const WebGLRenderer = require('./WebGLRenderer');
-    const TextureArray = require('./TextureArray');
 
     const shader = {
         vert:
@@ -39,7 +40,7 @@
             `
     };
 
-    const createQuad = function(min, max) {
+    const createQuad = function(gl, min, max) {
         const vertices = new Float32Array(24);
         // positions
         vertices[0] = min;      vertices[1] = min;
@@ -56,7 +57,8 @@
         vertices[20] = 1;       vertices[21] = 1;
         vertices[22] = 0;       vertices[23] = 1;
         // create quad buffer
-        return new esper.VertexBuffer(
+        return new VertexBuffer(
+            gl,
             vertices,
             {
                 0: {
@@ -75,39 +77,7 @@
             });
     };
 
-    const getRenderables = function(plot, pyramid) {
-
-        // get all currently visible tile coords
-        const coords = plot.viewport.getVisibleCoords(
-            plot.tileSize,
-            plot.zoom,
-            Math.round(plot.zoom), // get tiles closest to current zoom
-            plot.wraparound);
-
-        const renderables = [];
-        coords.forEach(coord => {
-            // check if we have any tile LOD available
-            const lod = pyramid.getAvailableLOD(coord);
-            if (lod) {
-                const renderable = {
-                    coord: coord,
-                    hash: lod.tile.coord.hash,
-                    scale: Math.pow(2, plot.zoom - coord.z),
-                    offset: [
-                        lod.offset.x,
-                        lod.offset.y,
-                        lod.offset.extent,
-                        lod.offset.extent
-                    ]
-                };
-                renderables.push(renderable);
-            }
-        });
-
-        return renderables;
-    };
-
-    const renderTiles = function(gl, shader, quad, array, plot, pyramid, opacity) {
+    const renderTiles = function(gl, shader, quad, array, plot, renderables, opacity) {
         // update projection
         const proj = plot.viewport.getOrthoMatrix();
 
@@ -127,16 +97,18 @@
         // bind quad
         quad.bind();
 
-        // get the renderables
-        const renderables = getRenderables(plot, pyramid);
-
+        let last;
         // for each renderable
         renderables.forEach(renderable => {
             const hash = renderable.hash;
             const coord = renderable.coord;
-            // bind texture
-            array.bind(hash, 0);
-            // set tile opacity
+            // TODO: move this inside TextureArray, have it done implicitly
+            if (last !== hash) {
+                // bind texture
+                array.bind(hash, 0);
+                last = hash;
+            }
+            // set texture coordinate offset
             shader.setUniform('uTextureCoordOffset', renderable.offset);
             // set tile scale
             shader.setUniform('uTileScale', renderable.scale);
@@ -195,12 +167,15 @@
          */
         onAdd(layer) {
             super.onAdd(layer);
-            this.quad = createQuad(0, layer.plot.tileSize);
-            this.shader = new esper.Shader(shader);
-            this.array = new TextureArray(layer.plot.tileSize, {
-                // set num chunks to be able to fit the capacity of the pyramid
-                numChunks: layer.pyramid.totalCapacity
-            });
+            this.quad = createQuad(this.gl, 0, layer.plot.tileSize);
+            this.shader = new Shader(this.gl, shader);
+            this.array = new TextureArray(
+                this.gl,
+                layer.plot.tileSize,
+                {
+                    // set num chunks to be able to fit the capacity of the pyramid
+                    numChunks: layer.pyramid.totalCapacity
+                });
             this.tileAdd = event => {
                 const tile = event.tile;
                 this.array.set(tile.coord.hash, tile.data);
@@ -248,7 +223,7 @@
                 this.quad,
                 this.array,
                 this.layer.plot,
-                this.layer.pyramid,
+                this.getRenderablesLOD(),
                 this.layer.opacity);
             return this;
         }

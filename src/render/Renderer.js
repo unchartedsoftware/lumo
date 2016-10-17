@@ -2,15 +2,18 @@
 
     'use strict';
 
+    const EventEmitter = require('events');
+
     /**
      * Class representing a renderer.
      */
-    class Renderer {
+    class Renderer extends EventEmitter {
 
         /**
          * Instantiates a new Renderer object.
          */
         constructor() {
+            super();
             this.layer = null;
         }
 

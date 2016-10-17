@@ -2,8 +2,16 @@
 
     'use strict';
 
-    const esper = require('esper');
     const Renderer = require('../Renderer');
+
+    const sortByHash = function(a, b) {
+        if (a < b) {
+            return -1;
+        } else if (a > b) {
+            return  1;
+        }
+        return 0;
+    };
 
     /**
      * Class representing a webgl renderer.
@@ -27,7 +35,7 @@
          */
         onAdd(layer) {
             super.onAdd(layer);
-            this.gl = esper.WebGLContext.get(this.layer.plot.canvas);
+            this.gl = this.layer.plot.gl;
             return this;
         }
 
@@ -42,6 +50,79 @@
             this.gl = null;
             super.onRemove(layer);
             return this;
+        }
+
+        /**
+         * Returns the renderables for the underlying layer.
+         *
+         * @returns {Array} The array of renderables.
+         */
+        getRenderables() {
+            const plot = this.layer.plot;
+            const pyramid = this.layer.pyramid;
+            // get all currently visible tile coords
+            const coords = plot.viewport.getVisibleCoords(
+                plot.tileSize,
+                plot.zoom,
+                Math.round(plot.zoom), // get tiles closest to current zoom
+                plot.wraparound);
+            // get available renderables
+            const renderables = [];
+            coords.forEach(coord => {
+                const ncoord = coord.normalize();
+                // check if we have the tile
+                if (pyramid.has(ncoord)) {
+                    const renderable = {
+                        coord: coord,
+                        scale: Math.pow(2, plot.zoom - coord.z),
+                        hash: ncoord.hash
+                    };
+                    renderables.push(renderable);
+                }
+            });
+            // sort by hash
+            renderables.sort(sortByHash);
+            return renderables;
+        }
+
+        /**
+         * Returns the renderables for the underlying layer at the closest
+         * available LOD.
+         *
+         * @returns {Array} The array of renderables.
+         */
+        getRenderablesLOD() {
+            const plot = this.layer.plot;
+            const pyramid = this.layer.pyramid;
+            // get all currently visible tile coords
+            const coords = plot.viewport.getVisibleCoords(
+                plot.tileSize,
+                plot.zoom,
+                Math.round(plot.zoom), // get tiles closest to current zoom
+                plot.wraparound);
+            // get available LOD renderables
+            const renderables = [];
+            coords.forEach(coord => {
+                // check if we have any tile LOD available
+                const lod = pyramid.getAvailableLOD(coord);
+                if (lod) {
+                    const renderable = {
+                        coord: coord,
+                        hash: lod.tile.coord.hash,
+                        scale: Math.pow(2, plot.zoom - coord.z),
+                        offset: [
+                            lod.offset.x,
+                            lod.offset.y,
+                            lod.offset.extent,
+                            lod.offset.extent
+                        ]
+                    };
+                    renderables.push(renderable);
+                }
+            });
+            // sort by hash
+            renderables.sort(sortByHash);
+            return renderables;
         }
     }
 

@@ -2,9 +2,10 @@
 
     'use strict';
 
-    const esper = require('esper');
     const defaultTo = require('lodash/defaultTo');
     const forIn = require('lodash/forIn');
+
+    // Constants
 
     const BYTES_PER_TYPE = {
         BYTE: 1,
@@ -14,6 +15,8 @@
         FIXED: 4,
         FLOAT: 4
     };
+
+    // Private Methods
 
     const calcChunkByteSize = function(pointers, chunkSize) {
         let byteSize = 0;
@@ -60,16 +63,17 @@
          * Instantiates a new VertexAtlas object.
          * NOTE: assumes interleaved vertex format.
          *
+         * @param {WebGLRenderingContext} gl - The WebGL context.
          * @param {Number} tileSize - The size of a tile, in pixels.
          * @param {Object} options - The parameters of the animation.
          * @param {Number} options.chunkSize - The size of a single chunk, in vertices.
          * @param {Number} options.numChunks - The size of the atlas, in tiles.
          */
-        constructor(pointers, options = {}) {
+        constructor(gl, pointers, options = {}) {
             // get context
-            const gl = this.gl = esper.WebGLContext.get();
+            this.gl = gl;
             // get the extension for hardware instancing
-            this.ext = esper.WebGLContext.getExtension('ANGLE_instanced_arrays');
+            this.ext = gl.getExtension('ANGLE_instanced_arrays');
             if (!this.ext) {
                 throw 'ANGLE_instanced_arrays WebGL extension is not supported';
             }

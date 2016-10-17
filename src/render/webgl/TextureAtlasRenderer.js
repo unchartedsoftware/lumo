@@ -2,10 +2,11 @@
 
     'use strict';
 
-    const esper = require('esper');
     const EventType = require('../../event/EventType');
+    const Shader = require('./shader/Shader');
+    const TextureAtlas = require('./texture/TextureAtlas');
+    const VertexBuffer = require('./vertex/VertexBuffer');
     const WebGLRenderer = require('./WebGLRenderer');
-    const TextureAtlas = require('./TextureAtlas');
 
     const shader = {
         vert:
@@ -39,7 +40,7 @@
             `
     };
 
-    const createQuad = function(min, max) {
+    const createQuad = function(gl, min, max) {
         const BYTES_PER_FLOAT = 4;
         const NUM_VERTICES = 6;
         const COMPONENTS_PER_VERTEX = 2;
@@ -60,7 +61,8 @@
         vertices[20] = 1;       vertices[21] = 1;
         vertices[22] = 0;       vertices[23] = 1;
         // create quad buffer
-        return new esper.VertexBuffer(
+        return new VertexBuffer(
+            gl,
             vertices,
             {
                 0: {
@@ -207,12 +209,15 @@
          */
         onAdd(layer) {
             super.onAdd(layer);
-            this.quad = createQuad(0, layer.plot.tileSize);
-            this.shader = new esper.Shader(shader);
-            this.atlas = new TextureAtlas(layer.plot.tileSize, {
-                // set num chunks to be able to fit the capacity of the pyramid
-                numChunks: layer.pyramid.totalCapacity
-            });
+            this.quad = createQuad(this.gl, 0, layer.plot.tileSize);
+            this.shader = new Shader(this.gl, shader);
+            this.atlas = new TextureAtlas(
+                this.gl,
+                layer.plot.tileSize,
+                {
+                    // set num chunks to be able to fit the capacity of the pyramid
+                    numChunks: layer.pyramid.totalCapacity
+                });
             this.tileAdd = event => {
                 const tile = event.tile;
                 this.atlas.set(tile.coord.hash, tile.data);

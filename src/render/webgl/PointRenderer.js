@@ -2,10 +2,12 @@
 
     'use strict';
 
-    const esper = require('esper');
+    const defaultTo = require('lodash/defaultTo');
     const EventType = require('../../event/EventType');
+    const Shader = require('./shader/Shader');
+    const VertexAtlas = require('./vertex/VertexAtlas');
+    const VertexBuffer = require('./vertex/VertexBuffer');
     const WebGLRenderer = require('./WebGLRenderer');
-    const VertexAtlas = require('./VertexAtlas');
 
     const tileShader = {
         vert:
@@ -67,7 +69,7 @@
             `
     };
 
-    const createQuad = function(min, max) {
+    const createQuad = function(gl, min, max) {
         const vertices = new Float32Array(24);
         // positions
         vertices[0] = min;      vertices[1] = min;
@@ -84,7 +86,8 @@
         vertices[20] = 1;       vertices[21] = 1;
         vertices[22] = 0;       vertices[23] = 1;
         // create quad buffer
-        return new esper.VertexBuffer(
+        return new VertexBuffer(
+            gl,
             vertices,
             {
                 0: {
@@ -103,33 +106,7 @@
             });
     };
 
-    const getRenderables = function(plot, pyramid) {
-
-        // get all currently visible tile coords
-        const coords = plot.viewport.getVisibleCoords(
-            plot.tileSize,
-            plot.zoom,
-            Math.round(plot.zoom), // get tiles closest to current zoom
-            plot.wraparound);
-
-        // get available renderables
-        const renderables = [];
-        coords.forEach(coord => {
-            const ncoord = coord.normalize();
-            // check if we have the tile
-            if (pyramid.has(ncoord)) {
-                const renderable = {
-                    coord: coord,
-                    scale: Math.pow(2, plot.zoom - coord.z),
-                    hash: ncoord.hash
-                };
-                renderables.push(renderable);
-            }
-        });
-        return renderables;
-    };
-
-    const renderTiles = function(gl, atlas, shader, plot, pyramid, color) {
+    const renderTiles = function(gl, atlas, shader, plot, renderables, color) {
         // get projection
         const proj = plot.viewport.getOrthoMatrix();
 
@@ -138,9 +115,6 @@
             plot.viewport.x,
             plot.viewport.y
         ];
-
-        // get renderables
-        const renderables = getRenderables(plot, pyramid);
 
         // bind render target
         plot.renderBuffer.bind();
@@ -223,12 +197,16 @@
 
         /**
          * Instantiates a new PointRenderer object.
+         *
+         * @param {Options} options - The options object.
+         * @param {Array} options.color - The color of the points.
          */
-        constructor() {
+        constructor(options = {}) {
             super();
             this.quad = null;
             this.shaders = null;
             this.atlas = null;
+            this.color = defaultTo(options.color, [ 1.0, 0.4, 0.1, 0.8 ]);
         }
 
         /**
@@ -240,26 +218,34 @@
          */
         onAdd(layer) {
             super.onAdd(layer);
-            this.quad = createQuad(-1, 1);
+            // get the extension for standard derivatives
+            this.ext = this.gl.getExtension('OES_standard_derivatives');
+            if (!this.ext) {
+                throw 'OES_standard_derivatives WebGL extension is not supported';
+            }
+            this.ext =
+            this.quad = createQuad(this.gl, -1, 1);
             this.shaders = new Map([
-                ['tile', new esper.Shader(tileShader)],
-                ['layer', new esper.Shader(layerShader)]
+                ['tile', new Shader(this.gl, tileShader)],
+                ['layer', new Shader(this.gl, layerShader)]
             ]);
-            this.atlas = new VertexAtlas({
-                // position
-                0: {
-                    size: 2,
-                    type: 'FLOAT'
-                },
-                // radius
-                1: {
-                    size: 1,
-                    type: 'FLOAT'
-                }
-            }, {
-                // set num chunks to be able to fit the capacity of the pyramid
-                numChunks: layer.pyramid.totalCapacity
-            });
+            this.atlas = new VertexAtlas(
+                this.gl,
+                {
+                    // position
+                    0: {
+                        size: 2,
+                        type: 'FLOAT'
+                    },
+                    // radius
+                    1: {
+                        size: 1,
+                        type: 'FLOAT'
+                    }
+                }, {
+                    // set num chunks to be able to fit the capacity of the pyramid
+                    numChunks: layer.pyramid.totalCapacity
+                });
             this.tileAdd = event => {
                 const tile = event.tile;
                 this.atlas.set(tile.coord.hash, tile.data, tile.data.length / 3);
@@ -308,8 +294,8 @@
                 this.atlas,
                 this.shaders.get('tile'),
                 this.layer.plot,
-                this.layer.pyramid,
-                [ 1.0, 0.4, 0.1, 0.8]);
+                this.getRenderables(),
+                this.color);
             // render framebuffer to the backbuffer
             renderlayer(
                 this.gl,

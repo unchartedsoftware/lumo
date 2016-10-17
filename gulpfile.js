@@ -57,14 +57,14 @@
             })
             .bundle()
             .on('error', handleError)
-            .pipe(source(project + '.js'))
+            .pipe(source(`${project}.js`))
             .pipe(gulp.dest(paths.build));
     });
 
     gulp.task('build-styles', () => {
         return gulp.src(paths.style)
             .pipe(csso())
-            .pipe(concat(project + '.css'))
+            .pipe(concat(`${project}.css`))
             .pipe(gulp.dest(paths.build));
     });
 

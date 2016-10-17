@@ -2,13 +2,14 @@
 
     'use strict';
 
-    const esper = require('esper');
     const clamp = require('lodash/clamp');
     const defaultTo = require('lodash/defaultTo');
     const EventEmitter = require('events');
     const EventType = require('../event/EventType');
     const FrameEvent = require('../event/FrameEvent');
     const ResizeEvent = require('../event/ResizeEvent');
+    const Texture = require('../render/webgl/texture/Texture');
+    const RenderBuffer = require('../render/webgl/texture/RenderBuffer');
     const Request = require('./Request');
     const Viewport = require('./Viewport');
     const ClickHandler = require('./handler/ClickHandler');
@@ -167,21 +168,18 @@
 
             // get WebGL context
             try {
-                this.gl = esper.WebGLContext.get(this.canvas);
+                this.gl = this.canvas.getContext('webgl', options);
             } catch(err) {
                 throw `Unable to create a WebGLRenderingContext, please ensure your browser supports WebGL`;
             }
 
             // create render target
-            this.renderTexture = new esper.ColorTexture2D({
+            this.renderTexture = new Texture(this.gl, null, {
                 width: this.canvas.width,
                 height: this.canvas.height,
-                filter: 'NEAREST',
-                wrap: 'CLAMP_TO_EDGE',
-                mipMap: false,
-                premultiplyAlpha: false
+                filter: 'NEAREST'
             });
-            this.renderBuffer = new esper.RenderTarget();
+            this.renderBuffer = new RenderBuffer(this.gl);
             this.renderBuffer.setColorTarget(this.renderTexture, 0);
 
             // set viewport
@@ -242,7 +240,6 @@
             cancelAnimationFrame(this.frameRequest);
             this.frameRequest = null;
             // destroy context
-            esper.WebGLContext.remove(this.canvas);
             this.gl = null;
             this.canvas = null;
             this.container = null;

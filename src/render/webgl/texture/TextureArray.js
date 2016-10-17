@@ -2,8 +2,9 @@
 
     'use strict';
 
-    const esper = require('esper');
     const defaultTo = require('lodash/defaultTo');
+
+    // Private Methods
 
     const createTexture = function(gl, format, size, type, filter, invertY, premultiplyAlpha) {
         const texture = gl.createTexture();
@@ -37,13 +38,13 @@
         /**
          * Instantiates a new TextureArray object.
          *
+         * @param {WebGLRenderingContext} gl - The WebGL context.
          * @param {Number} tileSize - The size of a tile, in pixels.
          * @param {Object} options - The parameters of the animation.
          * @param {Number} options.numChunks - The size of the array, in tiles.
          */
-        constructor(tileSize = 256, options = {}) {
-            // get context
-            this.gl = esper.WebGLContext.get();
+        constructor(gl, tileSize = 256, options = {}) {
+            this.gl = gl;
             this.numChunks = defaultTo(options.numChunks, 256);
             this.chunkSize = tileSize;
             // set texture properties
