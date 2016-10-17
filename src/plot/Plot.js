@@ -28,6 +28,7 @@
             width: plot.viewport.width,
             height: plot.viewport.height
         };
+        const center = plot.viewport.getCenter();
         if (prev.width !== current.width || prev.height !== current.height) {
             // resize canvas
             plot.canvas.style.width = current.width + 'px';
@@ -41,6 +42,8 @@
             // update viewport
             plot.viewport.width = current.width;
             plot.viewport.height = current.height;
+            // re-center viewport
+            plot.viewport.centerOn(center);
             // request tiles
             Request.requestTiles(plot);
             // emit resize

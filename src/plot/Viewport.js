@@ -192,6 +192,18 @@
         }
 
         /**
+         * Returns the center of the viewport in plot pixel coordinates.
+         *
+         * @returns {Object} The plot pixel center.
+         */
+        getCenter() {
+            return {
+                x: this.x + this.width / 2,
+                y: this.y + this.height / 2
+            };
+        }
+
+        /**
          * Centers the viewport on a given plot pixel coordinate.
          *
          * @param {Object} px - The plot pixel to center the viewport on.
