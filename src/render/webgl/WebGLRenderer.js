@@ -72,10 +72,16 @@
                 const ncoord = coord.normalize();
                 // check if we have the tile
                 if (pyramid.has(ncoord)) {
+                    const scale = Math.pow(2, plot.zoom - coord.z);
+                    const tileOffset = [
+                        (coord.x * scale * plot.tileSize) - plot.viewport.x,
+                        (coord.y * scale * plot.tileSize) - plot.viewport.y
+                    ];
                     const renderable = {
                         coord: coord,
-                        scale: Math.pow(2, plot.zoom - coord.z),
-                        hash: ncoord.hash
+                        scale: scale,
+                        hash: ncoord.hash,
+                        tileOffset: tileOffset
                     };
                     renderables.push(renderable);
                 }
@@ -106,16 +112,22 @@
                 // check if we have any tile LOD available
                 const lod = pyramid.getAvailableLOD(coord);
                 if (lod) {
+                    const scale = Math.pow(2, plot.zoom - coord.z);
+                    const tileOffset = [
+                        (coord.x * scale * plot.tileSize) - plot.viewport.x,
+                        (coord.y * scale * plot.tileSize) - plot.viewport.y
+                    ];
                     const renderable = {
                         coord: coord,
                         hash: lod.tile.coord.hash,
-                        scale: Math.pow(2, plot.zoom - coord.z),
-                        offset: [
+                        scale: scale,
+                        uvOffset: [
                             lod.offset.x,
                             lod.offset.y,
                             lod.offset.extent,
                             lod.offset.extent
-                        ]
+                        ],
+                        tileOffset: tileOffset
                     };
                     renderables.push(renderable);
                 }

@@ -101,7 +101,6 @@
         // for each renderable
         renderables.forEach(renderable => {
             const hash = renderable.hash;
-            const coord = renderable.coord;
             // TODO: move this inside TextureArray, have it done implicitly
             if (last !== hash) {
                 // bind texture
@@ -109,24 +108,11 @@
                 last = hash;
             }
             // set texture coordinate offset
-            shader.setUniform('uTextureCoordOffset', renderable.offset);
+            shader.setUniform('uTextureCoordOffset', renderable.uvOffset);
             // set tile scale
             shader.setUniform('uTileScale', renderable.scale);
             // get tile offset
-            const tileOffset = [
-                coord.x * renderable.scale * plot.tileSize,
-                coord.y * renderable.scale * plot.tileSize
-            ];
-            // get view offset
-            const viewOffset = [
-                plot.viewport.x,
-                plot.viewport.y
-            ];
-            const offset = [
-                tileOffset[0] - viewOffset[0],
-                tileOffset[1] - viewOffset[1]
-            ];
-            shader.setUniform('uTileOffset', offset);
+            shader.setUniform('uTileOffset', renderable.tileOffset);
             // draw
             quad.draw();
             // no need to unbind texture

@@ -8,7 +8,6 @@
     const EventType = require('../event/EventType');
     const FrameEvent = require('../event/FrameEvent');
     const ResizeEvent = require('../event/ResizeEvent');
-    const Texture = require('../render/webgl/texture/Texture');
     const RenderBuffer = require('../render/webgl/texture/RenderBuffer');
     const Request = require('./Request');
     const Viewport = require('./Viewport');
@@ -142,6 +141,7 @@
          * @param {Number} options.zoom - The zoom of the plot.
          * @param {Number} options.minZoom - The minimum zoom of the plot.
          * @param {Number} options.maxZoom - The maximum zoom of the plot.
+         * @param {Number} options.center - The center of the plot, in plot pixels.
          * @param {boolean} options.wraparound - Whether or not the plot wraps around.
          *
          * @param {Number} options.inertia - Whether or not pan inertia is enabled.
@@ -176,14 +176,11 @@
                 throw `Unable to create a WebGLRenderingContext, please ensure your browser supports WebGL`;
             }
 
-            // create render target
-            this.renderTexture = new Texture(this.gl, null, {
-                width: this.canvas.width,
-                height: this.canvas.height,
-                filter: 'NEAREST'
-            });
-            this.renderBuffer = new RenderBuffer(this.gl);
-            this.renderBuffer.setColorTarget(this.renderTexture, 0);
+            // create renderbuffer
+            this.renderBuffer = new RenderBuffer(
+                this.gl,
+                this.canvas.width,
+                this.canvas.height);
 
             // set viewport
             this.viewport = new Viewport({
@@ -203,7 +200,9 @@
             this.zoom = clamp(this.zoom, this.minZoom, this.maxZoom);
 
             // center the plot
-            const center = Math.pow(2, this.zoom) * this.tileSize / 2;
+            const center = defaultTo(
+                options.center,
+                Math.pow(2, this.zoom) * this.tileSize / 2);
             this.viewport.centerOn({
                 x: center,
                 y: center
@@ -246,9 +245,14 @@
             this.gl = null;
             this.canvas = null;
             this.container = null;
+            this.renderBuffer = null;
             // disable handlers
             this.handlers.forEach(handler => {
                 handler.disable();
+            });
+            // remove layers
+            this.layers.forEach(layer => {
+                this.removeLayer(layer);
             });
             return this;
         }

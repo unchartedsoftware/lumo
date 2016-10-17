@@ -51,7 +51,6 @@
          * @return {Texture} The texture object, for chaining.
          */
         bind(location = 0) {
-            // bind texture
             const gl = this.gl;
             gl.activeTexture(gl[`TEXTURE${location}`]);
             gl.bindTexture(gl.TEXTURE_2D, this.texture);
@@ -64,7 +63,8 @@
          * @return {Texture} The texture object, for chaining.
          */
         unbind() {
-            // no-op
+            const gl = this.gl;
+            gl.bindTexture(gl.TEXTURE_2D, null);
             return this;
         }
 

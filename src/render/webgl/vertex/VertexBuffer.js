@@ -110,7 +110,6 @@
          * @return {VertexBuffer} The vertex buffer object, for chaining.
          */
         bufferData(arg) {
-            // buffer the data
             const gl = this.gl;
             gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
             gl.bufferData(gl.ARRAY_BUFFER, arg, gl.STATIC_DRAW);
