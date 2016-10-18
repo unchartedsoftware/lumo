@@ -1,18 +1,14 @@
-(function() {
+'use strict';
 
-    'use strict';
+const Event = require('./Event');
 
-    const Event = require('./Event');
+class ResizeEvent extends Event {
+	constructor(plot, prevSize, targetSize) {
+		super();
+		this.plot = plot;
+		this.prevSize = prevSize;
+		this.targetSize = targetSize;
+	}
+}
 
-    class ResizeEvent extends Event {
-        constructor(plot, prevSize, targetSize) {
-            super();
-            this.plot = plot;
-            this.prevSize = prevSize;
-            this.targetSize = targetSize;
-        }
-    }
-
-    module.exports = ResizeEvent;
-
-}());
+module.exports = ResizeEvent;

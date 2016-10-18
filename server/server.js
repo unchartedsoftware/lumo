@@ -1,4 +1,4 @@
-(function() {
+
 
     'use strict';
 
@@ -40,4 +40,4 @@
         console.log(`Listening on port ${port}`);
     });
 
-}());
+

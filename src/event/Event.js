@@ -1,13 +1,9 @@
-(function() {
+'use strict';
 
-    'use strict';
+class Event {
+	constructor(timestamp = Date.now()) {
+		this.timestamp = timestamp;
+	}
+}
 
-    class Event {
-        constructor(timestamp = Date.now()) {
-            this.timestamp = timestamp;
-        }
-    }
-
-    module.exports = Event;
-
-}());
+module.exports = Event;

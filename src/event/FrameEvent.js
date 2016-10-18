@@ -1,15 +1,11 @@
-(function() {
+'use strict';
 
-    'use strict';
+const Event = require('./Event');
 
-    const Event = require('./Event');
+class FrameEvent extends Event {
+	constructor(timestamp) {
+		super(timestamp);
+	}
+}
 
-    class FrameEvent extends Event {
-        constructor(timestamp) {
-            super(timestamp);
-        }
-    }
-
-    module.exports = FrameEvent;
-
-}());
+module.exports = FrameEvent;

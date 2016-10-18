@@ -1,4 +1,4 @@
-(function() {
+
 
     'use strict';
 
@@ -91,4 +91,4 @@
         return buffer;
     };
 
-}());
+
