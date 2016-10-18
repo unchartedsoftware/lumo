@@ -128,9 +128,6 @@ class PointRenderer extends WebGLRenderer {
 		super.onAdd(layer);
 		// get the extension for standard derivatives
 		this.ext = this.gl.getExtension('OES_standard_derivatives');
-		if (!this.ext) {
-			throw 'OES_standard_derivatives WebGL extension is not supported';
-		}
 		this.shader = new Shader(this.gl, SHADER_GLSL);
 		this.atlas = new VertexAtlas(
 			this.gl,

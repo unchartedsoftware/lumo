@@ -10,16 +10,22 @@ const WebGLRenderer = require('./WebGLRenderer');
 // Constants
 
 /**
- * Slices in circle geometry.
+ * Inner radius of star.
  * @constant {Number}
  */
-const CIRCLE_SLICES = 64;
+const STAR_INNER_RADIUS = 0.4;
 
 /**
- * Radius in circle geometry.
+ * Outer radius of star.
  * @constant {Number}
  */
-const CIRCLE_RADIUS = 1;
+const STAR_OUTER_RADIUS = 1.0;
+
+/**
+ * Number of points on the star.
+ * @constant {Number}
+ */
+const STAR_NUM_POINTS = 5;
 
 /**
  * Shader GLSL source.
@@ -52,27 +58,26 @@ const SHADER_GLSL = {
 
 // Private Methods
 
-const createCircle = function(gl) {
-	const theta = (2 * Math.PI) / CIRCLE_SLICES;
-	// precalculate sine and cosine
-	const c = Math.cos(theta);
-	const s = Math.sin(theta);
-	// start at angle = 0
-	let x = CIRCLE_RADIUS;
-	let y = 0;
-	const positions = new Float32Array((CIRCLE_SLICES + 2) * 2);
+const createStar = function(gl) {
+	const theta = (2 * Math.PI) / STAR_NUM_POINTS;
+	const htheta = theta / 2.0;
+	const qtheta = theta / 4.0;
+	const positions = new Float32Array((STAR_NUM_POINTS * 2) * 2 + 4);
 	positions[0] = 0;
 	positions[1] = 0;
-	positions[positions.length-2] = CIRCLE_RADIUS;
-	positions[positions.length-1] = 0;
-	for (let i=0; i<CIRCLE_SLICES; i++) {
-		positions[(i+1)*2] = x;
-		positions[(i+1)*2+1] = y;
-		// apply the rotation
-		const t = x;
-		x = c * x - s * y;
-		y = s * t + c * y;
+	for (let i=0; i<STAR_NUM_POINTS; i++) {
+		const angle = i * theta;
+		let sx = Math.cos(angle - qtheta) * STAR_INNER_RADIUS;
+		let sy = Math.sin(angle - qtheta) * STAR_INNER_RADIUS;
+		positions[i*4+2] = sx;
+		positions[i*4+1+2] = sy;
+		sx = Math.cos(angle + htheta - qtheta) * STAR_OUTER_RADIUS;
+		sy = Math.sin(angle + htheta - qtheta) * STAR_OUTER_RADIUS;
+		positions[i*4+2+2] = sx;
+		positions[i*4+3+2] = sy;
 	}
+	positions[positions.length-2] = positions[2];
+	positions[positions.length-1] = positions[3];
 	return new VertexBuffer(
 		gl,
 		positions,
@@ -88,7 +93,7 @@ const createCircle = function(gl) {
 		});
 };
 
-const renderTiles = function(gl, atlas, circle, shader, plot, renderables, color) {
+const renderTiles = function(gl, atlas, shape, shader, plot, renderables, color) {
 	// get projection
 	const proj = plot.viewport.getOrthoMatrix();
 
@@ -110,8 +115,8 @@ const renderTiles = function(gl, atlas, circle, shader, plot, renderables, color
 	// set color
 	shader.setUniform('uColor', color);
 
-	// bind circle
-	circle.bind();
+	// bind shape
+	shape.bind();
 
 	// binds the buffer to instance
 	atlas.bindInstanced();
@@ -123,14 +128,14 @@ const renderTiles = function(gl, atlas, circle, shader, plot, renderables, color
 		// get tile offset
 		shader.setUniform('uTileOffset', renderable.tileOffset);
 		// draw the instances
-		atlas.drawInstanced(renderable.hash, circle.mode, circle.count);
+		atlas.drawInstanced(renderable.hash, shape.mode, shape.count);
 	});
 
 	// unbind
 	atlas.unbindInstanced();
 
 	// unbind quad
-	circle.unbind();
+	shape.unbind();
 
 	// unbind render target
 	plot.renderBuffer.unbind();
@@ -149,7 +154,7 @@ class PointRenderer extends WebGLRenderer {
 	 */
 	constructor(options = {}) {
 		super();
-		this.circle = null;
+		this.shape = null;
 		this.shader = null;
 		this.atlas = null;
 		this.color = defaultTo(options.color, [ 1.0, 0.4, 0.1, 0.8 ]);
@@ -164,8 +169,8 @@ class PointRenderer extends WebGLRenderer {
 	 */
 	onAdd(layer) {
 		super.onAdd(layer);
-		this.circle = createCircle(this.gl);
-		this.shaders = new Shader(this.gl, SHADER_GLSL);
+		this.shape = createStar(this.gl);
+		this.shader = new Shader(this.gl, SHADER_GLSL);
 		this.atlas = new VertexAtlas(
 			this.gl,
 			{
@@ -208,7 +213,7 @@ class PointRenderer extends WebGLRenderer {
 		this.layer.removeListener(this.remove);
 		this.tileAdd = null;
 		this.tileRemove = null;
-		this.circle = null;
+		this.shape = null;
 		this.shader = null;
 		this.atlas = null;
 		super.onRemove(layer);
@@ -227,7 +232,7 @@ class PointRenderer extends WebGLRenderer {
 		renderTiles(
 			this.gl,
 			this.atlas,
-			this.circle,
+			this.shape,
 			this.shader,
 			this.layer.plot,
 			this.getRenderables(),
