@@ -2,6 +2,8 @@
 
 const Renderer = require('../Renderer');
 
+// Private Methods
+
 const getRenderables = function(plot, pyramid) {
 	// get all currently visible tile coords
 	const coords = plot.viewport.getVisibleCoords(

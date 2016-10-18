@@ -15,9 +15,9 @@ class HTMLRenderer extends DOMRenderer {
 	}
 
 	/**
-	 * Create and return the DOM Element which contains the layer.
+	 * Create and return the HTML Element which contains the layer.
 	 *
-	 * @returns {Element} The layer container DOM element.
+	 * @returns {Element} The layer container HTML element.
 	 */
 	createContainer() {
 		const container = document.createElement('div');
@@ -28,14 +28,14 @@ class HTMLRenderer extends DOMRenderer {
 	}
 
 	/**
-	 * Create and return the DOM Element which represents an individual
+	 * Create and return the HTML Element which represents an individual
 	 * tile.
 	 *
 	 * @param {Number} x - The x position of the tile, in pixels.
 	 * @param {Number} y - The y position of the tile, in pixels.
 	 * @param {Number} size - the size of the tile, in pixels.
 	 *
-	 * @returns {Element} The layer container DOM element.
+	 * @returns {Element} The layer container HTML element.
 	 */
 	createTile(x, y, size) {
 		const tile = document.createElement('div');

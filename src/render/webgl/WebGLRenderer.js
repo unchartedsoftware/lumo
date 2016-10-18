@@ -2,6 +2,8 @@
 
 const Renderer = require('../Renderer');
 
+// Private Methods
+
 const sortByHash = function(a, b) {
 	if (a < b) {
 		return -1;
