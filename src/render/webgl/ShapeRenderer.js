@@ -209,8 +209,8 @@ class PointRenderer extends WebGLRenderer {
 	 * @returns {Renderer} The renderer object, for chaining.
 	 */
 	onRemove(layer) {
-		this.layer.removeListener(this.add);
-		this.layer.removeListener(this.remove);
+		this.layer.removeListener(this.tileAdd);
+		this.layer.removeListener(this.tileRemove);
 		this.tileAdd = null;
 		this.tileRemove = null;
 		this.shape = null;

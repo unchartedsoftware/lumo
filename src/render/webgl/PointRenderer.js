@@ -73,20 +73,19 @@ const renderTiles = function(gl, atlas, shader, plot, renderables, color) {
 
 	// set projection
 	shader.setUniform('uProjectionMatrix', proj);
-
-	// binds the buffer to instance
-	atlas.bind();
-
 	// set color
 	shader.setUniform('uColor', color);
 	// set pixel ratio
 	shader.setUniform('uPixelRatio', window.devicePixelRatio);
 
+	// binds the buffer to instance
+	atlas.bind();
+
 	// for each renderable
 	renderables.forEach(renderable => {
 		// set tile scale
 		shader.setUniform('uTileScale', renderable.scale);
-		// get tile offset
+		// set tile offset
 		shader.setUniform('uTileOffset', renderable.tileOffset);
 		// draw the points
 		atlas.draw(renderable.hash, 'POINTS');
@@ -100,7 +99,7 @@ const renderTiles = function(gl, atlas, shader, plot, renderables, color) {
 };
 
 /**
- * Class representing a pointer renderer.
+ * Class representing a point renderer.
  */
 class PointRenderer extends WebGLRenderer {
 
@@ -167,8 +166,8 @@ class PointRenderer extends WebGLRenderer {
 	 * @returns {Renderer} The renderer object, for chaining.
 	 */
 	onRemove(layer) {
-		this.layer.removeListener(this.add);
-		this.layer.removeListener(this.remove);
+		this.layer.removeListener(this.tileAdd);
+		this.layer.removeListener(this.tileRemove);
 		this.tileAdd = null;
 		this.tileRemove = null;
 		this.shader = null;
