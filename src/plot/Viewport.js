@@ -97,8 +97,7 @@ class Viewport {
 		// clamp vertical bounds
 		const bottom = Math.max(min, bounds.bottom);
 		const top = Math.min(max, bounds.top);
-		// TODO: pre-allocate this and index
-		let coords = [];
+		const coords = [];
 		for (let x=left; x<=right; x++) {
 			for (let y=bottom; y<=top; y++) {
 				coords.push(new Coord(tileZoom, x, y));

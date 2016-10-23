@@ -26,16 +26,21 @@ const resize = function(plot) {
 		height: plot.viewport.height
 	};
 	const center = plot.viewport.getCenter();
-	if (prev.width !== current.width || prev.height !== current.height) {
+
+	if (prev.width !== current.width ||
+		prev.height !== current.height ||
+		plot.pixelRatio !== window.devicePixelRatio) {
+		// store device pixel ratio
+		plot.pixelRatio = window.devicePixelRatio;
 		// resize canvas
 		plot.canvas.style.width = current.width + 'px';
 		plot.canvas.style.height = current.height + 'px';
-		plot.canvas.width = current.width * window.devicePixelRatio;
-		plot.canvas.height = current.height * window.devicePixelRatio;
+		plot.canvas.width = current.width * plot.pixelRatio;
+		plot.canvas.height = current.height * plot.pixelRatio;
 		// resize render target
 		plot.renderBuffer.resize(
-			current.width * window.devicePixelRatio,
-			current.height * window.devicePixelRatio);
+			current.width * plot.pixelRatio,
+			current.height * plot.pixelRatio);
 		// update viewport
 		plot.viewport.width = current.width;
 		plot.viewport.height = current.height;
@@ -56,8 +61,8 @@ const reset = function(plot) {
 	// resets the position of the viewport relative to the layer such that
 	// the layer native coordinate range is within the viewports bounds.
 	// NOTE: This does not have any observable effect.
-	const dim = Math.pow(2, plot.zoom);
-	const layerWidth = dim * plot.tileSize;
+	const scale = Math.pow(2, plot.zoom);
+	const layerWidth = scale * plot.tileSize;
 	const layerSpans = Math.ceil(plot.viewport.width / layerWidth);
 	const layerLeft = 0;
 	const layerRight = layerWidth - 1;
@@ -185,6 +190,9 @@ class Plot extends EventEmitter {
 			width: this.canvas.offsetWidth,
 			height: this.canvas.offsetHeight
 		});
+
+		// set pixel ratio
+		this.pixelRatio = window.devicePixelRatio;
 
 		// tile size in pixels
 		this.tileSize = defaultTo(options.tileSize, 256);

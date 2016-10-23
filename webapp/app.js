@@ -15,123 +15,116 @@ const SUBDOMAINS = [
 	'y', 'z'
 ];
 
-const loadImage = function(url, done) {
-	let image = new Image();
-	image.onload = () => {
-		done(null, image);
-	};
-	image.onerror = (event) => {
-		const err = `Unable to load image from URL: \`${event.path[0].currentSrc}\``;
-		done(err, null);
-	};
-	image.crossOrigin = 'anonymous';
-	image.src = url;
-};
-
-const loadArrayBuffer = function(url, done) {
-	const req = new XMLHttpRequest();
-	req.open('GET', url, true);
-	req.responseType = 'arraybuffer';
-	req.onload = () => {
-		const arraybuffer = req.response;
-		if (arraybuffer) {
-			const bytes = new Uint8Array(arraybuffer);
-			done(null, bytes);
-		} else {
-			const err = `Unable to load ArrayBuffer from URL: \`${event.path[0].currentSrc}\``;
-			done(err, null);
-		}
-	};
-	req.onerror = (event) => {
-		const err = `Unable to load ArrayBuffer from URL: \`${event.path[0].currentSrc}\``;
-		done(err, null);
-	};
-	req.send(null);
-};
-
 window.start = function() {
 
-	let plot = new caleida.Plot('#plot', {
-		continuousZoom: true,
+	const plot = new caleida.Plot('#plot', {
+		continuousZoom: false,
 		inertia: true,
-		wraparound: true,
-		zoom: 3
+		wraparound: false,
+		zoom: 0
 	});
 
 	// WebGL Image Texture
 
-	let base = new caleida.Layer({
+	const base = new caleida.Layer({
 		renderer: new caleida.TextureRenderer()
 	});
-
 	base.requestTile = (coord, done) => {
-		const dim = Math.pow(2, coord.z);
 		const s = SUBDOMAINS[(coord.x + coord.y + coord.z) % SUBDOMAINS.length];
-		const url = `http://${s}.basemaps.cartocdn.com/dark_nolabels/${coord.z}/${coord.x}/${dim - 1 - coord.y}.png`;
-		loadImage(url, done);
+		const url = `http://${s}.basemaps.cartocdn.com/dark_nolabels/${coord.xyz()}.png`;
+		caleida.loadImage(url, done);
 	};
-
+	base.on('tile:load', () => {
+		console.log('LOADED!');
+	});
 	plot.addLayer(base);
 
 	// WebGL Buffer Texture
 
-	let mandlebrot = new caleida.Layer({
+	const mandlebrot = new caleida.Layer({
 		renderer: new caleida.TextureRenderer()
 	});
-
-	mandlebrot.requestTile = (coord, done) => {
-		const url = `mandelbrot/${coord.z}/${coord.x}/${coord.y}`;
-		loadArrayBuffer(url, done);
-	};
-
 	mandlebrot.opacity = 0.5;
-
+	mandlebrot.requestTile = (coord, done) => {
+		const url = `mandelbrot/${coord.tms()}`;
+		caleida.loadBuffer(url, (err, buffer) => {
+			if (err) {
+				done(err);
+				return;
+			}
+			done(null, new Uint8Array(buffer));
+		});
+	};
 	// plot.addLayer(mandlebrot);
 
 	// WebGL Point
 
-	let point = new caleida.Layer({
+	const point = new caleida.Layer({
 		renderer: new caleida.PointRenderer({
 			color: [ 0.4, 1.0, 0.1, 0.8 ]
 		})
 	});
-
 	point.requestTile = (coord, done) => {
-		const numPoints = 256 * 2;
+		const numPoints = 256 * 16;
 		const buffer = new Float32Array(3 * numPoints);
 		for (let i=0; i<numPoints; i++) {
 			buffer[i*3] = Math.random() * 256; // x
 			buffer[i*3+1] = Math.random() * 256; // y
-			buffer[i*3+2] = (Math.random() * 4) + 2; // radius
+			buffer[i*3+2] = (Math.random() * 2) + 1; // radius
 		}
 		done(null, buffer);
 	};
+	//plot.addLayer(point);
 
-	plot.addLayer(point);
+	setInterval(()=> {
+		point.opacity = 0.2 + Math.sin(Date.now() / 200);
+	}, 10);
+
+	// WebGL Interactive Point
+
+	const interactive = new caleida.Layer({
+		renderer: new caleida.InteractiveRenderer()
+	});
+	interactive.requestTile = (coord, done) => {
+		const numPoints = 256;
+		const points = new Array(numPoints);
+		for (let i=0; i<numPoints; i++) {
+			points[i] = {
+				x: Math.random() * 256, // x
+				y: Math.random() * 256, // y
+				radius: (Math.random() * 8) + 4 // radius
+			};
+		}
+		done(null, points);
+	};
+	//plot.addLayer(interactive);
 
 	// WebGL Shape
 
-	let shape = new caleida.Layer({
-		renderer: new caleida.ShapeRenderer()
+	const shape = new caleida.Layer({
+		renderer: new caleida.ShapeRenderer({
+			color: [ 0.2, 0.2, 0.8, 0.8 ]
+		})
 	});
-
 	shape.requestTile = (coord, done) => {
-		const numPoints = 256 * 2;
-		const buffer = new Float32Array(3 * numPoints);
+		const numPoints = 64;
+		const buffer = new Float32Array(numPoints * 3);
 		for (let i=0; i<numPoints; i++) {
 			buffer[i*3] = Math.random() * 256; // x
 			buffer[i*3+1] = Math.random() * 256; // y
-			buffer[i*3+2] = (Math.random() * 4) + 2; // radius
+			buffer[i*3+2] = (Math.random() * 16) + 16; // radius
 		}
 		done(null, buffer);
 	};
+	//plot.addLayer(shape);
 
-	// plot.addLayer(shape);
+	setInterval(()=> {
+		shape.opacity = 0.2 + Math.cos(Date.now() / 200);
+	}, 20);
 
 	// SVG
 
-	let svgRenderer = new caleida.SVGRenderer();
-
+	const svgRenderer = new caleida.SVGRenderer();
 	svgRenderer.drawTile = function(element) {
 		const SVG_NS = 'http://www.w3.org/2000/svg';
 		const circle = document.createElementNS(SVG_NS, 'circle');
@@ -141,21 +134,17 @@ window.start = function() {
 		circle.setAttribute('fill', 'green');
 		element.appendChild(circle);
 	};
-
-	let svg = new caleida.Layer({
+	const svg = new caleida.Layer({
 		renderer: svgRenderer
 	});
-
 	svg.requestTile = (coord, done) => {
 		done(null, {});
 	};
-
 	// plot.addLayer(svg);
 
 	// HTML
 
-	let htmlRenderer = new caleida.HTMLRenderer();
-
+	const htmlRenderer = new caleida.HTMLRenderer();
 	htmlRenderer.drawTile = function(element, tile) {
 		const html = document.createElement('div');
 		html.style.position = 'absolute';
@@ -166,15 +155,12 @@ window.start = function() {
 		html.innerHTML = `HTML Tile ${tile.coord.hash}`;
 		element.appendChild(html);
 	};
-
-	let html = new caleida.Layer({
+	const html = new caleida.Layer({
 		renderer: htmlRenderer
 	});
-
 	html.requestTile = (coord, done) => {
 		done(null, {});
 	};
-
 	// plot.addLayer(html);
 
 	// Debug performance tracking

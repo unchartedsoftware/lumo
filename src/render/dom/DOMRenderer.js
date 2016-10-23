@@ -96,7 +96,7 @@ class DOMRenderer extends Renderer {
 	/**
 	 * The draw function that is executed per frame.
 	 *
-	 * @returns {Renderer} The renderer object, for chaining.
+	 * @returns {DOMRenderer} The renderer object, for chaining.
 	 */
 	draw() {
 		const layer = this.layer;
@@ -140,6 +140,25 @@ class DOMRenderer extends Renderer {
 				tiles.set(hash, tile);
 			}
 		});
+		return this;
+	}
+
+	/**
+	 * Forces the renderer to discard all current DOM rendered tiles and
+	 * recreate them.
+	 *
+	 * @returns {DOMRenderer} The renderer object, for chaining.
+	 */
+	redraw() {
+		const container = this.container;
+		const tiles = this.tiles;
+		// remove all tiles
+		tiles.forEach((tile, hash) => {
+			container.removeChild(tile);
+			tiles.delete(hash);
+		});
+		// force draw
+		this.draw();
 		return this;
 	}
 

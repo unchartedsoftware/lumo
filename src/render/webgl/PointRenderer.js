@@ -76,7 +76,7 @@ const renderTiles = function(gl, atlas, shader, plot, renderables, color) {
 	// set color
 	shader.setUniform('uColor', color);
 	// set pixel ratio
-	shader.setUniform('uPixelRatio', window.devicePixelRatio);
+	shader.setUniform('uPixelRatio', plot.pixelRatio);
 
 	// binds the buffer to instance
 	atlas.bind();

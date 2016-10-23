@@ -93,6 +93,7 @@ class PanHandler {
 		}
 
 		const plot = this.plot;
+
 		let down = false;
 		let lastPos = null;
 		let lastTime = null;

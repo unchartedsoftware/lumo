@@ -147,11 +147,11 @@ const zoom = function(handler, plot, targetPx, wheelDelta, continuousZoom) {
 	}
 };
 
-const getWheelDelta = function(event) {
+const getWheelDelta = function(plot, event) {
 	if (event.deltaMode === 0) {
 		// pixels
 		if (Browser.firefox) {
-			return -event.deltaY / window.devicePixelRatio;
+			return -event.deltaY / plot.pixelRatio;
 		}
 		return -event.deltaY;
 	} else if (event.deltaMode === 1) {
@@ -198,25 +198,27 @@ class ZoomHandler {
 			throw 'Handler is already enabled';
 		}
 
+		const plot = this.plot;
+
 		let wheelDelta = 0;
 		let timeout = null;
 		let evt = null;
 
 		this.dblclick = (event) => {
 			// get mouse position
-			const targetPx = this.plot.mouseToPlotPx(event);
-			zoom(this, this.plot, targetPx, this.deltaPerZoom, false);
+			const targetPx = plot.mouseToPlotPx(event);
+			zoom(this, plot, targetPx, this.deltaPerZoom, false);
 		};
 
 		this.wheel = (event) => {
 			// increment wheel delta
-			wheelDelta += getWheelDelta(event);
+			wheelDelta += getWheelDelta(plot, event);
 			// check zoom type
 			if (this.continuousZoom) {
 				// get target pixel from mouse position
-				const targetPx = this.plot.mouseToPlotPx(event);
+				const targetPx = plot.mouseToPlotPx(event);
 				// process continuous zoom immediately
-				zoom(this, this.plot, targetPx, wheelDelta, true);
+				zoom(this, plot, targetPx, wheelDelta, true);
 				// reset wheel delta
 				wheelDelta = 0;
 			} else {
@@ -229,9 +231,9 @@ class ZoomHandler {
 						// NOTE: this is called inside the closure to ensure
 						// that we use the current viewport of the plot to
 						// convert from mouse to plot pixels
-						const targetPx = this.plot.mouseToPlotPx(evt);
+						const targetPx = plot.mouseToPlotPx(evt);
 						// process zoom event
-						zoom(this, this.plot, targetPx, wheelDelta, false);
+						zoom(this, plot, targetPx, wheelDelta, false);
 						// reset wheel delta
 						wheelDelta = 0;
 						// clear timeout
