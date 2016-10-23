@@ -4,10 +4,6 @@ const Bounds = require('./Bounds');
 
 // Private Methods
 
-const hashCoord = function(coord) {
-	return `${coord.z}:${coord.x}:${coord.y}`;
-};
-
 const mod = function(n, m) {
 	return ((n % m) + m) % m;
 };
@@ -28,7 +24,26 @@ class Coord {
 		this.z = z;
 		this.x = x;
 		this.y = y;
-		this.hash = hashCoord(this);
+		this.hash = `${this.z}:${this.x}:${this.y}`;
+	}
+
+	/**
+	 * Returns the XYZ URL string.
+	 *
+	 * @returns {String} The XYZ URL string.
+	 */
+	xyz() {
+		const dim = Math.pow(2, this.z);
+		return `${this.z}/${this.x}/${dim - 1 - this.y}`;
+	}
+
+	/**
+	 * Returns the TMS URL string.
+	 *
+	 * @returns {String} The TMS URL string.
+	 */
+	tms() {
+		return `${this.z}/${this.x}/${this.y}`;
 	}
 
 	/**
