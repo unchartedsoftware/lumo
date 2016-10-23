@@ -124,5 +124,11 @@ module.exports = {
 	 * Emitted when a tile is evicted from the internal LRU cache.
 	 * @constant {String}
 	 */
-	TILE_REMOVE: 'tile:remove'
+	TILE_REMOVE: 'tile:remove',
+
+	/**
+	 * Emitted when all visible tiles have been loaded for a layer.
+	 * @constant {String}
+	 */
+	TILE_LOAD: 'tile:load',
 };

@@ -1,6 +1,7 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
+const throttle = require('lodash/throttle');
 const LRU = require('lru-cache');
 const Tile = require('../core/Tile');
 const EventType = require('../event/EventType');
@@ -19,6 +20,12 @@ const CACHE_SIZE = 128;
  * @constant {Number}
  */
 const PERSISTANT_LEVELS = 4;
+
+/**
+ * Loaded event throttle in milliseconds.
+ * @constant {Number}
+ */
+const LOADED_THROTTLE_MS = 200;
 
 // Private Methods
 
@@ -79,6 +86,13 @@ const remove = function(pyramid, tile) {
 const sumPowerOfFour = function(n) {
 	return (1/3) * (Math.pow(4, n) - 1);
 };
+
+const checkIfLoaded = throttle(function(pyramid) {
+	// if no more pending tiles, emit load
+	if (pyramid.pending.size === 0) {
+		pyramid.layer.emit(EventType.TILE_LOAD, new TileEvent(pyramid.layer, null));
+	}
+}, LOADED_THROTTLE_MS);
 
 /**
  * Class representing a pyramid of tiles.
@@ -231,6 +245,8 @@ class TilePyramid {
 					tile.err = err;
 					// emit failure
 					this.layer.emit(EventType.TILE_FAILURE, new TileEvent(this.layer, tile));
+					// check if loaded
+					checkIfLoaded(this);
 					return;
 				}
 				// add data to the tile
@@ -239,10 +255,14 @@ class TilePyramid {
 				if (this.isStale(plot, coord)) {
 					// emit discard
 					this.layer.emit(EventType.TILE_DISCARD, new TileEvent(this.layer, tile));
+					// check if loaded
+					checkIfLoaded(this);
 					return;
 				}
 				// add to tile pyramid
 				add(this, tile);
+				// check if loaded
+				checkIfLoaded(this);
 			});
 		});
 	}
