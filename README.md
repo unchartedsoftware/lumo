@@ -21,6 +21,8 @@ bower install lumo
 
 ## Example
 
+* [JSFiddle Example](https://jsfiddle.net/wz73r793/)
+
 ```javascript
 
 import lumo from 'lumo';
@@ -59,8 +61,8 @@ const point = new lumo.Layer({
 
 point.requestTile = (coord, done) => {
 	const NUM_POINTS = 256 * 32;
-	const buffer = new Float32Array(3 * numPoints);
-	for (let i=0; i<numPoints; i++) {
+	const buffer = new Float32Array(3 * NUM_POINTS);
+	for (let i=0; i<NUM_POINTS; i++) {
 		buffer[i*3] = Math.random() * 256; // x
 		buffer[i*3+1] = Math.random() * 256; // y
 		buffer[i*3+2] = (Math.random() * 4) + 2; // radius
@@ -70,7 +72,3 @@ point.requestTile = (coord, done) => {
 
 plot.addLayer(point);
 ```
-
-## Usage
-
-TODO
