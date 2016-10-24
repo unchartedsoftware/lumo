@@ -1,0 +1,10 @@
+language: node_js
+notifications:
+  email: false
+node_js:
+  - "node"
+  - "6"
+script:
+  - npm run build
+  - npm run test
+# after_success: npm run coveralls
