@@ -8,6 +8,7 @@ const VertexBuffer = require('../vertex/VertexBuffer');
 
 /**
  * Shader GLSL source.
+ * @private
  * @constant {Object}
  */
 const SHADER_GLSL = {

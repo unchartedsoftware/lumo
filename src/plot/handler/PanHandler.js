@@ -10,24 +10,28 @@ const Request = require('./../Request');
 
 /**
  * Time in milliseconds before a pan point expires.
+ * @private
  * @constant {Number}
  */
 const PAN_EXPIRY_MS = 50;
 
 /**
  * Pan inertia enabled.
+ * @private
  * @constant {boolean}
  */
 const PAN_INTERTIA = true;
 
 /**
  * Pan inertia easing.
+ * @private
  * @constant {Number}
  */
 const PAN_INTERTIA_EASING = 0.2;
 
 /**
  * Pan inertia deceleration.
+ * @private
  * @constant {Number}
  */
 const PAN_INTERTIA_DECELERATION = 3400;

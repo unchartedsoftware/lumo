@@ -14,7 +14,7 @@ class Layer extends EventEmitter {
 	 *
 	 * @param {Object} options - The layer options.
 	 * @param {Renderer} options.renderer - The layer renderer.
-	 * @param {Array[Renderer]} options.renderers - The layer renderers.
+	 * @param {Array} options.renderers - The layer renderers.
 	 * @param {Number} options.opacity - The layer opacity.
 	 * @param {boolean} options.hidden - Whether or not the layer is visible.
 	 */

@@ -11,24 +11,28 @@ const WebGLRenderer = require('./WebGLRenderer');
 
 /**
  * Inner radius of star.
+ * @private
  * @constant {Number}
  */
 const STAR_INNER_RADIUS = 0.4;
 
 /**
  * Outer radius of star.
+ * @private
  * @constant {Number}
  */
 const STAR_OUTER_RADIUS = 1.0;
 
 /**
  * Number of points on the star.
+ * @private
  * @constant {Number}
  */
 const STAR_NUM_POINTS = 5;
 
 /**
  * Shader GLSL source.
+ * @private
  * @constant {Object}
  */
 const SHADER_GLSL = {

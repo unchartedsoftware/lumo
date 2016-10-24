@@ -7,6 +7,7 @@ const vendor = (navigator && navigator.vendor || '').toLowerCase();
 
 /**
  * Test if the browser is firefox.
+ * @private
  *
  * @returns {boolean} Whether or not the browser is firefox.
  */
@@ -16,6 +17,7 @@ const isFirefox = function() {
 
 /**
  * Test if the browser is chrome.
+ * @private
  *
  * @returns {boolean} Whether or not the browser is chrome.
  */
@@ -25,6 +27,7 @@ const isChrome = function() {
 
 /**
  * Test if the browser is internet explorer.
+ * @private
  *
  * @returns {boolean} Whether or not the browser is internet explorer.
  */
@@ -34,6 +37,7 @@ const isIE = function() {
 
 /**
  * Test if the browser is edge.
+ * @private
  *
  * @returns {boolean} Whether or not the browser is edge.
  */
@@ -43,6 +47,7 @@ const isEdge = function() {
 
 /**
  * Test if the browser is opera.
+ * @private
  *
  * @returns {boolean} Whether or not the browser is opera.
  */
@@ -52,6 +57,7 @@ const isOpera = function() {
 
 /**
  * Test if the browser is safari.
+ * @private
  *
  * @returns {boolean} Whether or not the browser is safari.
  */
@@ -60,10 +66,40 @@ const isSafari = function() {
 };
 
 module.exports = {
+
+	/**
+	 * Whether or not the browser is firefox.
+	 * @constant {boolean}
+	 */
 	firefox: isFirefox(),
+
+	/**
+	 * Whether or not the browser is chrome.
+	 * @constant {boolean}
+	 */
 	chrome: isChrome(),
+
+	/**
+	 * Whether or not the browser is ie.
+	 * @constant {boolean}
+	 */
 	ie: isIE(),
+
+	/**
+	 * Whether or not the browser is edge.
+	 * @constant {boolean}
+	 */
 	edge: isEdge(),
+
+	/**
+	 * Whether or not the browser is opera.
+	 * @constant {boolean}
+	 */
 	opera: isOpera(),
+
+	/**
+	 * Whether or not the browser is safari.
+	 * @constant {boolean}
+	 */
 	safari: isSafari()
 };

@@ -8,6 +8,7 @@ const ClickEvent = require('../../event/ClickEvent');
 /**
  * Distance in pixels the mouse can be moved before the click event is
  * cancelled.
+ * @private
  * @constant {Number}
  */
 const MOVE_TOLERANCE = 15;

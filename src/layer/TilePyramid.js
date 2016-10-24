@@ -11,18 +11,21 @@ const TileEvent = require('../event/TileEvent');
 
 /**
  * Number of the tiles held in the pyramid.
+ * @private
  * @constant {Number}
  */
 const CACHE_SIZE = 128;
 
 /**
  * Number of persistant zoom levels held in the pyramids.
+ * @private
  * @constant {Number}
  */
 const PERSISTANT_LEVELS = 4;
 
 /**
  * Loaded event throttle in milliseconds.
+ * @private
  * @constant {Number}
  */
 const LOADED_THROTTLE_MS = 200;
@@ -217,7 +220,7 @@ class TilePyramid {
 	 * in the pyramid or is currently pending no request is made.
 	 *
 	 * @param {Plot} plot - The plot object.
-	 * @param {Array[Coord]} coords - The array of coords to request.
+	 * @param {Array} coords - The array of coords to request.
 	 */
 	requestTiles(plot, coords) {
 		// request tiles

@@ -6,12 +6,14 @@ const DOMRenderer = require('./DOMRenderer');
 
 /**
  * SVG Namespace string.
+ * @private
  * @constant {String}
  */
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 /**
  * Arbitrary size of the root svg element.
+ * @private
  * @constant {Number}
  */
 const SVG_SIZE = 20;

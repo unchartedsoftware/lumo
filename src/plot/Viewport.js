@@ -72,7 +72,7 @@ class Viewport {
 	 * @param {Number} tileZoom - The zoom of the tiles within the viewport. Optional.
 	 * @param {boolean} wraparound - The if the horizontal axis should wraparound. Optional.
 	 *
-	 * @returns {Array[Coord]} The array of visible tile coords.
+	 * @returns {Array} The array of visible tile coords.
 	 */
 	getVisibleCoords(tileSize, viewportZoom, tileZoom = viewportZoom, wraparound = false) {
 		const bounds = this.getTileBounds(tileSize, viewportZoom, tileZoom);
@@ -128,7 +128,7 @@ class Viewport {
 	 * @param {Number} zoom - The current zoom of the viewport.
 	 * @param {Number} targetZoom - The target zoom of the viewport.
 	 *
-	 * @returns {Array[Coord]} The array of visible tile coords.
+	 * @returns {Array} The array of visible tile coords.
 	 */
 	zoomFromPlotCenter(tileSize, zoom, targetZoom) {
 		// get the current dimension
@@ -155,7 +155,7 @@ class Viewport {
 	 * @param {Number} targetZoom - The target zoom of the viewport.
 	 * @param {Object} targetPx - The target pixel to zoom around.
 	 *
-	 * @returns {Array[Coord]} The array of visible tile coords.
+	 * @returns {Array} The array of visible tile coords.
 	 */
 	zoomFromPlotPx(tileSize, zoom, targetZoom, targetPx) {
 		// get the current dimension

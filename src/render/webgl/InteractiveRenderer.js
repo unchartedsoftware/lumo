@@ -12,18 +12,21 @@ const WebGLInteractiveRenderer = require('./WebGLInteractiveRenderer');
 
 /**
  * Highlighted point radius increase.
+ * @private
  * @constant {Number}
  */
 const HIGHLIGHTED_RADIUS_OFFSET = 2;
 
 /**
  * Selected point radius increase.
+ * @private
  * @constant {Number}
  */
 const SELECTED_RADIUS_OFFSET = 4;
 
 /**
  * Shader GLSL source.
+ * @private
  * @constant {Object}
  */
 const SHADER_GLSL = {

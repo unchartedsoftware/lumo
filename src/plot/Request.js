@@ -7,12 +7,14 @@ const Coord = require('../core/Coord');
 
 /**
  * Zoom request throttle in milliseconds.
+ * @private
  * @constant {Number}
  */
 const ZOOM_REQUEST_THROTTLE_MS = 200;
 
 /**
  * Pan request throttle in milliseconds.
+ * @private
  * @constant {Number}
  */
 const PAN_REQUEST_THROTTLE_MS = 50;

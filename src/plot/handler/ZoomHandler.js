@@ -13,30 +13,35 @@ const Viewport = require('../Viewport');
 
 /**
  * Amount of scroll pixels per zoom level.
+ * @private
  * @constant {Number}
  */
 const ZOOM_WHEEL_DELTA = 300;
 
 /**
  * Length of zoom animation in milliseconds.
+ * @private
  * @constant {Number}
  */
 const ZOOM_ANIMATION_MS = 250;
 
 /**
  * Maximum concurrent discrete zooms in a single batch.
+ * @private
  * @constant {Number}
  */
 const MAX_CONCURRENT_ZOOMS = 4;
 
 /**
  * Zoom debounce delay in miliseconds.
+ * @private
  * @constant {Number}
  */
 const ZOOM_DEBOUNCE_MS = 100;
 
 /**
  * Continuous zoom enabled.
+ * @private
  * @constant {boolean}
  */
 const CONTINUOUS_ZOOM = false;

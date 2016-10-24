@@ -79,7 +79,7 @@ class Coord {
 	 *
 	 * @param {Number} offset - The offset of the descendants from the coord. Optional.
 	 *
-	 * @returns {Array[Coord]} The array of descendant coords.
+	 * @returns {Array} The array of descendant coords.
 	 */
 	getDescendants(offset = 1) {
 		const scale = Math.pow(2, offset);
