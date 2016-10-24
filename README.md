@@ -5,7 +5,7 @@
 [![Build Status](https://travis-ci.org/kbirk/lumo.svg?branch=master)](https://travis-ci.org/kbirk/lumo)
 [![Dependency Status](https://david-dm.org/kbirk/lumo.svg)](https://david-dm.org/kbirk/lumo)
 
-A high performance WebGL tile rendering framework.
+A high performance WebGL tile rendering framework
 
 ## Installation
 

@@ -1,0 +1,29 @@
+{
+  "name": "lumo",
+  "version": "0.1.1",
+  "description": "A high performance WebGL tile rendering framework",
+  "homepage": "https://github.com/kbirk/lumo",
+  "authors": [
+    "kbirk <birk.kevin@gmail.com>"
+  ],
+  "license": "MIT",
+  "main": "build/lumo.js",
+  "moduleType": [
+    "globals"
+  ],
+  "keywords": [
+    "map",
+    "plot",
+    "webgl",
+	"tile"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "src",
+    "test",
+    "docs",
+    "gulpfile.js",
+    "package.json"
+  ]
+}
