@@ -150,8 +150,8 @@ class WebGLInteractiveRenderer extends WebGLRenderer {
 	 * @returns {Renderer} The renderer object, for chaining.
 	 */
 	onRemove(layer) {
-		this.layer.plot.removeListener(this.click);
-		this.layer.plot.removeListener(this.mousemove);
+		this.layer.plot.removeListener(EventType.CLICK, this.click);
+		this.layer.plot.removeListener(EventType.MOUSE_MOVE, this.mousemove);
 
 		this.click = null;
 		this.mousemove = null;
