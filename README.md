@@ -1,4 +1,4 @@
-# lumo
+<img width="600" src="https://rawgit.com/kbirk/lumo/master/logo.svg" alt="lumo" />
 
 [![npm version](https://badge.fury.io/js/lumo.svg)](http://badge.fury.io/js/lumo)
 [![Bower version](https://badge.fury.io/bo/lumo.svg)](http://badge.fury.io/bo/lumo)
