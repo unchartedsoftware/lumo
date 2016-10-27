@@ -48,7 +48,7 @@ module.exports = {
 	 * Emitted when a new pan event is handled.
 	 * @constant {String}
 	 */
-	PAN_START: 'pan:start',
+	PAN_START: 'panstart',
 
 	/**
 	 * Emitted during each frame of a pan animation.
@@ -60,13 +60,13 @@ module.exports = {
 	 * Emitted on the final frame of a pan animation.
 	 * @constant {String}
 	 */
-	PAN_END: 'pan:end',
+	PAN_END: 'panend',
 
 	/**
 	 * Emitted when a new zoom event is handled.
 	 * @constant {String}
 	 */
-	ZOOM_START: 'zoom:start',
+	ZOOM_START: 'zoomstart',
 
 	/**
 	 * Emitted during each frame of a zoom animation.
@@ -78,7 +78,7 @@ module.exports = {
 	 * Emitted on the final frame of a zoom animation.
 	 * @constant {String}
 	 */
-	ZOOM_END: 'zoom:end',
+	ZOOM_END: 'zoomend',
 
 	/**
 	 * Emitted before processing a new frame.
@@ -97,38 +97,38 @@ module.exports = {
 	 * yet part of the layer and has not yet been requested.
 	 * @constant {String}
 	 */
-	TILE_REQUEST: 'tile:request',
+	TILE_REQUEST: 'tilerequest',
 
 	/**
 	 * Emitted when a tile request completes unsuccessfully. The tile is not
 	 * added to the layer.
 	 * @constant {String}
 	 */
-	TILE_FAILURE: 'tile:failure',
+	TILE_FAILURE: 'tilefailure',
 
 	/**
 	 * Emitted when a tile request completes successfully. The tile is added
 	 * to the layer.
 	 * @constant {String}
 	 */
-	TILE_ADD: 'tile:add',
+	TILE_ADD: 'tileadd',
 
 	/**
 	 * Emitted when a tile request completes successfully but the tile is no
 	 * longer in view. The tile is not added to the layer.
 	 * @constant {String}
 	 */
-	TILE_DISCARD: 'tile:discard',
+	TILE_DISCARD: 'tilediscard',
 
 	/**
 	 * Emitted when a tile is evicted from the internal LRU cache.
 	 * @constant {String}
 	 */
-	TILE_REMOVE: 'tile:remove',
+	TILE_REMOVE: 'tileremove',
 
 	/**
 	 * Emitted when all visible tiles have been loaded for a layer.
 	 * @constant {String}
 	 */
-	TILE_LOAD: 'tile:load',
+	LOAD: 'load',
 };

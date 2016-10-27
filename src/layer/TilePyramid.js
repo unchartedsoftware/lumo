@@ -93,7 +93,7 @@ const sumPowerOfFour = function(n) {
 const checkIfLoaded = throttle(function(pyramid) {
 	// if no more pending tiles, emit load
 	if (pyramid.pending.size === 0) {
-		pyramid.layer.emit(EventType.TILE_LOAD, new TileEvent(pyramid.layer, null));
+		pyramid.layer.emit(EventType.LOAD, new TileEvent(pyramid.layer, null));
 	}
 }, LOADED_THROTTLE_MS);
 
