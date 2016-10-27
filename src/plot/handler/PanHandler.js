@@ -36,6 +36,13 @@ const PAN_INTERTIA_EASING = 0.2;
  */
 const PAN_INTERTIA_DECELERATION = 3400;
 
+/**
+ * Pan to animation duration
+ * @private
+ * @constant {Number}
+ */
+const PAN_TO_DURATION = 800;
+
 // Private Methods
 
 const pan = function(plot, delta) {
@@ -43,13 +50,10 @@ const pan = function(plot, delta) {
 		// no panning while zooming
 		return;
 	}
-	const prev = {
-		x: plot.viewport.x,
-		y: plot.viewport.y
-	};
+	const prev = plot.viewport.getPosition();
 	const current = {
-		x: prev.x -= delta.x,
-		y: prev.y -= delta.y
+		x: prev.x += delta.x,
+		y: prev.y += delta.y
 	};
 	// update current viewport
 	plot.viewport.x = current.x;
@@ -149,8 +153,8 @@ class PanHandler {
 
 				// calculate the positional delta
 				const delta = {
-					x: pos.x - lastPos.x,
-					y: pos.y - lastPos.y
+					x: lastPos.x - pos.x,
+					y: lastPos.y - pos.y
 				};
 				// pan the plot
 				pan(plot, delta);
@@ -170,11 +174,14 @@ class PanHandler {
 				return;
 			}
 
-			if (!this.inertia || positions.length === 0) {
+			// ignore if no drag occurred
+			if (positions.length === 0) {
+				return;
+			}
+
+			if (!this.inertia) {
 				// exit early if no inertia or no movement
-				const prev = { x: plot.viewport.x, y: plot.viewport.y };
-				const current = { x: plot.viewport.x, y: plot.viewport.y };
-				plot.emit(EventType.PAN_END, new PanEvent(plot, prev, current));
+				plot.emit(EventType.PAN_END, new PanEvent(plot));
 				return;
 			}
 
@@ -189,9 +196,7 @@ class PanHandler {
 
 			if (times.length < 2) {
 				// exit early if no remaining positions
-				const prev = { x: plot.viewport.x, y: plot.viewport.y };
-				const current = { x: plot.viewport.x, y: plot.viewport.y };
-				plot.emit(EventType.PAN_END, new PanEvent(plot, prev, current));
+				plot.emit(EventType.PAN_END, new PanEvent(plot));
 				return;
 			}
 
@@ -205,7 +210,7 @@ class PanHandler {
 				y: lastPos.y - positions[0].y
 			};
 			// calculate the time difference
-			const diff = (lastTime - times[0]) / 1000;
+			const diff = (lastTime - times[0]) / 1000; // ms to s
 			// calculate velocity
 			const velocity = {
 				x: direction.x * (easing / diff),
@@ -232,7 +237,7 @@ class PanHandler {
 				start: start,
 				delta: delta,
 				easing: easing,
-				duration: duration * 1000 // back to ms
+				duration: duration * 1000 // s to ms
 			});
 		};
 
@@ -258,6 +263,36 @@ class PanHandler {
 		this.mousemove = null;
 		this.mouseup = null;
 		this.enabled = false;
+	}
+
+	/**
+	 * Pans to the target plot pixel coordinate.
+	 *
+	 * @param {Number} level - The target plot pixel.
+	 * @param {boolean} animate - Whether or not to animate the pan. Defaults to `true`.
+	 */
+	panTo(plotPx, animate = true) {
+		const plot = this.plot;
+		const centerPx = plot.viewport.getCenter();
+		const delta = {
+			x: plotPx.x - centerPx.x,
+			y: plotPx.y - centerPx.y
+		};
+		if (!animate) {
+			// do not animate
+			plot.emit(EventType.PAN_START, new PanEvent(plot));
+			pan(plot, delta);
+			plot.emit(EventType.PAN_END, new PanEvent(plot));
+		} else {
+			// animate pan
+			plot.emit(EventType.PAN_START, new PanEvent(plot));
+			plot.panAnimation = new PanAnimation({
+				start: plot.viewport.getPosition(),
+				delta: delta,
+				easing: this.inertiaEasing,
+				duration: PAN_TO_DURATION
+			});
+		}
 	}
 }
 

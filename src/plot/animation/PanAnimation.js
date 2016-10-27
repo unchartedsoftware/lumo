@@ -41,10 +41,7 @@ class PanAnimation {
 		// calculate the progress of the animation
 		const progress = 1 - Math.pow(1 - t, 1 / this.easing);
 		// caclulate the current position along the pan
-		const prev = {
-			x: plot.viewport.x,
-			y: plot.viewport.y
-		};
+		const prev = plot.viewport.getPosition();
 		const current = {
 			x: this.start.x + this.delta.x * progress,
 			y: this.start.y + this.delta.y * progress

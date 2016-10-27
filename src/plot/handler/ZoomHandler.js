@@ -106,13 +106,7 @@ const computeTargetZoom = function(zoomDelta, currentZoom, currentAnimation, min
 	return clamp(targetZoom, minZoom, maxZoom);
 };
 
-const zoom = function(handler, plot, targetPx, wheelDelta, continuousZoom) {
-	// calculate zoom delta
-	const zoomDelta = computeZoomDelta(
-		wheelDelta,
-		continuousZoom,
-		handler.deltaPerZoom,
-		handler.maxConcurrentZooms);
+const zoom = function(plot, targetPx, zoomDelta, duration) {
 	// calculate target zoom level
 	const targetZoom = computeTargetZoom(
 		zoomDelta,
@@ -121,7 +115,7 @@ const zoom = function(handler, plot, targetPx, wheelDelta, continuousZoom) {
 		plot.minZoom,
 		plot.maxZoom);
 	// check if we need to zoom
-	if (zoomDelta !== 0 && targetZoom !== plot.zoom) {
+	if (targetZoom !== plot.zoom) {
 		// set target viewport
 		const targetViewport = plot.viewport.zoomFromPlotPx(
 			plot.tileSize,
@@ -130,12 +124,6 @@ const zoom = function(handler, plot, targetPx, wheelDelta, continuousZoom) {
 			targetPx);
 		// clear pan animation
 		plot.panAnimation = null;
-		// get duration
-		let duration = handler.zoomDuration;
-		if (continuousZoom && skipInterpolation(plot.zoomAnimation, wheelDelta)) {
-			// skip animation interpolation
-			duration = 0;
-		}
 		// set zoom animation
 		plot.zoomAnimation = new ZoomAnimation({
 			duration: duration,
@@ -150,6 +138,27 @@ const zoom = function(handler, plot, targetPx, wheelDelta, continuousZoom) {
 		// emit zoom start
 		plot.emit(EventType.ZOOM_START, new ZoomEvent(plot, plot.zoom, plot.zoom, targetZoom));
 	}
+};
+
+const zoomFromWheel = function(handler, plot, targetPx, wheelDelta, continuousZoom) {
+	// no wheel delta, exit early
+	if (wheelDelta === 0) {
+		return;
+	}
+	// calculate zoom delta from wheel delta
+	const zoomDelta = computeZoomDelta(
+		wheelDelta,
+		continuousZoom,
+		handler.deltaPerZoom,
+		handler.maxConcurrentZooms);
+	// get duration
+	let duration = handler.zoomDuration;
+	if (continuousZoom && skipInterpolation(plot.zoomAnimation, wheelDelta)) {
+		// skip animation interpolation
+		duration = 0;
+	}
+	// process the zoom
+	zoom(plot, targetPx, zoomDelta, duration);
 };
 
 const getWheelDelta = function(plot, event) {
@@ -212,7 +221,8 @@ class ZoomHandler {
 		this.dblclick = (event) => {
 			// get mouse position
 			const targetPx = plot.mouseToPlotPx(event);
-			zoom(this, plot, targetPx, this.deltaPerZoom, false);
+			// zoom the plot by one level
+			zoom(plot, targetPx, 1, this.zoomDuration);
 		};
 
 		this.wheel = (event) => {
@@ -223,7 +233,7 @@ class ZoomHandler {
 				// get target pixel from mouse position
 				const targetPx = plot.mouseToPlotPx(event);
 				// process continuous zoom immediately
-				zoom(this, plot, targetPx, wheelDelta, true);
+				zoomFromWheel(this, plot, targetPx, wheelDelta, true);
 				// reset wheel delta
 				wheelDelta = 0;
 			} else {
@@ -238,7 +248,7 @@ class ZoomHandler {
 						// convert from mouse to plot pixels
 						const targetPx = plot.mouseToPlotPx(evt);
 						// process zoom event
-						zoom(this, plot, targetPx, wheelDelta, false);
+						zoomFromWheel(this, plot, targetPx, wheelDelta, false);
 						// reset wheel delta
 						wheelDelta = 0;
 						// clear timeout
@@ -272,6 +282,27 @@ class ZoomHandler {
 		this.dblclick = null;
 		this.wheel = null;
 		this.enabled = false;
+	}
+
+	/**
+	 * Zooms in to the target zoom level. This is bounded by the plot objects
+	 * minZoom and maxZoom attributes.
+	 *
+	 * @param {Number} level - The target zoom level.
+	 * @param {Object} plotPx - the target pixel to center the zoom around.
+	 * @param {boolean} animate - Whether or not to animate the zoom. Defaults to `true`.
+	 */
+	zoomTo(level, plotPx, animate = true) {
+		const plot = this.plot;
+		//const targetPx = plot.viewport.getCenter();
+		const zoomDelta = level - plot.zoom;
+		if (!animate) {
+			// do not animate
+			zoom(plot, plotPx, zoomDelta, 0);
+		} else {
+			// animate
+			zoom(plot, plotPx, zoomDelta, this.zoomDuration);
+		}
 	}
 }
 

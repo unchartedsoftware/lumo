@@ -3,7 +3,7 @@
 const Event = require('./Event');
 
 class PanEvent extends Event {
-	constructor(plot, prevPx, currentPx) {
+	constructor(plot, prevPx = plot.viewport.getPosition(), currentPx = plot.viewport.getPosition()) {
 		super();
 		this.plot = plot;
 		this.prevPx = prevPx;
