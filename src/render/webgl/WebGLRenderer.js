@@ -1,5 +1,6 @@
 'use strict';
 
+const Shader = require('./shader/Shader');
 const Renderer = require('../Renderer');
 
 // Private Methods
@@ -20,9 +21,11 @@ class WebGLRenderer extends Renderer {
 
 	/**
 	 * Instantiates a new WebGLRenderer object.
+	 *
+	 * @param {Object} options - The options object.
 	 */
-	constructor() {
-		super();
+	constructor(options = {}) {
+		super(options);
 		this.gl = null;
 	}
 
@@ -50,6 +53,56 @@ class WebGLRenderer extends Renderer {
 		this.gl = null;
 		super.onRemove(layer);
 		return this;
+	}
+
+	/**
+	 * Instantiate and return a new Shader object using the renderers internal
+	 * WebGLRenderingContext.
+	 * @param {Object} params - The shader paramsification object.
+	 * @param {String} params.common - Common glsl to be shared by both vertex and fragment shaders.
+	 * @param {String} params.vert - The vertex shader glsl.
+	 * @param {String} params.frag - The fragment shader glsl.
+	 *
+	 * @returns {Shader} The shader object.
+	 */
+	createShader(source) {
+		return new Shader(this.gl, source);
+	}
+
+	/**
+	 * Returns the orthographic projection matrix for the viewport.
+	 *
+	 * @return {Float32Array} The orthographic projection matrix.
+	 */
+	getOrthoMatrix() {
+		const viewport = this.layer.plot.viewport;
+		const left = 0;
+		const right = viewport.width;
+		const bottom = 0;
+		const top = viewport.height;
+		const near = -1;
+		const far = 1;
+		const lr = 1 / (left - right);
+		const bt = 1 / (bottom - top);
+		const nf = 1 / (near - far);
+		const out = new Float32Array(16);
+		out[0] = -2 * lr;
+		out[1] = 0;
+		out[2] = 0;
+		out[3] = 0;
+		out[4] = 0;
+		out[5] = -2 * bt;
+		out[6] = 0;
+		out[7] = 0;
+		out[8] = 0;
+		out[9] = 0;
+		out[10] = 2 * nf;
+		out[11] = 0;
+		out[12] = (left + right) * lr;
+		out[13] = (top + bottom) * bt;
+		out[14] = (far + near) * nf;
+		out[15] = 1;
+		return out;
 	}
 
 	/**
@@ -119,15 +172,15 @@ class WebGLRenderer extends Renderer {
 				];
 				const renderable = {
 					coord: coord,
-					hash: lod.tile.coord.hash,
 					scale: scale,
+					hash: lod.tile.coord.hash,
+					tileOffset: tileOffset,
 					uvOffset: [
 						lod.offset.x,
 						lod.offset.y,
 						lod.offset.extent,
 						lod.offset.extent
-					],
-					tileOffset: tileOffset
+					]
 				};
 				renderables.push(renderable);
 			}

@@ -1,11 +1,8 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const EventType = require('../../event/EventType');
-const Shader = require('./shader/Shader');
-const VertexAtlas = require('./vertex/VertexAtlas');
 const VertexBuffer = require('./vertex/VertexBuffer');
-const WebGLRenderer = require('./WebGLRenderer');
+const WebGLVertexRenderer = require('./WebGLVertexRenderer');
 
 // Constants
 
@@ -43,10 +40,10 @@ const SHADER_GLSL = {
 		attribute vec2 aOffset;
 		attribute float aRadius;
 		uniform vec2 uTileOffset;
-		uniform float uTileScale;
+		uniform float uScale;
 		uniform mat4 uProjectionMatrix;
 		void main() {
-			vec2 wPosition = (aPosition * aRadius) + (aOffset * uTileScale) + uTileOffset;
+			vec2 wPosition = (aPosition * aRadius) + (aOffset * uScale) + uTileOffset;
 			gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
 		}
 		`,
@@ -97,67 +94,19 @@ const createStar = function(gl) {
 		});
 };
 
-const renderTiles = function(gl, atlas, shape, shader, plot, renderables, color) {
-	// get projection
-	const proj = plot.viewport.getOrthoMatrix();
-
-	// bind render target
-	plot.renderBuffer.bind();
-
-	// clear viewport
-	gl.clear(gl.COLOR_BUFFER_BIT);
-
-	// set blending func
-	gl.enable(gl.BLEND);
-	gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-
-	// bind shader
-	shader.use();
-
-	// set projection
-	shader.setUniform('uProjectionMatrix', proj);
-	// set color
-	shader.setUniform('uColor', color);
-
-	// bind shape
-	shape.bind();
-
-	// binds the buffer to instance
-	atlas.bindInstanced();
-
-	// for each renderable
-	renderables.forEach(renderable => {
-		// set tile scale
-		shader.setUniform('uTileScale', renderable.scale);
-		// get tile offset
-		shader.setUniform('uTileOffset', renderable.tileOffset);
-		// draw the instances
-		atlas.drawInstanced(renderable.hash, shape.mode, shape.count);
-	});
-
-	// unbind
-	atlas.unbindInstanced();
-
-	// unbind quad
-	shape.unbind();
-
-	// unbind render target
-	plot.renderBuffer.unbind();
-};
-
 /**
- * Class representing a pointer renderer.
+ * Class representing a shape renderer.
  */
-class PointRenderer extends WebGLRenderer {
+class ShapeRenderer extends WebGLVertexRenderer {
 
 	/**
-	 * Instantiates a new PointRenderer object.
+	 * Instantiates a new ShapeRenderer object.
 	 *
-	 * @param {Options} options - The options object.
+	 * @param {Object} options - The options object.
 	 * @param {Array} options.color - The color of the points.
 	 */
 	constructor(options = {}) {
-		super();
+		super(options);
 		this.shape = null;
 		this.shader = null;
 		this.atlas = null;
@@ -174,34 +123,19 @@ class PointRenderer extends WebGLRenderer {
 	onAdd(layer) {
 		super.onAdd(layer);
 		this.shape = createStar(this.gl);
-		this.shader = new Shader(this.gl, SHADER_GLSL);
-		this.atlas = new VertexAtlas(
-			this.gl,
-			{
-				// offset
-				1: {
-					size: 2,
-					type: 'FLOAT'
-				},
-				// radius
-				2: {
-					size: 1,
-					type: 'FLOAT'
-				}
-			}, {
-				// set num chunks to be able to fit the capacity of the pyramid
-				numChunks: layer.pyramid.totalCapacity
-			});
-		this.tileAdd = event => {
-			const tile = event.tile;
-			this.atlas.set(tile.coord.hash, tile.data, tile.data.length / 3);
-		};
-		this.tileRemove = event => {
-			const tile = event.tile;
-			this.atlas.delete(tile.coord.hash);
-		};
-		layer.on(EventType.TILE_ADD, this.tileAdd);
-		layer.on(EventType.TILE_REMOVE, this.tileRemove);
+		this.shader = this.createShader(SHADER_GLSL);
+		this.atlas = this.createVertexAtlas({
+			// offset
+			1: {
+				size: 2,
+				type: 'FLOAT'
+			},
+			// radius
+			2: {
+				size: 1,
+				type: 'FLOAT'
+			}
+		});
 		return this;
 	}
 
@@ -213,13 +147,10 @@ class PointRenderer extends WebGLRenderer {
 	 * @returns {Renderer} The renderer object, for chaining.
 	 */
 	onRemove(layer) {
-		this.layer.removeListener(EventType.TILE_ADD, this.tileAdd);
-		this.layer.removeListener(EventType.TILE_REMOVE, this.tileRemove);
-		this.tileAdd = null;
-		this.tileRemove = null;
+		this.destroyVertexAtlas(this.atlas);
+		this.atlas = null;
 		this.shape = null;
 		this.shader = null;
-		this.atlas = null;
 		super.onRemove(layer);
 		return this;
 	}
@@ -232,19 +163,60 @@ class PointRenderer extends WebGLRenderer {
 	 * @returns {Renderer} The renderer object, for chaining.
 	 */
 	draw() {
-		// render the tiles
-		renderTiles(
-			this.gl,
-			this.atlas,
-			this.shape,
-			this.shader,
-			this.layer.plot,
-			this.getRenderables(),
-			this.color);
+		const gl = this.gl;
+		const shader = this.shader;
+		const atlas = this.atlas;
+		const shape = this.shape;
+		const plot = this.layer.plot;
+		const renderables = this.getRenderables();
+		const proj = this.getOrthoMatrix();
+
+		// bind render target
+		plot.renderBuffer.bind();
+
+		// clear viewport
+		gl.clear(gl.COLOR_BUFFER_BIT);
+
+		// set blending func
+		gl.enable(gl.BLEND);
+		gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+
+		// bind shader
+		shader.use();
+
+		// set global uniforms
+		shader.setUniform('uProjectionMatrix', proj);
+		shader.setUniform('uColor', this.color);
+
+		// bind shape
+		shape.bind();
+
+		// binds the buffer to instance
+		atlas.bindInstanced();
+
+		// for each renderable
+		renderables.forEach(renderable => {
+			// set tile uniforms
+			shader.setUniform('uScale', renderable.scale);
+			shader.setUniform('uTileOffset', renderable.tileOffset);
+			// draw the instances
+			atlas.drawInstanced(renderable.hash, shape.mode, shape.count);
+		});
+
+		// unbind
+		atlas.unbindInstanced();
+
+		// unbind quad
+		shape.unbind();
+
+		// unbind render target
+		plot.renderBuffer.unbind();
+
 		// render framebuffer to the backbuffer
-		this.layer.plot.renderBuffer.blitToScreen(this.layer.opacity);
+		plot.renderBuffer.blitToScreen(this.layer.opacity);
+
 		return this;
 	}
 }
 
-module.exports = PointRenderer;
+module.exports = ShapeRenderer;

@@ -2,9 +2,6 @@
 
 const defaultTo = require('lodash/defaultTo');
 const get = require('lodash/get');
-const EventType = require('../../event/EventType');
-const Shader = require('./shader/Shader');
-const VertexAtlas = require('./vertex/VertexAtlas');
 const VertexBuffer = require('./vertex/VertexBuffer');
 const WebGLInteractiveRenderer = require('./WebGLInteractiveRenderer');
 
@@ -37,12 +34,12 @@ const SHADER_GLSL = {
 		attribute float aRadius;
 		uniform float uRadiusOffset;
 		uniform vec2 uTileOffset;
-		uniform float uTileScale;
+		uniform float uScale;
 		uniform float uPixelRatio;
 		uniform mat4 uProjectionMatrix;
 		void main() {
-			vec2 wPosition = (aPosition * uTileScale) + uTileOffset;
-			gl_PointSize = (aRadius + uRadiusOffset) * 2.0 * uPixelRatio;
+			vec2 wPosition = (aPosition * uScale) + uTileOffset;
+			gl_PointSize = (aRadius + uRadiusOffset) * uScale * 2.0 * uPixelRatio;
 			gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
 		}
 		`,
@@ -94,7 +91,6 @@ const createPoint = function(gl) {
 };
 
 const renderTiles = function(gl, atlas, shader, proj, renderables, color) {
-
 	// clear render target
 	gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -102,6 +98,7 @@ const renderTiles = function(gl, atlas, shader, proj, renderables, color) {
 	gl.enable(gl.BLEND);
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
+	// set global uniforms
 	shader.setUniform('uColor', color);
 	shader.setUniform('uRadiusOffset', 0);
 
@@ -110,8 +107,10 @@ const renderTiles = function(gl, atlas, shader, proj, renderables, color) {
 
 	// for each renderable
 	renderables.forEach(renderable => {
-		shader.setUniform('uTileScale', renderable.scale);
+		// set tile uniforms
+		shader.setUniform('uScale', renderable.scale);
 		shader.setUniform('uTileOffset', renderable.tileOffset);
+		// draw points
 		atlas.draw(renderable.hash, 'POINTS');
 	});
 
@@ -120,7 +119,6 @@ const renderTiles = function(gl, atlas, shader, proj, renderables, color) {
 };
 
 const renderPoint = function(gl, point, shader, proj, plot, target, color, radius) {
-
 	// get tile offset
 	const coord = target.tile.coord;
 	const scale = Math.pow(2, plot.zoom - coord.z);
@@ -128,8 +126,9 @@ const renderPoint = function(gl, point, shader, proj, plot, target, color, radiu
 		(coord.x * scale * plot.tileSize) + (scale * target.x) - plot.viewport.x,
 		(coord.y * scale * plot.tileSize) + (scale * target.y) - plot.viewport.y
 	];
+	// set uniforms
 	shader.setUniform('uTileOffset', tileOffset);
-	shader.setUniform('uTileScale', scale);
+	shader.setUniform('uScale', scale);
 	shader.setUniform('uColor', color);
 	shader.setUniform('uRadiusOffset', radius + target.radius);
 
@@ -143,60 +142,6 @@ const renderPoint = function(gl, point, shader, proj, plot, target, color, radiu
 	point.unbind();
 };
 
-const addTile = function(renderer, event) {
-	const tile = event.tile;
-	const coord = tile.coord;
-	const data = tile.data;
-
-	const tileSize = renderer.layer.plot.tileSize;
-	const xOffset = coord.x * tileSize;
-	const yOffset = coord.y * tileSize;
-
-	const xField = renderer.xField;
-	const yField = renderer.yField;
-	const radiusField = renderer.radiusField;
-
-	const points = new Array(data.length);
-	const vertices = new Float32Array(data.length * 3);
-
-	for (let i=0; i<data.length; i++) {
-		const datum = data[i];
-
-		const x = get(datum, xField);
-		const y = get(datum, yField);
-		const radius = get(datum, radiusField);
-
-		const plotX = x + xOffset;
-		const plotY = y + yOffset;
-
-		vertices[i*3] = x;
-		vertices[i*3+1] = y;
-		vertices[i*3+2] = radius;
-
-		points[i] = {
-			x: x,
-			y: y,
-			radius: radius,
-			minX: plotX - radius,
-			maxX: plotX + radius,
-			minY: plotY - radius,
-			maxY: plotY + radius,
-			tile: tile,
-			data: datum
-		};
-	}
-
-	renderer.addPoints(coord, points);
-	renderer.atlas.set(coord.hash, vertices, points.length);
-};
-
-const removeTile = function(renderer, event) {
-	const tile = event.tile;
-	const coord = tile.coord;
-	renderer.atlas.delete(coord.hash);
-	renderer.removePoints(coord);
-};
-
 /**
  * Class representing an interactive point renderer.
  */
@@ -205,14 +150,14 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 	/**
 	 * Instantiates a new InteractiveRenderer object.
 	 *
-	 * @param {Options} options - The options object.
+	 * @param {Object} options - The options object.
 	 * @param {Array} options.xField - The X field of the data.
 	 * @param {Array} options.yField - The Y field of the data.
 	 * @param {Array} options.radiusField - The radius field of the data.
 	 * @param {Array} options.color - The color of the points.
 	 */
 	constructor(options = {}) {
-		super();
+		super(options);
 		this.shader = null;
 		this.point = null;
 		this.atlas = null;
@@ -231,40 +176,22 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 	 */
 	onAdd(layer) {
 		super.onAdd(layer);
-
 		// get the extension for standard derivatives
 		this.ext = this.gl.getExtension('OES_standard_derivatives');
-
-		this.shader = new Shader(this.gl, SHADER_GLSL);
-
 		this.point = createPoint(this.gl);
-		this.atlas = new VertexAtlas(
-			this.gl,
-			{
-				0: {
-					size: 2,
-					type: 'FLOAT'
-				},
-				1: {
-					size: 1,
-					type: 'FLOAT'
-				}
-			}, {
-				// set num chunks to be able to fit the capacity of the pyramid
-				numChunks: layer.pyramid.totalCapacity
-			});
-
-		this.tileAdd = event => {
-			addTile(this, event);
-		};
-
-		this.tileRemove = event => {
-			removeTile(this, event);
-		};
-
-		layer.on(EventType.TILE_ADD, this.tileAdd);
-		layer.on(EventType.TILE_REMOVE, this.tileRemove);
-
+		this.shader = this.createShader(SHADER_GLSL);
+		this.atlas = this.createVertexAtlas({
+			// position
+			0: {
+				size: 2,
+				type: 'FLOAT'
+			},
+			// radius
+			1: {
+				size: 1,
+				type: 'FLOAT'
+			}
+		});
 		return this;
 	}
 
@@ -276,18 +203,75 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 	 * @returns {Renderer} The renderer object, for chaining.
 	 */
 	onRemove(layer) {
-		this.layer.removeListener(EventType.TILE_ADD, this.tileAdd);
-		this.layer.removeListener(EventType.TILE_REMOVE, this.tileRemove);
-		this.tileAdd = null;
-		this.tileRemove = null;
-
-		this.shader = null;
-
+		this.destroyVertexAtlas(this.atlas);
 		this.atlas = null;
+		this.shader = null;
 		this.point = null;
-
 		super.onRemove(layer);
 		return this;
+	}
+
+	/**
+	 * Executed when a tile is added to the layer pyramid.
+	 *
+	 * @param {VertexAtlas} atlas - The vertex atlas object.
+	 * @param {Tile} tile - The new tile object containing data.
+	 */
+	addTile(atlas, tile) {
+		const coord = tile.coord;
+		const data = tile.data;
+		const tileSize = this.layer.plot.tileSize;
+		const xOffset = coord.x * tileSize;
+		const yOffset = coord.y * tileSize;
+		const xField = this.xField;
+		const yField = this.yField;
+		const radiusField = this.radiusField;
+		const points = new Array(data.length);
+		const vertices = new Float32Array(data.length * 3);
+		for (let i=0; i<data.length; i++) {
+			const datum = data[i];
+			// get point attributes
+			const x = get(datum, xField);
+			const y = get(datum, yField);
+			const radius = get(datum, radiusField);
+			// convert to plot pixels
+			const plotX = x + xOffset;
+			const plotY = y + yOffset;
+			// add to buffer
+			vertices[i*3] = x;
+			vertices[i*3+1] = y;
+			vertices[i*3+2] = radius;
+			// add to points
+			points[i] = {
+				x: x,
+				y: y,
+				radius: radius,
+				minX: plotX - radius,
+				maxX: plotX + radius,
+				minY: plotY - radius,
+				maxY: plotY + radius,
+				tile: tile,
+				data: datum
+			};
+		}
+		// index points
+		this.addPoints(coord, points);
+		// add to atlas
+		atlas.set(coord.hash, vertices, points.length);
+	}
+
+	/**
+	 * Executed when a tile is removed from the layer pyramid.
+	 *
+	 * @param {VertexAtlas} atlas - The vertex atlas object.
+	 * @param {Tile} tile - The new tile object containing data.
+	 */
+	removeTile(atlas, tile) {
+		const coord = tile.coord;
+		// remove from atlas
+		atlas.delete(coord.hash);
+		// unindex points
+		this.removePoints(coord);
 	}
 
 	/**
@@ -298,9 +282,8 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 	 * @returns {Renderer} The renderer object, for chaining.
 	 */
 	draw() {
-
 		const plot = this.layer.plot;
-		const projection = plot.viewport.getOrthoMatrix();
+		const projection = this.getOrthoMatrix();
 		const shader = this.shader;
 
 		// bind render target

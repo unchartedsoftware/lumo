@@ -1,10 +1,27 @@
 'use strict';
 
+const defaultTo = require('lodash/defaultTo');
 const rbush = require('rbush');
 const EventType = require('../../event/EventType');
 const ClickEvent = require('../../event/ClickEvent');
 const MouseEvent = require('../../event/MouseEvent');
-const WebGLRenderer = require('./WebGLRenderer');
+const WebGLVertexRenderer = require('./WebGLVertexRenderer');
+
+// Constants
+
+/**
+ * Click event handler symbol.
+ * @private
+ * @constant
+ */
+const CLICK = Symbol();
+
+/**
+ * Mousemove event handler symbol.
+ * @private
+ * @constant
+ */
+const MOUSE_MOVE = Symbol();
 
 // Private Methods
 
@@ -17,17 +34,27 @@ const getCollision = function(renderer, plotPx) {
 		x: plotPx.x * scale,
 		y: plotPx.y * scale
 	};
-	const collisions = renderer.trees.get(targetZoom).search({
+	const tree = renderer.trees.get(targetZoom);
+	if (!tree) {
+		return null;
+	}
+	const collisions = tree.search({
 		minX: unscaledPx.x,
 		maxX: unscaledPx.x,
 		minY: unscaledPx.y,
 		maxY: unscaledPx.y
 	});
+	if (collisions.length === 0) {
+		return null;
+	}
+	if (!renderer.circularCollision) {
+		return collisions[0];
+	}
 	for (let i=0; i<collisions.length; i++) {
 		const collision = collisions[i];
 		const dx = (collision.minX + collision.maxX) * 0.5 - unscaledPx.x;
 		const dy = (collision.minY + collision.maxY) * 0.5 - unscaledPx.y;
-		const radius = collision.radius * scale;
+		const radius = collision.radius;
 		if ((dx * dx + dy * dy) <= (radius * radius)) {
 			return collision;
 		}
@@ -101,19 +128,23 @@ const onMouseMove = function(renderer, event) {
 };
 
 /**
- * Class representing an interactive webgl renderer.
+ * Class representing an interactive vertex based webgl renderer.
  */
-class WebGLInteractiveRenderer extends WebGLRenderer {
+class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 
 	/**
 	 * Instantiates a new WebGLInteractiveRenderer object.
+	 *
+	 * @param {Object} options - The options object.
+	 * @param {boolean} options.circularCollision - Whether to use circular collision instead of box.
 	 */
-	constructor() {
-		super();
+	constructor(options = {}) {
+		super(options);
 		this.trees = null;
 		this.points = null;
 		this.highlighted = null;
 		this.selected = null;
+		this.circularCollision = defaultTo(options.circularCollision, true);
 	}
 
 	/**
@@ -125,20 +156,19 @@ class WebGLInteractiveRenderer extends WebGLRenderer {
 	 */
 	onAdd(layer) {
 		super.onAdd(layer);
-
+		// create rtree and point maps
 		this.trees = new Map();
 		this.points = new Map();
-
-		this.click = event => {
+		// create handlers
+		this.handlers.set(CLICK, event => {
 			onClick(this, event);
-		};
-		this.mousemove = event => {
+		});
+		this.handlers.set(MOUSE_MOVE, event => {
 			onMouseMove(this, event);
-		};
-
-		layer.plot.on(EventType.CLICK, this.click);
-		layer.plot.on(EventType.MOUSE_MOVE, this.mousemove);
-
+		});
+		// attach handlers
+		layer.plot.on(EventType.CLICK, this.handlers.get(CLICK));
+		layer.plot.on(EventType.MOUSE_MOVE, this.handlers.get(MOUSE_MOVE));
 		return this;
 	}
 
@@ -150,17 +180,18 @@ class WebGLInteractiveRenderer extends WebGLRenderer {
 	 * @returns {Renderer} The renderer object, for chaining.
 	 */
 	onRemove(layer) {
-		this.layer.plot.removeListener(EventType.CLICK, this.click);
-		this.layer.plot.removeListener(EventType.MOUSE_MOVE, this.mousemove);
-
-		this.click = null;
-		this.mousemove = null;
-
+		// detach handlers
+		this.layer.plot.removeListener(EventType.CLICK, this.handlers.get(CLICK));
+		this.layer.plot.removeListener(EventType.MOUSE_MOVE, this.handlers.get(MOUSE_MOVE));
+		// destroy handlers
+		this.handlers.delete(CLICK);
+		this.handlers.delete(MOUSE_MOVE);
+		// destroy rtree and point maps
 		this.trees = null;
 		this.points = null;
+		// clear selected / highlighted
 		this.highlighted = null;
 		this.selected = null;
-
 		super.onRemove(layer);
 		return this;
 	}
