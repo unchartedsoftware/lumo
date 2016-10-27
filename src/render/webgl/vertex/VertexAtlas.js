@@ -32,6 +32,14 @@ const calcByteOffsets = function(chunk, pointers, chunkByteOffset) {
 	});
 };
 
+const calcStride = function(pointers) {
+	let stride = 0;
+	pointers.forEach(pointer => {
+		stride += pointer.size;
+	});
+	return stride;
+};
+
 const parseAttributePointers = function(pointers) {
 	const attributePointers = new Map();
 	let byteOffset = 0;
@@ -59,7 +67,7 @@ class VertexAtlas {
 
 	/**
 	 * Instantiates a new VertexAtlas object.
-	 * NOTE: assumes interleaved vertex format.
+	 * NOTE: Assumes interleaved vertex format.
 	 *
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
 	 * @param {Number} tileSize - The size of a tile, in pixels.
@@ -79,6 +87,8 @@ class VertexAtlas {
 		this.chunkSize = defaultTo(options.chunkSize, 128 * 128);
 		// set the pointers of the atlas
 		this.pointers = parseAttributePointers(pointers);
+		// calc stride of the atlas
+		this.stride = calcStride(this.pointers);
 		// create available chunks
 		this.available = new Array(this.numChunks);
 		// calc the chunk byte size
@@ -104,6 +114,7 @@ class VertexAtlas {
 			// add chunk
 			this.available[i] = available;
 		}
+		// create used chunk map
 		this.used = new Map();
 		// create buffer
 		this.buffer = gl.createBuffer();
