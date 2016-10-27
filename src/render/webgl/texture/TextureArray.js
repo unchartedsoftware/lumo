@@ -36,6 +36,14 @@ class TextureArray {
 	/**
 	 * Instantiates a new TextureArray object.
 	 *
+	 * NOTE: we use a texture array rather than a texture atlas because of
+	 * the sub-pixel bleeding that occurs in the atlas when textures are
+	 * not padded. Due to the overhead of padding clientside, the
+	 * frequency of load load events, and the average number of tiles on
+	 * the screen at any one time, binding individual tile textures
+	 * provides a less volatile frame rate compared to padding textures and
+	 * using an atlas.
+	 *
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
 	 * @param {Number} tileSize - The size of a tile, in pixels.
 	 * @param {Object} options - The parameters of the animation.
@@ -65,6 +73,7 @@ class TextureArray {
 					this.premultiplyAlpha)
 			};
 		}
+		// create used chunk map
 		this.used = new Map();
 	}
 

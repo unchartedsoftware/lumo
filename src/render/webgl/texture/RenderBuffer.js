@@ -41,12 +41,12 @@ const SHADER_GLSL = {
 const createQuad = function(gl, min, max) {
 	const vertices = new Float32Array(24);
 	// positions
-	vertices[0] = min;	  vertices[1] = min;
-	vertices[2] = max;	  vertices[3] = min;
-	vertices[4] = max;	  vertices[5] = max;
-	vertices[6] = min;	  vertices[7] = min;
-	vertices[8] = max;	  vertices[9] = max;
-	vertices[10] = min;	 vertices[11] = max;
+	vertices[0] = min;	   vertices[1] = min;
+	vertices[2] = max;	   vertices[3] = min;
+	vertices[4] = max;	   vertices[5] = max;
+	vertices[6] = min;	   vertices[7] = min;
+	vertices[8] = max;	   vertices[9] = max;
+	vertices[10] = min;	   vertices[11] = max;
 	// uvs
 	vertices[12] = 0;	   vertices[13] = 0;
 	vertices[14] = 1;	   vertices[15] = 0;
@@ -107,7 +107,7 @@ const renderToScreen = function(gl, texture, shader, quad, opacity) {
 };
 
 /**
- * Class representing a render buffer.
+ * Class representing a renderbuffer.
  */
 class RenderBuffer {
 
