@@ -4,7 +4,7 @@ const assert = require('assert');
 const Viewport = require('../src/plot/Viewport');
 
 describe('Viewport', () => {
-	
+
 	describe('#constructor()', () => {
 		it('should accept `width`, `height`, `x`, and `y` arguments', () => {
 			const viewport = new Viewport({
