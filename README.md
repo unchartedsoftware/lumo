@@ -124,7 +124,7 @@ const renderer = new lumo.PointRenderer();
 layer.addRenderer(renderer);
 ```
 
-The base `lumo.enderer` class provides a simple and unstructured class for rendering layer data.
+The base `lumo.Renderer` class provides a simple and unstructured class for rendering layer data.
 
 The `lumo.WebGLRenderer` class implements a more refined class specific to custom WebGL renderings. This is iterated upon further with the `lumo.WebGLVertexRenderer` and `lumo.WebGLTextureRenderer` which provide high-level abstractions for efficiently storing and accessing tile data on the GPU.
 
