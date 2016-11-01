@@ -14,7 +14,7 @@ const TileEvent = require('../event/TileEvent');
  * @private
  * @constant {Number}
  */
-const CACHE_SIZE = 128;
+const CACHE_SIZE = 256;
 
 /**
  * Number of persistant zoom levels held in the pyramids.
