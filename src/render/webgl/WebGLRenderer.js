@@ -124,13 +124,15 @@ class WebGLRenderer extends Renderer {
 		coords.forEach(coord => {
 			const ncoord = coord.normalize();
 			// check if we have the tile
-			if (pyramid.has(ncoord)) {
+			const tile = pyramid.get(ncoord);
+			if (tile) {
 				const scale = Math.pow(2, plot.zoom - coord.z);
 				const tileOffset = [
 					(coord.x * scale * plot.tileSize) - plot.viewport.x,
 					(coord.y * scale * plot.tileSize) - plot.viewport.y
 				];
 				const renderable = {
+					tile: tile,
 					coord: coord,
 					scale: scale,
 					hash: ncoord.hash,
@@ -171,6 +173,7 @@ class WebGLRenderer extends Renderer {
 					(coord.y * scale * plot.tileSize) - plot.viewport.y
 				];
 				const renderable = {
+					tile: lod.tile,
 					coord: coord,
 					scale: scale,
 					hash: lod.tile.coord.hash,
