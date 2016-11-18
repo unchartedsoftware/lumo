@@ -51,6 +51,9 @@ module.exports = {
 	SVGRenderer: require('./render/dom/SVGRenderer'),
 	// webgl
 	WebGLRenderer: require('./render/webgl/WebGLRenderer'),
+	WebGLTextureRenderer: require('./render/webgl/WebGLTextureRenderer'),
+	WebGLVertexRenderer: require('./render/webgl/WebGLVertexRenderer'),
+	WebGLInteractiveRenderer: require('./render/webgl/WebGLInteractiveRenderer'),
 	PointRenderer: require('./render/webgl/PointRenderer'),
 	ShapeRenderer: require('./render/webgl/ShapeRenderer'),
 	TextureRenderer: require('./render/webgl/TextureRenderer'),
