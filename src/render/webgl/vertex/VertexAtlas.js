@@ -166,10 +166,13 @@ class VertexAtlas {
 		const chunk = this.available.pop();
 		// update chunk count
 		chunk.count = count;
-		// buffer the data
-		const gl = this.gl;
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
-		gl.bufferSubData(gl.ARRAY_BUFFER, chunk.chunkByteOffset, data);
+		// only actually buffer the data if there is  data
+		if (count > 0) {
+			// buffer the data
+			const gl = this.gl;
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+			gl.bufferSubData(gl.ARRAY_BUFFER, chunk.chunkByteOffset, data);
+		}
 		// add to used
 		this.used.set(key, chunk);
 	}
@@ -280,8 +283,11 @@ class VertexAtlas {
 		}
 		const gl = this.gl;
 		const chunk = this.used.get(key);
-		// draw the chunk
-		gl.drawArrays(gl[mode], chunk.chunkOffset, chunk.count);
+		// only actually draw if count > 0
+		if (chunk.count > 0) {
+			// draw the chunk
+			gl.drawArrays(gl[mode], chunk.chunkOffset, chunk.count);
+		}
 	}
 
 	drawInstanced(key, mode, count) {
@@ -302,8 +308,11 @@ class VertexAtlas {
 				pointer.byteStride,
 				chunk.byteOffsets[index]);
 		});
-		// draw the bound vertex array
-		ext.drawArraysInstancedANGLE(gl[mode], 0, count, chunk.count);
+		// only actually draw if count > 0
+		if (chunk.count > 0) {
+			// draw the bound vertex array
+			ext.drawArraysInstancedANGLE(gl[mode], 0, count, chunk.count);
+		}
 	}
 }
 
