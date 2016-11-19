@@ -1,5 +1,6 @@
 'use strict';
 
+const defaultTo = require('lodash/defaultTo');
 const EventType = require('../../event/EventType');
 const WebGLRenderer = require('./WebGLRenderer');
 const TextureArray = require('./texture/TextureArray');
@@ -32,6 +33,11 @@ class WebGLTextureRenderer extends WebGLRenderer {
 	 */
 	constructor(options = {}) {
 		super(options);
+		this.format = defaultTo(options.format, 'RGBA');
+		this.type = defaultTo(options.type, 'UNSIGNED_BYTE');
+		this.filter = defaultTo(options.filter, 'LINEAR');
+		this.invertY = defaultTo(options.invertY, true);
+		this.premultiplyAlpha = defaultTo(options.premultiplyAlpha, false);
 	}
 
 	/**
@@ -68,7 +74,12 @@ class WebGLTextureRenderer extends WebGLRenderer {
 			textureSize,
 			{
 				// set num chunks to be able to fit the capacity of the pyramid
-				numChunks: this.layer.pyramid.totalCapacity
+				numChunks: this.layer.pyramid.totalCapacity,
+				// set texture attributes
+				format: this.format,
+				filter: this.filter,
+				invertY: this.invertY,
+				premultiplyAlpha: this.premultiplyAlpha
 			});
 		// create handlers
 		const add = event => {
