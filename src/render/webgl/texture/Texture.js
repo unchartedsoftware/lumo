@@ -28,10 +28,9 @@ class Texture {
 		this.format = defaultTo(options.format, 'RGBA');
 		this.type = defaultTo(options.type, 'UNSIGNED_BYTE');
 		this.filter = defaultTo(options.filter, 'LINEAR');
+		this.wrap = defaultTo(options.wrap, 'CLAMP_TO_EDGE');
 		this.invertY = defaultTo(options.invertY, true);
 		this.premultiplyAlpha = defaultTo(options.premultiplyAlpha, false);
-		this.wrap = defaultTo(options.wrap, 'CLAMP_TO_EDGE');
-		this.filter = defaultTo(options.wrap, 'LINEAR');
 		// buffer the data
 		this.bufferData(src, options.width, options.height);
 		// set parameters
