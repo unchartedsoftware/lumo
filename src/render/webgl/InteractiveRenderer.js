@@ -59,7 +59,7 @@ const SHADER_GLSL = {
 				alpha = 1.0 - smoothstep(1.0 - delta, 1.0 + delta, radius);
 			#else
 				if (radius > 1.0) {
-				   discard;
+					discard;
 				}
 			#endif
 			gl_FragColor = vec4(uColor.rgb, uColor.a * alpha);
