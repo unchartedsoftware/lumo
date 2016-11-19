@@ -1,6 +1,6 @@
 {
   "name": "lumo",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "A high performance WebGL tile rendering library",
   "homepage": "https://github.com/kbirk/lumo",
   "authors": [
