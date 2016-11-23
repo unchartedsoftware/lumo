@@ -36,7 +36,7 @@ const SHADER_GLSL = {
 		uniform float uOpacity;
 		varying vec2 vTextureCoord;
 		void main() {
-			vec4 color = texture2D(uTextureSampler, vTextureCoord);
+			vec4 color = texture2D(uTextureSampler, vec2(vTextureCoord.x, 1.0 - vTextureCoord.y));
 			gl_FragColor = vec4(color.rgb, color.a * uOpacity);
 		}
 		`

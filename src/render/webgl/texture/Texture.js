@@ -29,7 +29,7 @@ class Texture {
 		this.type = defaultTo(options.type, 'UNSIGNED_BYTE');
 		this.filter = defaultTo(options.filter, 'LINEAR');
 		this.wrap = defaultTo(options.wrap, 'CLAMP_TO_EDGE');
-		this.invertY = defaultTo(options.invertY, true);
+		this.invertY = defaultTo(options.invertY, false);
 		this.premultiplyAlpha = defaultTo(options.premultiplyAlpha, false);
 		// buffer the data
 		this.bufferData(src, options.width, options.height);
@@ -127,6 +127,8 @@ class Texture {
 		const gl = this.gl;
 		// bind texture
 		gl.bindTexture(gl.TEXTURE_2D, this.texture);
+		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.invertY);
+		gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this.premultiplyAlpha);
 		// buffer the data
 		if (data.width && data.height) {
 			// buffer the texture

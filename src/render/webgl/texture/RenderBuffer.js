@@ -126,7 +126,8 @@ class RenderBuffer {
 		this.texture = new Texture(gl, null, {
 			width: width,
 			height: height,
-			filter: 'NEAREST'
+			filter: 'NEAREST',
+			invertY: false
 		});
 		setColorTarget(
 			this.gl,

@@ -36,7 +36,7 @@ class WebGLTextureRenderer extends WebGLRenderer {
 		this.format = defaultTo(options.format, 'RGBA');
 		this.type = defaultTo(options.type, 'UNSIGNED_BYTE');
 		this.filter = defaultTo(options.filter, 'LINEAR');
-		this.invertY = defaultTo(options.invertY, true);
+		this.invertY = defaultTo(options.invertY, false);
 		this.premultiplyAlpha = defaultTo(options.premultiplyAlpha, false);
 	}
 

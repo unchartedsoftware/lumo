@@ -57,7 +57,7 @@ class TextureArray {
 		this.format = defaultTo(options.format, 'RGBA');
 		this.type = defaultTo(options.type, 'UNSIGNED_BYTE');
 		this.filter = defaultTo(options.filter, 'LINEAR');
-		this.invertY = defaultTo(options.invertY, true);
+		this.invertY = defaultTo(options.invertY, false);
 		this.premultiplyAlpha = defaultTo(options.premultiplyAlpha, false);
 		// create textures
 		this.available = new Array(this.numChunks);
@@ -118,6 +118,8 @@ class TextureArray {
 		// buffer the data
 		const gl = this.gl;
 		gl.bindTexture(gl.TEXTURE_2D, chunk.texture);
+		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.invertY);
+		gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this.premultiplyAlpha);
 		if (data.width && data.height) {
 			// canvas type
 			gl.texImage2D(
