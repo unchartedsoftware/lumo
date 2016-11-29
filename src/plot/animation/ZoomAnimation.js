@@ -16,7 +16,7 @@ class ZoomAnimation {
 	 * @param {Number} params.targetZoom - The target zoom of the animation.
 	 * @param {Number} params.prevViewport - The starting viewport of the animation.
 	 * @param {Number} params.targetViewport - The target viewport of the animation.
-	 * @param {Number} params.targetPx - The target pixel of the animation.
+	 * @param {Number} params.targetPx - The target pixel of the animation, in plot coordinates.
 	 * @param {Number} params.duration - The duration of the animation.
 	 */
 	constructor(params = {}) {

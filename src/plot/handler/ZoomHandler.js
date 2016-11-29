@@ -226,8 +226,18 @@ class ZoomHandler {
 		};
 
 		this.wheel = (event) => {
+
+			// get normalized delta
+			const delta = getWheelDelta(plot, event);
+
+			if (!this.continuousZoom && Math.abs(delta) < 4) {
+				// mitigate the hyper sensitivty of a trackpad
+				return;
+			}
+
 			// increment wheel delta
-			wheelDelta += getWheelDelta(plot, event);
+			wheelDelta += delta;
+
 			// check zoom type
 			if (this.continuousZoom) {
 				// get target pixel from mouse position
