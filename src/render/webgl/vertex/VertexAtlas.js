@@ -284,7 +284,7 @@ class VertexAtlas {
 		const gl = this.gl;
 		const chunk = this.used.get(key);
 		// only actually draw if count > 0
-		if (chunk.count > 0 && count > 0) {
+		if (chunk.count > 0) {
 			// draw the chunk
 			gl.drawArrays(gl[mode], chunk.chunkOffset + offset, count ? count : chunk.count);
 		}
