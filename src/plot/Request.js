@@ -10,20 +10,20 @@ const Coord = require('../core/Coord');
  * @private
  * @constant {Number}
  */
-const ZOOM_REQUEST_THROTTLE_MS = 200;
+const ZOOM_REQUEST_THROTTLE_MS = 400;
 
 /**
  * Pan request throttle in milliseconds.
  * @private
  * @constant {Number}
  */
-const PAN_REQUEST_THROTTLE_MS = 50;
+const PAN_REQUEST_THROTTLE_MS = 100;
 
 // Private
 
-const requestBaseTile = function(plot, layer) {
+const requestBaseTile = function(layer) {
 	// request tiles
-	layer.pyramid.requestTiles(plot, [
+	layer.pyramid.requestTiles([
 		new Coord(0, 0, 0)
 	]);
 };
@@ -38,7 +38,7 @@ const requestTiles = function(plot, viewport = plot.viewport, zoom = plot.zoom) 
 	// for each layer
 	plot.layers.forEach(layer => {
 		// request tiles
-		layer.pyramid.requestTiles(plot, coords);
+		layer.pyramid.requestTiles(coords);
 	});
 };
 

@@ -97,6 +97,44 @@ const checkIfLoaded = throttle(function(pyramid) {
 	}
 }, LOADED_THROTTLE_MS);
 
+const sortAroundCenter = function(plot, coords) {
+	// get the center plot pixel
+	let center = null;
+	let zoom = 0;
+	if (plot.zoomAnimation) {
+		center = plot.zoomAnimation.targetViewport.getCenter();
+		zoom = plot.zoomAnimation.targetZoom;
+	} else {
+		center = plot.viewport.getCenter();
+		zoom = plot.zoom;
+	}
+	// get the scaled tile size
+	const tileSize = plot.tileSize * Math.pow(2, (zoom - Math.round(zoom)));
+	// convert center to tile coords
+	center.x /= tileSize;
+	center.y /= tileSize;
+	// sort the requests by distance from center tile
+	coords.sort((a, b) => {
+		const dax = center.x - (a.x + 0.5);
+		const day = center.y - (a.y + 0.5);
+		const dbx = center.x - (b.x + 0.5);
+		const dby = center.y - (b.y + 0.5);
+		const da = dax * dax + day * day;
+		const db = dbx * dbx + dby * dby;
+		a.d = da;
+		b.d = db;
+		return da - db;
+	});
+	return coords;
+};
+
+const removeDuplicates = function(coords) {
+	const seen = new Map();
+	return coords.filter(function(coord) {
+		return seen.has(coord.hash) ? false : (seen.set(coord.hash, true));
+	});
+};
+
 /**
  * Class representing a pyramid of tiles.
  */
@@ -202,14 +240,14 @@ class TilePyramid {
 	 * Returns true if the coordinate is no in the current or target
 	 * viewport.
 	 *
-	 * @param {Plot} plot - The plot object.
 	 * @param {Coord} coord - The coord to test.
 	 *
 	 * @returns {boolean} Whether or not the tile is stale.
 	 */
-	isStale(plot, coord) {
-		// if zooming, use target zoom, if not use current zoom
+	isStale(coord) {
+		const plot = this.layer.plot;
 		const animation = plot.zoomAnimation;
+		// if zooming, use target zoom, if not use current zoom
 		const viewport = animation ? animation.targetViewport : plot.viewport;
 		const zoom = animation ? animation.targetZoom : plot.zoom;
 		return !viewport.isInView(plot.tileSize, coord, zoom);
@@ -219,16 +257,32 @@ class TilePyramid {
 	 * Requests tiles for the provided coords. If the tiles already exist
 	 * in the pyramid or is currently pending no request is made.
 	 *
-	 * @param {Plot} plot - The plot object.
 	 * @param {Array} coords - The array of coords to request.
 	 */
-	requestTiles(plot, coords) {
+	requestTiles(coords) {
+
+		// remove any duplicates
+		coords = removeDuplicates(coords);
+
+		// filter out coords we don't need to request
+		coords = coords.filter(coord => {
+			// get normalized coord, we use normalized coords for requests
+			// so that we do not track / request the same tiles
+			const ncoord = coord.normalize();
+			// we already have the tile, or it's currently pending
+			return !this.has(ncoord) && !this.isPending(ncoord);
+		});
+
+		// sort coords by distance from viewport center
+		coords = sortAroundCenter(this.layer.plot, coords);
+
 		// request tiles
 		coords.forEach(coord => {
 			// get normalized coord, we use normalized coords for requests
 			// so that we do not track / request the same tiles
 			const ncoord = coord.normalize();
 			// we already have the tile, or it's currently pending
+			// NOTE: do this again here in case of any duplicates
 			if (this.has(ncoord) || this.isPending(ncoord)) {
 				return;
 			}
@@ -255,7 +309,7 @@ class TilePyramid {
 				// add data to the tile
 				tile.data = data;
 				// check if tile is stale
-				if (this.isStale(plot, coord)) {
+				if (this.isStale(coord)) {
 					// emit discard
 					this.layer.emit(EventType.TILE_DISCARD, new TileEvent(this.layer, tile));
 					// check if loaded
