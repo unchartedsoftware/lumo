@@ -277,16 +277,16 @@ class VertexAtlas {
 		return this;
 	}
 
-	draw(key, mode) {
+	draw(key, mode, offset = 0, count = 0) {
 		if (!this.has(key)) {
 			throw `Tile of coord ${key} does not exist in the atlas`;
 		}
 		const gl = this.gl;
 		const chunk = this.used.get(key);
 		// only actually draw if count > 0
-		if (chunk.count > 0) {
+		if (chunk.count > 0 && count > 0) {
 			// draw the chunk
-			gl.drawArrays(gl[mode], chunk.chunkOffset, chunk.count);
+			gl.drawArrays(gl[mode], chunk.chunkOffset + offset, count ? count : chunk.count);
 		}
 	}
 
