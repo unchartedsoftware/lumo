@@ -23,7 +23,7 @@ const PAN_REQUEST_THROTTLE_MS = 100;
 
 const requestBaseTile = function(layer) {
 	// request tiles
-	layer.pyramid.requestTiles([
+	layer.requestTiles([
 		new Coord(0, 0, 0)
 	]);
 };
@@ -38,7 +38,7 @@ const requestTiles = function(plot, viewport = plot.viewport, zoom = plot.zoom) 
 	// for each layer
 	plot.layers.forEach(layer => {
 		// request tiles
-		layer.pyramid.requestTiles(coords);
+		layer.requestTiles(coords);
 	});
 };
 
