@@ -2,6 +2,7 @@
 
 const defaultTo = require('lodash/defaultTo');
 const EventEmitter = require('events');
+const Request = require('../plot/Request');
 const TilePyramid = require('./TilePyramid');
 
 /**
@@ -17,6 +18,7 @@ class Layer extends EventEmitter {
 	 * @param {Array} options.renderers - The layer renderers.
 	 * @param {Number} options.opacity - The layer opacity.
 	 * @param {boolean} options.hidden - Whether or not the layer is visible.
+	 * @param {boolean} options.muted - Whether or not the layer is muted.
 	 */
 	constructor(options = {}) {
 		super();
@@ -27,6 +29,7 @@ class Layer extends EventEmitter {
 		}
 		this.opacity = defaultTo(options.opacity, 1.0);
 		this.hidden = defaultTo(options.hidden, false);
+		this.muted = defaultTo(options.muted, false);
 		this.pyramid = new TilePyramid(this, options);
 		this.plot = null;
 	}
@@ -46,6 +49,8 @@ class Layer extends EventEmitter {
 		this.renderers.forEach(renderer => {
 			renderer.onAdd(this);
 		});
+		// request initial tiles.
+		this.refresh();
 		return this;
 	}
 
@@ -64,6 +69,8 @@ class Layer extends EventEmitter {
 			renderer.onRemove(this);
 		});
 		this.plot = null;
+		// clear the underlying pyramid
+		this.pyramid.clear();
 		return this;
 	}
 
@@ -131,6 +138,51 @@ class Layer extends EventEmitter {
 	}
 
 	/**
+	 * Mutes the layer, it will no longer send any tile requests.
+	 *
+	 * @returns {Layer} The layer object, for chaining.
+	 */
+	mute() {
+		this.muted = true;
+		return this;
+	}
+
+	/**
+	 * Unmutes the layer and immediately requests all visible tiles.
+	 *
+	 * @returns {Layer} The layer object, for chaining.
+	 */
+	unmute() {
+		if (this.muted) {
+			this.muted = false;
+			if (this.plot) {
+				// request tiles
+				Request.requestTiles(this.plot);
+			}
+		}
+	}
+
+	/**
+	 * Unmutes and shows the layer.
+	 *
+	 * @returns {Layer} The layer object, for chaining.
+	 */
+	enable() {
+		this.show();
+		this.unmute();
+	}
+
+	/**
+	 * Mutes and hides the layer.
+	 *
+	 * @returns {Layer} The layer object, for chaining.
+	 */
+	disable() {
+		this.hide();
+		this.mute();
+	}
+
+	/**
 	 * Draw the layer for the frame.
 	 *
 	 * @param {Number} timestamp - The frame timestamp.
@@ -148,6 +200,28 @@ class Layer extends EventEmitter {
 	}
 
 	/**
+	 * Clear and re-request all tiles for the layer.
+	 *
+	 * @returns {Layer} The layer object, for chaining.
+	 */
+	refresh() {
+		// clear the underlying pyramid
+		this.pyramid.clear();
+		// request base tile, this ensures we at least have the lowest LOD
+		Request.requestBaseTile(this);
+		// check if we are currently zooming
+		const animation = this.plot.zoomAnimation;
+		if (animation) {
+			// initiate a zoom request
+			Request.zoomRequest(this.plot, animation.targetViewport, animation.targetZoom);
+		} else {
+			// request tiles for current viewport
+			Request.requestTiles(this.plot);
+		}
+		return this;
+	}
+
+	/**
 	 * Request a specific tile.
 	 *
 	 * @param {Coord} coord - The coord of the tile to request.
@@ -155,6 +229,20 @@ class Layer extends EventEmitter {
 	 */
 	requestTile(coord, done) {
 		done(null, null);
+	}
+
+	/**
+	 * Request an array of tiles.
+	 *
+	 * @param {Array} coords - The coords of the tiles to request.
+	 *
+	 * @returns {Layer} The layer object, for chaining.
+	 */
+	requestTiles(coords) {
+		if (!this.muted) {
+			this.pyramid.requestTiles(coords);
+		}
+		return this;
 	}
 }
 
