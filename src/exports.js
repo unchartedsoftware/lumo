@@ -37,6 +37,7 @@ module.exports = {
 	EventType: require('./event/EventType'),
 	ClickEvent: require('./event/ClickEvent'),
 	FrameEvent: require('./event/FrameEvent'),
+	LayerEvent: require('./event/LayerEvent'),
 	MouseEvent: require('./event/MouseEvent'),
 	PanEvent: require('./event/PanEvent'),
 	ResizeEvent: require('./event/ResizeEvent'),
