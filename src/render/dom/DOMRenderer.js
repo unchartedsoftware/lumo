@@ -2,15 +2,66 @@
 
 const Renderer = require('../Renderer');
 
+// Constants
+
+/**
+ * Draw debounce timeout in milliseconds.
+ * @private
+ * @constant {Number}
+ */
+const DRAW_DEBOUNCE_MS = 400;
+
+/**
+ * Erase debounce timeout in milliseconds.
+ * @private
+ * @constant {Number}
+ */
+const ERASE_DEBOUNCE_MS = 400;
+
+/**
+ * Opacity timeout in milleseconds.
+ * @private
+ * @constant {Number}
+ */
+const OPACITY_TIMEOUT_MS = 40;
+
+/**
+ * Opacity fade in transition duration in milleseconds.
+ * @private
+ * @constant {Number}
+ */
+const OPACITY_FADE_IN_MS = 400;
+
 // Private Methods
 
-const getRenderables = function(plot, pyramid) {
-	// get all currently visible tile coords
-	const coords = plot.viewport.getVisibleCoords(
+const getVisibleCoords = function(plot) {
+	return plot.viewport.getVisibleCoords(
 		plot.tileSize,
 		plot.zoom,
 		Math.round(plot.zoom), // get tiles closest to current zoom
 		plot.wraparound);
+};
+
+const getStaleCoords = function(plot, tiles) {
+	// get visible coords
+	const coords = getVisibleCoords(plot);
+	const visible = new Map();
+	coords.forEach(coord => {
+		visible.set(coord.hash, coord);
+	});
+	// remove any stale tiles from DOM
+	const stale = new Map();
+	tiles.forEach((tile, hash) => {
+		if (!visible.has(hash)) {
+			stale.set(hash, tile);
+		}
+	});
+	return stale;
+};
+
+const getRenderables = function(plot, pyramid) {
+	// get all currently visible tile coords
+	const coords = getVisibleCoords(plot);
 	// get available renderables
 	const renderables = new Map();
 	coords.forEach(coord => {
@@ -38,6 +89,8 @@ class DOMRenderer extends Renderer {
 	constructor() {
 		super();
 		this.tiles = null;
+		this.drawTimeout = null;
+		this.eraseTimeout = null;
 	}
 
 	/**
@@ -115,31 +168,81 @@ class DOMRenderer extends Renderer {
 			container.style.transform = `translate3d(${px.x}px,${-px.y}px,0) scale(${scale})`;
 		}
 		// update opacity
-		container.style.opacity = layer.opacity;
+		if (container.style.opacity !== layer.opacity) {
+			container.style.opacity = layer.opacity;
+		}
 
-		// get renderables
-		const renderables = getRenderables(plot, pyramid);
+		// get all stale coords
+		const stale = getStaleCoords(plot, tiles);
 
-		// remove any stale tiles from DOM
-		tiles.forEach((tile, hash) => {
-			if (!renderables.has(hash)) {
-				container.removeChild(tile);
-				tiles.delete(hash);
+		if (tiles.size > 0 && stale.size === tiles.size) {
+			// all tiles are stale, remove them all
+			if (this.eraseTimeout) {
+				clearTimeout(this.eraseTimeout);
+				this.eraseTimeout = null;
 			}
-		});
-
-		// add new tiles to the DOM
-		renderables.forEach((renderable, hash) => {
-			if (!tiles.has(hash)) {
-				const tile = this.createTile(
-					renderable.coord.x * tileSize,
-					renderable.coord.y * tileSize,
-					tileSize);
-				this.drawTile(tile, renderable.tile);
-				container.appendChild(tile);
-				tiles.set(hash, tile);
+			tiles.clear();
+			container.innerHTML = '';
+		} else {
+			// not all tiles are stale, remove them individually
+			if (!this.eraseTimeout) {
+				this.eraseTimeout = setTimeout(()=> {
+					// clear timeout
+					this.eraseTimeout = null;
+					// remove any stale tiles from DOM
+					getStaleCoords(plot, tiles).forEach((tile, hash) => {
+						tiles.delete(hash);
+						container.removeChild(tile);
+					});
+				}, ERASE_DEBOUNCE_MS);
 			}
-		});
+		}
+
+		if (!this.drawTimeout) {
+			this.drawTimeout = setTimeout(()=> {
+				// clear the timeout
+				this.drawTimeout = null;
+				// create document fragment
+				const fragment = document.createDocumentFragment();
+				// add new tiles to the DOM
+				getRenderables(plot, pyramid).forEach((renderable, hash) => {
+					if (!tiles.has(hash)) {
+						const tile = this.createTile(
+							renderable.coord.x * tileSize,
+							renderable.coord.y * tileSize,
+							tileSize);
+						// make tile invisible
+						tile.style.transition = `opacity ${OPACITY_FADE_IN_MS}ms`;
+						tile.style.opacity = '0.0';
+						// draw the tile
+						this.drawTile(tile, renderable.tile);
+						// add to the fragment
+						fragment.append(tile);
+						// fade tile in
+						setTimeout(()=>{
+							tile.style.opacity = 1.0;
+						}, OPACITY_TIMEOUT_MS);
+						// add the tile
+						tiles.set(hash, tile);
+					}
+				});
+				// append all new tiles to the container
+				container.appendChild(fragment);
+			}, DRAW_DEBOUNCE_MS);
+		}
+
+		return this;
+	}
+
+	/**
+	 * Remove all rendered tiles from the DOM.
+	 *
+	 * @returns {DOMRenderer} The renderer object, for chaining.
+	 */
+	clear() {
+		// remove all tiles and clear the container
+		this.container.innerHTML = '';
+		this.tiles.clear();
 		return this;
 	}
 
@@ -150,13 +253,7 @@ class DOMRenderer extends Renderer {
 	 * @returns {DOMRenderer} The renderer object, for chaining.
 	 */
 	redraw() {
-		const container = this.container;
-		const tiles = this.tiles;
-		// remove all tiles
-		tiles.forEach((tile, hash) => {
-			container.removeChild(tile);
-			tiles.delete(hash);
-		});
+		this.clear();
 		// force draw
 		this.draw();
 		return this;
