@@ -30,6 +30,8 @@ module.exports = {
 	TILE_ADD: EventType.TILE_ADD,
 	TILE_DISCARD: EventType.TILE_DISCARD,
 	TILE_REMOVE: EventType.TILE_REMOVE,
+	ON_ADD: EventType.ON_ADD,
+	ON_REMOVE: EventType.ON_REMOVE,
 	// event
 	Event: require('./event/Event'),
 	EventType: require('./event/EventType'),

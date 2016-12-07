@@ -131,4 +131,16 @@ module.exports = {
 	 * @constant {String}
 	 */
 	LOAD: 'load',
+
+	/**
+	 * Emitted when the layer is added to a plot.
+	 * @constant {String}
+	 */
+	ON_ADD: 'onadd',
+
+	/**
+	 * Emitted when the layer is removed from a plot.
+	 * @constant {String}
+	 */
+	ON_REMOVE: 'onremove',
 };
