@@ -195,7 +195,7 @@ class PanHandler {
 			}
 
 			if (times.length < 2) {
-				// exit early if no remaining positions
+				// exit early if no remaining valid positions
 				plot.emit(EventType.PAN_END, new PanEvent(plot));
 				return;
 			}
@@ -210,7 +210,7 @@ class PanHandler {
 				y: lastPos.y - positions[0].y
 			};
 			// calculate the time difference
-			const diff = (lastTime - times[0]) / 1000; // ms to s
+			const diff = ((lastTime - times[0]) || 1) / 1000; // ms to s
 			// calculate velocity
 			const velocity = {
 				x: direction.x * (easing / diff),
