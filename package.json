@@ -1,6 +1,6 @@
 {
   "name": "lumo",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "A high performance WebGL tile rendering library",
   "main": "src/exports.js",
   "author": "Kevin Birk <birk.kevin@gmail.com>",
@@ -20,7 +20,7 @@
   ],
   "dependencies": {
     "lodash": "4.17.2",
-    "lru-cache": "4.0.1",
+    "lru-cache": "4.0.2",
     "rbush": "2.0.1"
   },
   "devDependencies": {
