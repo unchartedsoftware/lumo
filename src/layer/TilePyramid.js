@@ -90,12 +90,12 @@ const sumPowerOfFour = function(n) {
 	return (1/3) * (Math.pow(4, n) - 1);
 };
 
-const checkIfLoaded = throttle(function(pyramid) {
+const checkIfLoaded = function(pyramid) {
 	// if no more pending tiles, emit load
 	if (pyramid.pending.size === 0) {
-		pyramid.layer.emit(EventType.LOAD, new TileEvent(pyramid.layer, null));
+		pyramid.emitLoad(new TileEvent(pyramid.layer, null));
 	}
-}, LOADED_THROTTLE_MS);
+};
 
 const sortAroundCenter = function(plot, coords) {
 	// get the center plot pixel
@@ -156,6 +156,30 @@ class TilePyramid {
 		this.persistantLevels = defaultTo(options.persistantLevels, PERSISTANT_LEVELS);
 		this.totalCapacity = this.cacheSize + sumPowerOfFour(this.persistantLevels);
 		this.layer = layer;
+		this.levels = new Map();
+		this.persistants = new Map();
+		this.pending = new Map();
+		this.stale = new Map();
+		this.tiles = new LRU({
+			max: this.cacheSize,
+			dispose: (key, tile) => {
+				remove(this, tile);
+			}
+		});
+		// create throttled emit load event for this layer
+		this.emitLoad = throttle(event => {
+			this.layer.emit(EventType.LOAD, event);
+		}, LOADED_THROTTLE_MS);
+	}
+
+	/**
+	 * Empties the current pyramid of all tiles, flags any pending tiles as
+	 * stale.
+	 */
+	clear() {
+		// any pending tiles are now flagged as stale
+		this.stale = this.pending;
+		// clear all tile data
 		this.levels = new Map();
 		this.persistants = new Map();
 		this.pending = new Map();
@@ -245,7 +269,17 @@ class TilePyramid {
 	 * @returns {boolean} Whether or not the tile is stale.
 	 */
 	isStale(coord) {
+		// check if it is flagged as stale
+		const ncoord = coord.normalize();
+		if (this.stale.has(ncoord.hash)) {
+			this.stale.delete(ncoord.hash);
+			return true;
+		}
 		const plot = this.layer.plot;
+		if (!plot) {
+			// layer has been removed from plot, tile is stale
+			return true;
+		}
 		const animation = plot.zoomAnimation;
 		// if zooming, use target zoom, if not use current zoom
 		const viewport = animation ? animation.targetViewport : plot.viewport;

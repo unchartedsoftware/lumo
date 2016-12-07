@@ -7,7 +7,6 @@ const TilePyramid = require('../src/layer/TilePyramid');
 const Viewport = require('../src/plot/Viewport');
 
 let layer;
-let plot;
 
 describe('TilePyramid', () => {
 
@@ -16,7 +15,7 @@ describe('TilePyramid', () => {
 		layer.requestTile = (coord, done) => {
 			done(null, {});
 		};
-		plot = {
+		layer.plot = {
 			zoom: 0,
 			tileSize: 256,
 			viewport: new Viewport({
@@ -30,7 +29,6 @@ describe('TilePyramid', () => {
 
 	after(() => {
 		layer = null;
-		plot = null;
 	});
 
 	describe('#constructor()', () => {
@@ -52,7 +50,7 @@ describe('TilePyramid', () => {
 		it('should get an active tile from the pyramid', () => {
 			const pyramid = new TilePyramid(layer);
 			const coord = new Coord(0, 0, 0);
-			pyramid.requestTiles(plot, [ coord ]);
+			pyramid.requestTiles([ coord ]);
 			assert(pyramid.get(coord) !== undefined);
 		});
 		it('should return `undefined` if the pyramid does not contain the tile', () => {
