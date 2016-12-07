@@ -1,10 +1,11 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const rbush = require('rbush');
 const EventType = require('../../event/EventType');
 const ClickEvent = require('../../event/ClickEvent');
 const MouseEvent = require('../../event/MouseEvent');
+const RTree = require('./rtree/RTree');
+const CollisionType = require('./rtree/CollisionType');
 const WebGLVertexRenderer = require('./WebGLVertexRenderer');
 
 // Constants
@@ -23,6 +24,13 @@ const CLICK = Symbol();
  */
 const MOUSE_MOVE = Symbol();
 
+/**
+ * Zoom end event handler symbol.
+ * @private
+ * @constant
+ */
+const ZOOM_START = Symbol();
+
 // Private Methods
 
 const getCollision = function(renderer, plotPx) {
@@ -30,36 +38,16 @@ const getCollision = function(renderer, plotPx) {
 	// points are hashed in un-scaled coordinates, unscale the point
 	const targetZoom = Math.round(plot.zoom);
 	const scale = Math.pow(2, targetZoom - plot.zoom);
-	const unscaledPx = {
-		x: plotPx.x * scale,
-		y: plotPx.y * scale
-	};
+	// unscaled points
+	const sx = plotPx.x * scale;
+	const sy = plotPx.y * scale;
+	// get the tree for the zoom
 	const tree = renderer.trees.get(targetZoom);
 	if (!tree) {
+		// no data for tile
 		return null;
 	}
-	const collisions = tree.search({
-		minX: unscaledPx.x,
-		maxX: unscaledPx.x,
-		minY: unscaledPx.y,
-		maxY: unscaledPx.y
-	});
-	if (collisions.length === 0) {
-		return null;
-	}
-	if (!renderer.circularCollision) {
-		return collisions[0];
-	}
-	for (let i=0; i<collisions.length; i++) {
-		const collision = collisions[i];
-		const dx = (collision.minX + collision.maxX) * 0.5 - unscaledPx.x;
-		const dy = (collision.minY + collision.maxY) * 0.5 - unscaledPx.y;
-		const radius = collision.radius;
-		if ((dx * dx + dy * dy) <= (radius * radius)) {
-			return collision;
-		}
-	}
-	return null;
+	return tree.search(sx, sy);
 };
 
 const onClick = function(renderer, event) {
@@ -136,7 +124,8 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 	 * Instantiates a new WebGLInteractiveRenderer object.
 	 *
 	 * @param {Object} options - The options object.
-	 * @param {boolean} options.circularCollision - Whether to use circular collision instead of box.
+	 * @param {boolean} options.collisionType - The collision type of the points.
+	 * @param {boolean} options.nodeCapacity - The node capacity of the r-tree.
 	 */
 	constructor(options = {}) {
 		super(options);
@@ -144,7 +133,8 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 		this.points = null;
 		this.highlighted = null;
 		this.selected = null;
-		this.circularCollision = defaultTo(options.circularCollision, true);
+		this.collisionType = defaultTo(options.collisionType, CollisionType.CIRCLE);
+		this.nodeCapacity = defaultTo(options.nodeCapacity, 32);
 	}
 
 	/**
@@ -166,9 +156,14 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 		this.handlers.set(MOUSE_MOVE, event => {
 			onMouseMove(this, event);
 		});
+		this.handlers.set(ZOOM_START, () => {
+			this.selected = null;
+			this.highlighted = null;
+		});
 		// attach handlers
 		layer.plot.on(EventType.CLICK, this.handlers.get(CLICK));
 		layer.plot.on(EventType.MOUSE_MOVE, this.handlers.get(MOUSE_MOVE));
+		layer.plot.on(EventType.ZOOM_START, this.handlers.get(ZOOM_START));
 		return this;
 	}
 
@@ -183,6 +178,7 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 		// detach handlers
 		this.layer.plot.removeListener(EventType.CLICK, this.handlers.get(CLICK));
 		this.layer.plot.removeListener(EventType.MOUSE_MOVE, this.handlers.get(MOUSE_MOVE));
+		this.layer.plot.removeListener(EventType.ZOOM_START, this.handlers.get(ZOOM_START));
 		// destroy handlers
 		this.handlers.delete(CLICK);
 		this.handlers.delete(MOUSE_MOVE);
@@ -206,9 +202,12 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 	 */
 	addPoints(coord, points) {
 		if (!this.trees.has(coord.z)) {
-			this.trees.set(coord.z, rbush());
+			this.trees.set(coord.z, new RTree({
+				collisionType: this.collisionType,
+				nodeCapcity: this.nodeCapacity
+			}));
 		}
-		this.trees.get(coord.z).load(points);
+		this.trees.get(coord.z).insert(points);
 		this.points.set(coord.hash, points);
 		return this;
 	}
@@ -222,10 +221,7 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 	 */
 	removePoints(coord) {
 		const points = this.points.get(coord.hash);
-		const tree = this.trees.get(coord.z);
-		for (let i=0; i<points.length; i++) {
-			tree.remove(points[i]);
-		}
+		this.trees.get(coord.z).remove(points);
 		this.points.delete(coord.hash);
 		return this;
 	}

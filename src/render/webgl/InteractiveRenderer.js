@@ -1,7 +1,6 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const get = require('lodash/get');
 const VertexBuffer = require('./vertex/VertexBuffer');
 const WebGLInteractiveRenderer = require('./WebGLInteractiveRenderer');
 
@@ -231,9 +230,9 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 		for (let i=0; i<data.length; i++) {
 			const datum = data[i];
 			// get point attributes
-			const x = get(datum, xField);
-			const y = get(datum, yField);
-			const radius = get(datum, radiusField);
+			const x = datum[xField];
+			const y = datum[yField];
+			const radius = datum[radiusField];
 			// convert to plot pixels
 			const plotX = x + xOffset;
 			const plotY = y + yOffset;
