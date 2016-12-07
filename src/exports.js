@@ -1,6 +1,7 @@
 'use strict';
 
 const EventType = require('./event/EventType');
+const CollisionType = require('./render/webgl/rtree/CollisionType');
 
 module.exports = {
 	// core
@@ -39,6 +40,9 @@ module.exports = {
 	ResizeEvent: require('./event/ResizeEvent'),
 	TileEvent: require('./event/TileEvent'),
 	ZoomEvent: require('./event/ZoomEvent'),
+	// collision types
+	CIRCLE: CollisionType.CIRCLE,
+	RECTANGLE: CollisionType.RECTANGLE,
 	// layer
 	Layer: require('./layer/Layer'),
 	// plot
