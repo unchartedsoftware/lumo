@@ -1,5 +1,7 @@
 'use strict';
 
+const preprocess = require('./preprocess');
+
 // Constants
 
 const COMMENTS_REGEXP = /(\/\*([\s\S]*?)\*\/)|(\/\/(.*)$)/gm;
@@ -9,7 +11,6 @@ const BRACKET_WHITESPACE_REGEXP = /(\s*)(\[)(\s*)(\d+)(\s*)(\])(\s*)/g;
 const NAME_COUNT_REGEXP = /([a-zA-Z_][a-zA-Z0-9_]*)(?:\[(\d+)\])?/;
 const PRECISION_REGEX = /\bprecision\s+\w+\s+\w+;/g;
 const INLINE_PRECISION_REGEX = /\b(highp|mediump|lowp)\s+/g;
-const PREP_REGEXP = /#([\W\w\s\d])(?:.*\\r?\n)*.*$/gm;
 
 // Private Methods
 
@@ -122,16 +123,11 @@ const filterDuplicatesByName = function(declarations) {
 	});
 };
 
-const preprocess = function(source) {
-	// this should run the the preprocessor on the glsl code. Currently just
-	// removes all # statements.
-	return source.replace(PREP_REGEXP, '');
-};
-
 /**
  * Parses the provided GLSL source, and returns all declaration statements that
  * contain the provided qualifier types. This can be used to extract the
  * attributes and uniform names / types from a shader.
+ * NOTE: This is run only AFTER compilation succeed, so it assumes VALID syntax.
  *
  * Ex, when provided a 'uniform' qualifier, the declaration:
  *
@@ -159,12 +155,12 @@ module.exports = function(sources = [], qualifiers = []) {
 	// parse out targetted declarations
 	let declarations = [];
 	sources.forEach(source => {
+		// remove comments
+		source = stripComments(source);
 		// run preprocessor
 		source = preprocess(source);
 		// remove precision statements
 		source = stripPrecision(source);
-		// remove comments
-		source = stripComments(source);
 		// finally, normalize the whitespace
 		source = normalizeWhitespace(source);
 		// parse out declarations
