@@ -58,7 +58,7 @@ class WebGLRenderer extends Renderer {
 	/**
 	 * Instantiate and return a new Shader object using the renderers internal
 	 * WebGLRenderingContext.
-	 * @param {Object} params - The shader paramsification object.
+	 * @param {Object} params - The shader param object.
 	 * @param {String} params.common - Common glsl to be shared by both vertex and fragment shaders.
 	 * @param {String} params.vert - The vertex shader glsl.
 	 * @param {String} params.frag - The fragment shader glsl.

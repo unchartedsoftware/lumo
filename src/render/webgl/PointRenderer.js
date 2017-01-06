@@ -127,9 +127,8 @@ class PointRenderer extends WebGLVertexRenderer {
 
 		// bind render target
 		plot.renderBuffer.bind();
-
 		// clear render target
-		gl.clear(gl.COLOR_BUFFER_BIT);
+		plot.renderBuffer.clear();
 
 		// set blending func
 		gl.enable(gl.BLEND);

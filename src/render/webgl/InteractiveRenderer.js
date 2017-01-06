@@ -89,14 +89,7 @@ const createPoint = function(gl) {
 		});
 };
 
-const renderTiles = function(gl, atlas, shader, proj, renderables, color) {
-	// clear render target
-	gl.clear(gl.COLOR_BUFFER_BIT);
-
-	// set blending func
-	gl.enable(gl.BLEND);
-	gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-
+const renderTiles = function(atlas, shader, renderables, color) {
 	// set global uniforms
 	shader.setUniform('uColor', color);
 	shader.setUniform('uRadiusOffset', 0);
@@ -117,7 +110,7 @@ const renderTiles = function(gl, atlas, shader, proj, renderables, color) {
 	atlas.unbind();
 };
 
-const renderPoint = function(gl, point, shader, proj, plot, target, color, radius) {
+const renderPoint = function(point, shader, plot, target, color, radius) {
 	// get tile offset
 	const coord = target.tile.coord;
 	const scale = Math.pow(2, plot.zoom - coord.z);
@@ -281,12 +274,19 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 	 * @returns {Renderer} The renderer object, for chaining.
 	 */
 	draw() {
+		const gl = this.gl;
 		const plot = this.layer.plot;
 		const projection = this.getOrthoMatrix();
 		const shader = this.shader;
 
 		// bind render target
 		plot.renderBuffer.bind();
+		// clear render target
+		plot.renderBuffer.clear();
+
+		// set blending func
+		gl.enable(gl.BLEND);
+		gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
 		// use shader
 		shader.use();
@@ -297,20 +297,16 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 
 		// render the tiles
 		renderTiles(
-			this.gl,
 			this.atlas,
 			shader,
-			projection,
 			this.getRenderables(),
 			this.color);
 
 		// render selected
 		if (this.selected) {
 			renderPoint(
-				this.gl,
 				this.point,
 				shader,
-				projection,
 				plot,
 				this.selected,
 				this.color,
@@ -320,10 +316,8 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 		// render highlighted
 		if (this.highlighted && this.highlighted !== this.selected) {
 			renderPoint(
-				this.gl,
 				this.point,
 				shader,
-				projection,
 				plot,
 				this.highlighted,
 				this.color,

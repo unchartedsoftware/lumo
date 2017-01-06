@@ -173,9 +173,8 @@ class ShapeRenderer extends WebGLVertexRenderer {
 
 		// bind render target
 		plot.renderBuffer.bind();
-
-		// clear viewport
-		gl.clear(gl.COLOR_BUFFER_BIT);
+		// clear render target
+		plot.renderBuffer.clear();
 
 		// set blending func
 		gl.enable(gl.BLEND);

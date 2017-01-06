@@ -159,6 +159,28 @@ class RenderBuffer {
 	}
 
 	/**
+	 * Clears the renderbuffer buffer color bits.
+	 *
+	 * @param {Number} r - The red clear color. (Optional)
+	 * @param {Number} g - The green clear color. (Optional)
+	 * @param {Number} b - The blue clear color. (Optional)
+	 * @param {Number} a - The alpha clear color. (Optional)
+	 *
+	 * @return {RenderBuffer} The renderbuffer object, for chaining.
+	 */
+	clear(r, g, b, a) {
+		if (r !== undefined &&
+			g !== undefined &&
+			b !== undefined &&
+			a !== undefined) {
+			this.gl.clearColor(r, g, b, a);
+		}
+		// clear render target
+		this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+		return this;
+	}
+
+	/**
 	 * Blits the renderbuffer texture to the screen.
 	 *
 	 * @param {Number} opacity - The opacity to blit at.
