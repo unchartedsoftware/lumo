@@ -1,10 +1,10 @@
 'use strict';
 
 const assert = require('assert');
-const Coord = require('../src/core/Coord');
-const Layer = require('../src/layer/Layer');
-const TilePyramid = require('../src/layer/TilePyramid');
-const Viewport = require('../src/plot/Viewport');
+const Coord = require('../../src/core/Coord');
+const Layer = require('../../src/layer/Layer');
+const TilePyramid = require('../../src/layer/TilePyramid');
+const Viewport = require('../../src/plot/Viewport');
 
 let layer;
 
@@ -23,7 +23,16 @@ describe('TilePyramid', () => {
 				y: -256,
 				width: 512,
 				height: 512
-			})
+			}),
+			getTargetCenter: function() {
+				return this.viewport.getCenter();
+			},
+			getTargetZoom: function() {
+				return this.zoom;
+			},
+			getTargetViewport: function() {
+				return this.viewport;
+			}
 		};
 	});
 

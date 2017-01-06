@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('assert');
-const Viewport = require('../src/plot/Viewport');
+const Viewport = require('../../src/plot/Viewport');
 
 describe('Viewport', () => {
 

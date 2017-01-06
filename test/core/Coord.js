@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('assert');
-const Coord = require('../src/core/Coord');
+const Coord = require('../../src/core/Coord');
 
 describe('Coord', () => {
 
