@@ -1,5 +1,6 @@
 'use strict';
 
+const map = require('lodash/map');
 const parseShader = require('./parseShader');
 
 // Constants
@@ -97,6 +98,12 @@ const getUniformLocations = function(shader) {
 	});
 };
 
+const createDefines = function(defines) {
+	return map(defines, (value, name) => {
+		return `#define ${name} ${value}`;
+	}).join('\n');
+};
+
 const createProgram = function(shader, sources) {
 	// Creates the shader program object from source strings. This includes:
 	//	1) Compiling and linking the shader program.
@@ -104,12 +111,13 @@ const createProgram = function(shader, sources) {
 	//	3) Binding attribute locations, by order of delcaration.
 	//	4) Querying and storing uniform location.
 	const gl = shader.gl;
-	const common = sources.common || '';
-	const vert = sources.vert;
-	const frag = sources.frag;
+	const defines = createDefines(sources.define);
+	const common = defines + (sources.common || '');
+	const vert = common + sources.vert;
+	const frag = common + sources.frag;
 	// compile shaders
-	const vertexShader = compileShader(gl, common + vert, 'VERTEX_SHADER');
-	const fragmentShader = compileShader(gl, common + frag, 'FRAGMENT_SHADER');
+	const vertexShader = compileShader(gl, vert, 'VERTEX_SHADER');
+	const fragmentShader = compileShader(gl, frag, 'FRAGMENT_SHADER');
 	// parse source for attribute and uniforms
 	setAttributesAndUniforms(shader, vert, frag);
 	// create the shader program
@@ -138,10 +146,11 @@ class Shader {
 	 * Instantiates a Shader object.
 	 *
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
-	 * @param {Object} params - The shader paramsification object.
+	 * @param {Object} params - The shader params object.
 	 * @param {String} params.common - Common glsl to be shared by both vertex and fragment shaders.
 	 * @param {String} params.vert - The vertex shader glsl.
 	 * @param {String} params.frag - The fragment shader glsl.
+	 * @param {Object} params.define - Any #define directives to include in the glsl.
 	 */
 	constructor(gl, params = {}) {
 		// check source arguments
