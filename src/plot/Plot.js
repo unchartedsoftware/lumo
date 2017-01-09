@@ -358,6 +358,55 @@ class Plot extends EventEmitter {
 			y: px.y - this.viewport.y
 		};
 	}
+
+	/**
+	 * Returns the target zoom of the plot. If the plot is actively zooming, it
+	 * will return the destination zoom. If the plot is not actively zooming, it
+	 * will return the current zoom.
+	 *
+	 * @returns {Number} The target zoom of the plot.
+	 */
+	getTargetZoom() {
+		if (this.zoomAnimation) {
+			// if zooming, use the target level
+			return this.zoomAnimation.targetZoom;
+		}
+		// if not zooming, use the current level
+		return this.zoom;
+	}
+
+	/**
+	 * Returns the target center of the plot in plot pixel coordinates. If the
+	 * plot is actively zooming or panning, it will return the  destination
+	 * center. If the plot is not actively zooming or panning, it will return
+	 * the current center in plot pixel coordinates.
+	 *
+	 * @returns {Object} The target center in plot pixel coordinates.
+	 */
+	getTargetCenter() {
+		if (this.zoomAnimation) {
+			// if zooming, use the target level
+			return this.zoomAnimation.targetViewport.getCenter();
+		}
+		// if not zooming, use the current level
+		return this.viewport.getCenter();
+	}
+
+	/**
+	 * Returns the target viewport of the plot. If the plot is actively zooming,
+	 * it will return the target viewport. If the plot is not actively zooming,
+	 * it will return the current viewport.
+	 *
+	 * @returns {Viewport} The target viewport of the plot.
+	 */
+	getTargetViewport() {
+		if (this.zoomAnimation) {
+			// if zooming, use the target level
+			return this.zoomAnimation.targetViewport;
+		}
+		// if not zooming, use the current level
+		return this.viewport;
+	}
 }
 
 module.exports = Plot;

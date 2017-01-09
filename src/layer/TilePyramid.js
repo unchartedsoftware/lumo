@@ -99,15 +99,8 @@ const checkIfLoaded = function(pyramid) {
 
 const sortAroundCenter = function(plot, coords) {
 	// get the center plot pixel
-	let center = null;
-	let zoom = 0;
-	if (plot.zoomAnimation) {
-		center = plot.zoomAnimation.targetViewport.getCenter();
-		zoom = plot.zoomAnimation.targetZoom;
-	} else {
-		center = plot.viewport.getCenter();
-		zoom = plot.zoom;
-	}
+	const center = plot.getTargetCenter();
+	const zoom = plot.getTargetZoom();
 	// get the scaled tile size
 	const tileSize = plot.tileSize * Math.pow(2, (zoom - Math.round(zoom)));
 	// convert center to tile coords
@@ -280,10 +273,9 @@ class TilePyramid {
 			// layer has been removed from plot, tile is stale
 			return true;
 		}
-		const animation = plot.zoomAnimation;
 		// if zooming, use target zoom, if not use current zoom
-		const viewport = animation ? animation.targetViewport : plot.viewport;
-		const zoom = animation ? animation.targetZoom : plot.zoom;
+		const viewport = plot.getTargetViewport();
+		const zoom = plot.getTargetZoom();
 		return !viewport.isInView(plot.tileSize, coord, zoom);
 	}
 
