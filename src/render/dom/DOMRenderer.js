@@ -49,7 +49,7 @@ const getStaleCoords = function(plot, tiles) {
 	coords.forEach(coord => {
 		visible.set(coord.hash, coord);
 	});
-	// remove any stale tiles from DOM
+	// flag any coord that is not in view as stale
 	const stale = new Map();
 	tiles.forEach((tile, hash) => {
 		if (!visible.has(hash)) {
@@ -78,6 +78,40 @@ const getRenderables = function(plot, pyramid) {
 	return renderables;
 };
 
+const drawTiles = function(renderer, container, tiles, plot, pyramid, ignoreFade = false) {
+	const tileSize = plot.tileSize;
+	// create document fragment
+	const fragment = document.createDocumentFragment();
+	// add new tiles to the DOM
+	getRenderables(plot, pyramid).forEach((renderable, hash) => {
+		if (!tiles.has(hash)) {
+			const tile = renderer.createTile(
+				renderable.coord.x * tileSize,
+				renderable.coord.y * tileSize,
+				tileSize);
+			// make tile invisible
+			if (!ignoreFade) {
+				tile.style.transition = `opacity ${OPACITY_FADE_IN_MS}ms`;
+				tile.style.opacity = '0.0';
+			}
+			// draw the tile
+			renderer.drawTile(tile, renderable.tile);
+			// add to the fragment
+			fragment.append(tile);
+			if (!ignoreFade) {
+				// fade tile in
+				setTimeout(()=>{
+					tile.style.opacity = 1.0;
+				}, OPACITY_TIMEOUT_MS);
+			}
+			// add the tile
+			tiles.set(hash, tile);
+		}
+	});
+	// append all new tiles to the container
+	container.appendChild(fragment);
+};
+
 /**
  * Class representing a DOM renderer.
  */
@@ -89,6 +123,7 @@ class DOMRenderer extends Renderer {
 	constructor() {
 		super();
 		this.tiles = null;
+		this.container = null;
 		this.drawTimeout = null;
 		this.eraseTimeout = null;
 	}
@@ -119,6 +154,11 @@ class DOMRenderer extends Renderer {
 		this.layer.plot.container.removeChild(this.container);
 		this.tiles = null;
 		this.container = null;
+		// clear timeouts
+		clearTimeout(this.drawTimeout);
+		clearTimeout(this.eraseTimeout);
+		this.drawTimeout = null;
+		this.eraseTimeout = null;
 		super.onRemove(layer);
 		return this;
 	}
@@ -153,9 +193,7 @@ class DOMRenderer extends Renderer {
 	 */
 	draw() {
 		const layer = this.layer;
-		const pyramid = layer.pyramid;
 		const plot = layer.plot;
-		const tileSize = plot.tileSize;
 		const tiles = this.tiles;
 		const container = this.container;
 
@@ -202,32 +240,14 @@ class DOMRenderer extends Renderer {
 			this.drawTimeout = setTimeout(()=> {
 				// clear the timeout
 				this.drawTimeout = null;
-				// create document fragment
-				const fragment = document.createDocumentFragment();
-				// add new tiles to the DOM
-				getRenderables(plot, pyramid).forEach((renderable, hash) => {
-					if (!tiles.has(hash)) {
-						const tile = this.createTile(
-							renderable.coord.x * tileSize,
-							renderable.coord.y * tileSize,
-							tileSize);
-						// make tile invisible
-						tile.style.transition = `opacity ${OPACITY_FADE_IN_MS}ms`;
-						tile.style.opacity = '0.0';
-						// draw the tile
-						this.drawTile(tile, renderable.tile);
-						// add to the fragment
-						fragment.append(tile);
-						// fade tile in
-						setTimeout(()=>{
-							tile.style.opacity = 1.0;
-						}, OPACITY_TIMEOUT_MS);
-						// add the tile
-						tiles.set(hash, tile);
-					}
-				});
-				// append all new tiles to the container
-				container.appendChild(fragment);
+				// draw the renderables
+				drawTiles(
+					this,
+					this.container,
+					this.tiles,
+					this.layer.plot,
+					this.layer.pyramid,
+					false);
 			}, DRAW_DEBOUNCE_MS);
 		}
 
@@ -243,6 +263,11 @@ class DOMRenderer extends Renderer {
 		// remove all tiles and clear the container
 		this.container.innerHTML = '';
 		this.tiles.clear();
+		// clear timeouts
+		clearTimeout(this.drawTimeout);
+		clearTimeout(this.eraseTimeout);
+		this.drawTimeout = null;
+		this.eraseTimeout = null;
 		return this;
 	}
 
@@ -250,12 +275,20 @@ class DOMRenderer extends Renderer {
 	 * Forces the renderer to discard all current DOM rendered tiles and
 	 * recreate them.
 	 *
+	 * @param {Boolean} ignoreFade - Do not fade-in redrawn layer.
+	 *
 	 * @returns {DOMRenderer} The renderer object, for chaining.
 	 */
-	redraw() {
+	redraw(ignoreFade = false) {
 		this.clear();
 		// force draw
-		this.draw();
+		drawTiles(
+			this,
+			this.container,
+			this.tiles,
+			this.layer.plot,
+			this.layer.pyramid,
+			ignoreFade);
 		return this;
 	}
 
