@@ -296,7 +296,8 @@ class TilePyramid {
 			// so that we do not track / request the same tiles
 			const ncoord = coord.normalize();
 			// we already have the tile, or it's currently pending
-			return !this.has(ncoord) && !this.isPending(ncoord);
+			// NOTE: use `get` here to update the recentness of the tile in LRU
+			return !this.get(ncoord) && !this.isPending(ncoord);
 		});
 
 		// sort coords by distance from viewport center
@@ -307,11 +308,6 @@ class TilePyramid {
 			// get normalized coord, we use normalized coords for requests
 			// so that we do not track / request the same tiles
 			const ncoord = coord.normalize();
-			// we already have the tile, or it's currently pending
-			// NOTE: do this again here in case of any duplicates
-			if (this.has(ncoord) || this.isPending(ncoord)) {
-				return;
-			}
 			// create the new tile
 			const tile = new Tile(ncoord);
 			// add tile to pending array
