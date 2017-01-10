@@ -12,7 +12,7 @@ const DOMRenderer = require('./DOMRenderer');
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 /**
- * Arbitrary size of the root svg element.
+ * Arbitrary size of the root svg element, since it cannot be 0x0.
  * @private
  * @constant {Number}
  */
@@ -50,16 +50,27 @@ class SVGRenderer extends DOMRenderer {
 	 * Create and return the SVG Element which represents an individual
 	 * tile.
 	 *
+	 * @param {Number} size - the size of the tile, in pixels.
+	 *
+	 * @returns {Element} The tile SVG element.
+	 */
+	createTile() {
+		return document.createElementNS(SVG_NS, 'g');
+	}
+
+	/**
+	 * Set the location of the SVG Element which represents an individual
+	 * tile.
+	 *
+	 * @param {Element} tile - The tile DOM element.
 	 * @param {Number} x - The x position of the tile, in pixels.
 	 * @param {Number} y - The y position of the tile, in pixels.
 	 * @param {Number} size - the size of the tile, in pixels.
 	 *
-	 * @returns {Element} The layer container SVG element.
+	 * @returns {Element} The tile SVG element.
 	 */
-	createTile(x, y, size) {
-		const tile = document.createElementNS(SVG_NS, 'g');
+	positionTile(tile, x, y, size) {
 		tile.setAttribute('transform', `translate(${x},${-y - size})`);
-		return tile;
 	}
 }
 

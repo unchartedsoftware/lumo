@@ -5,11 +5,18 @@ const Renderer = require('../Renderer');
 // Constants
 
 /**
+ * The maximum left / bottom offset of the container element.
+ * @private
+ * @constant {Number}
+ */
+const MAX_CONTAINER_OFFSET = 256*256*8;
+
+/**
  * Draw debounce timeout in milliseconds.
  * @private
  * @constant {Number}
  */
-const DRAW_DEBOUNCE_MS = 400;
+const DRAW_DEBOUNCE_MS = 0;
 
 /**
  * Erase debounce timeout in milliseconds.
@@ -35,10 +42,12 @@ const OPACITY_FADE_IN_MS = 400;
 // Private Methods
 
 const getVisibleCoords = function(plot) {
-	return plot.viewport.getVisibleCoords(
+	// always use target zoom since we don't care to create / remove intermediate
+	// DOM elements within a zoom
+	return plot.getTargetViewport().getVisibleCoords(
 		plot.tileSize,
-		plot.zoom,
-		Math.round(plot.zoom), // get tiles closest to current zoom
+		plot.getTargetZoom(),
+		plot.getTargetZoom(),
 		plot.wraparound);
 };
 
@@ -85,27 +94,35 @@ const drawTiles = function(renderer, container, tiles, plot, pyramid, ignoreFade
 	// add new tiles to the DOM
 	getRenderables(plot, pyramid).forEach((renderable, hash) => {
 		if (!tiles.has(hash)) {
-			const tile = renderer.createTile(
-				renderable.coord.x * tileSize,
-				renderable.coord.y * tileSize,
+			const coord = renderable.coord;
+			// create tile element
+			const elem = renderer.createTile(tileSize);
+			// position tile
+			renderer.positionTile(
+				elem,
+				coord.x * tileSize + renderer.offset.x,
+				coord.y * tileSize + renderer.offset.y,
 				tileSize);
 			// make tile invisible
 			if (!ignoreFade) {
-				tile.style.transition = `opacity ${OPACITY_FADE_IN_MS}ms`;
-				tile.style.opacity = '0.0';
+				elem.style.transition = `opacity ${OPACITY_FADE_IN_MS}ms`;
+				elem.style.opacity = '0.0';
 			}
 			// draw the tile
-			renderer.drawTile(tile, renderable.tile);
+			renderer.drawTile(elem, renderable.tile);
 			// add to the fragment
-			fragment.append(tile);
+			fragment.append(elem);
 			if (!ignoreFade) {
 				// fade tile in
 				setTimeout(()=>{
-					tile.style.opacity = 1.0;
+					elem.style.opacity = 1.0;
 				}, OPACITY_TIMEOUT_MS);
 			}
 			// add the tile
-			tiles.set(hash, tile);
+			tiles.set(hash, {
+				coord: coord,
+				elem: elem
+			});
 		}
 	});
 	// append all new tiles to the container
@@ -124,6 +141,13 @@ class DOMRenderer extends Renderer {
 		super();
 		this.tiles = null;
 		this.container = null;
+		// to deal with css top / left precision issues, we need to position
+		// the layer container relative to the current viewport within some
+		// pixel threshold to prevent rendering issues.
+		this.offset = {
+			x: 0,
+			y: 0
+		};
 		this.drawTimeout = null;
 		this.eraseTimeout = null;
 	}
@@ -176,14 +200,27 @@ class DOMRenderer extends Renderer {
 	 * Create and return the DOM Element which represents an individual
 	 * tile.
 	 *
+	 * @param {Number} size - the size of the tile, in pixels.
+	 *
+	 * @returns {Element} The tile DOM element.
+	 */
+	createTile() {
+		throw '`createTile` not implemented';
+	}
+
+	/**
+	 * Set the location of the DOM Element which represents an individual
+	 * tile.
+	 *
+	 * @param {Element} tile - The tile DOM element.
 	 * @param {Number} x - The x position of the tile, in pixels.
 	 * @param {Number} y - The y position of the tile, in pixels.
 	 * @param {Number} size - the size of the tile, in pixels.
 	 *
-	 * @returns {Element} The layer container DOM element.
+	 * @returns {Element} The tile DOM element.
 	 */
-	createTile() {
-		throw '`createTile` not implemented';
+	positionTile() {
+		throw '`positionTile` not implemented';
 	}
 
 	/**
@@ -197,18 +234,8 @@ class DOMRenderer extends Renderer {
 		const tiles = this.tiles;
 		const container = this.container;
 
-		// update container size
+		// get viewport position
 		const px = plot.plotPxToViewPx({ x: 0, y: 0 });
-		const scale = Math.pow(2, plot.zoom - Math.round(plot.zoom));
-		if (scale === 1) {
-			container.style.transform = `translate3d(${px.x}px,${-px.y}px,0)`;
-		} else {
-			container.style.transform = `translate3d(${px.x}px,${-px.y}px,0) scale(${scale})`;
-		}
-		// update opacity
-		if (container.style.opacity !== layer.opacity) {
-			container.style.opacity = layer.opacity;
-		}
 
 		// get all stale coords
 		const stale = getStaleCoords(plot, tiles);
@@ -230,7 +257,7 @@ class DOMRenderer extends Renderer {
 					// remove any stale tiles from DOM
 					getStaleCoords(plot, tiles).forEach((tile, hash) => {
 						tiles.delete(hash);
-						container.removeChild(tile);
+						container.removeChild(tile.elem);
 					});
 				}, ERASE_DEBOUNCE_MS);
 			}
@@ -250,6 +277,38 @@ class DOMRenderer extends Renderer {
 					false);
 			}, DRAW_DEBOUNCE_MS);
 		}
+
+		// determine container offset
+		const delta = {
+			x: px.x - this.offset.x,
+			y: px.y - this.offset.y
+		};
+
+		if (Math.abs(delta.x) > MAX_CONTAINER_OFFSET ||
+			Math.abs(delta.y) > MAX_CONTAINER_OFFSET) {
+			// tile to container offset is too large, reset it to current
+			// viewport, re-position all current tiles.
+			this.offset.x = px.x;
+			this.offset.y = px.y;
+			delta.x = 0;
+			delta.y = 0;
+			const tileSize = plot.tileSize;
+			this.tiles.forEach(tile => {
+				// re-position tile
+				this.positionTile(
+					tile.elem,
+					tile.coord.x * tileSize + this.offset.x,
+					tile.coord.y * tileSize + this.offset.y,
+					tileSize);
+			});
+		}
+
+		const scale = Math.pow(2, plot.zoom - plot.getTargetZoom());
+
+		// update container
+		container.style.transform = `translate3d(${delta.x}px,${-delta.y}px,0) scale(${scale})`;
+		container.style.transformOrigin = `${this.offset.x}px ${-this.offset.y}px`;
+		container.style.opacity = layer.opacity;
 
 		return this;
 	}
