@@ -385,10 +385,10 @@ class Plot extends EventEmitter {
 	 */
 	getTargetCenter() {
 		if (this.zoomAnimation) {
-			// if zooming, use the target level
+			// if zooming, use the target center
 			return this.zoomAnimation.targetViewport.getCenter();
 		}
-		// if not zooming, use the current level
+		// if not zooming, use the current center
 		return this.viewport.getCenter();
 	}
 
@@ -401,10 +401,10 @@ class Plot extends EventEmitter {
 	 */
 	getTargetViewport() {
 		if (this.zoomAnimation) {
-			// if zooming, use the target level
+			// if zooming, use the target viewport
 			return this.zoomAnimation.targetViewport;
 		}
-		// if not zooming, use the current level
+		// if not zooming, use the current viewport
 		return this.viewport;
 	}
 }
