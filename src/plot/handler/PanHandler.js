@@ -169,6 +169,11 @@ class PanHandler {
 			// flag as up
 			down = false;
 
+			if (plot.zoomAnimation) {
+				// no panning while zooming
+				return;
+			}
+
 			// ignore if right-button
 			if (isRightButton(event)) {
 				return;
