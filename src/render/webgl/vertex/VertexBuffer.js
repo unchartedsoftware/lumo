@@ -74,7 +74,7 @@ class VertexBuffer {
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
 	 * @param {WebGLBuffer|ArrayBuffer|Number} arg - The buffer or length of the buffer.
 	 * @param {Object} pointers - The array pointer map.
-	 * @param {Object} options - The rendering options.
+	 * @param {Object} options - The vertex buffer options.
 	 * @param {String} options.mode - The draw mode / primitive type.
 	 * @param {String} options.indexOffset - The index offset into the drawn buffer.
 	 * @param {String} options.count - The number of indices to draw.

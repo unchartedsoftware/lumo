@@ -17,7 +17,6 @@ const PARSE_IF_REGEX = /#if\s+\(?\s*(!?\s*\w+)\s*(==|!=)?\s*(\w*)\s*\)?/i;
 const PARSE_IFDEF_REGEX = /#ifdef\s+(\w+)/i;
 const PARSE_IFNDEF_REGEX = /#ifndef\s+(\w+)/i;
 const PARSE_ELIF_REGEX = /#elif\s+\(?\s*(!?\s*\w+)\s*(==|!=)?\s*(\w*)\s*\)?/i;
-
 const REMAINING_REGEX = /#([\W\w\s\d])(?:.*\\r?\n)*.*$/gm;
 
 const evalIf = function(a, logic, b) {
@@ -33,7 +32,7 @@ const evalIf = function(a, logic, b) {
 		case '!=':
 			return a !== b;
 	}
-	throw `Unrecognized logical operator ${logic}`;
+	throw `Unrecognized logical operator \`${logic}\``;
 };
 
 class Conditional {

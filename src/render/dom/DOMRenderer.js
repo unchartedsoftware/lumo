@@ -16,7 +16,7 @@ const MAX_CONTAINER_OFFSET = 256*256*8;
  * @private
  * @constant {Number}
  */
-const DRAW_DEBOUNCE_MS = 0;
+const DRAW_DEBOUNCE_MS = 400;
 
 /**
  * Erase debounce timeout in milliseconds.
@@ -234,9 +234,6 @@ class DOMRenderer extends Renderer {
 		const tiles = this.tiles;
 		const container = this.container;
 
-		// get viewport position
-		const px = plot.plotPxToViewPx({ x: 0, y: 0 });
-
 		// get all stale coords
 		const stale = getStaleCoords(plot, tiles);
 
@@ -277,6 +274,9 @@ class DOMRenderer extends Renderer {
 					false);
 			}, DRAW_DEBOUNCE_MS);
 		}
+
+		// get viewport position
+		const px = plot.plotPxToViewPx({ x: 0, y: 0 });
 
 		// determine container offset
 		const delta = {

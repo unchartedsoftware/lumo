@@ -71,7 +71,7 @@ class VertexAtlas {
 	 *
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
 	 * @param {Number} tileSize - The size of a tile, in pixels.
-	 * @param {Object} options - The parameters of the animation.
+	 * @param {Object} options - The vertex atlas options.
 	 * @param {Number} options.chunkSize - The size of a single chunk, in vertices.
 	 * @param {Number} options.numChunks - The size of the atlas, in tiles.
 	 */

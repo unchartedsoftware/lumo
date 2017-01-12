@@ -46,7 +46,7 @@ class TextureArray {
 	 *
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
 	 * @param {Number} tileSize - The size of a tile, in pixels.
-	 * @param {Object} options - The parameters of the animation.
+	 * @param {Object} options - The texture array options.
 	 * @param {Number} options.numChunks - The size of the array, in tiles.
 	 */
 	constructor(gl, tileSize = 256, options = {}) {

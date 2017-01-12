@@ -12,6 +12,7 @@ class Texture {
 	 *
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
 	 * @param {ArrayBuffer|CanvasElement} src - The data to buffer.
+	 * @param {Object} options - The texture options.
 	 * @param {Number} options.width - The width of the texture.
 	 * @param {Number} options.height - The height of the texture.
 	 * @param {String} options.wrap - The wrapping type over both S and T dimension.
