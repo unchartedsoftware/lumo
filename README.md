@@ -117,11 +117,11 @@ plot.addLayer(layer)
 
 ### Renderer
 
-One or more renderers are attached to a layer and are responsible for storing the data on the GPU and subsequently rendering the data to the plot.
+A renderer is attached to a layer and is responsible for storing the data on the GPU and subsequently rendering the data to the plot.
 
 ```javascript
 const renderer = new lumo.PointRenderer();
-layer.addRenderer(renderer);
+layer.setRenderer(renderer);
 ```
 
 The base `lumo.Renderer` class provides a simple and unstructured class for rendering layer data.

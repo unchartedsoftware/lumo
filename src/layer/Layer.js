@@ -17,22 +17,17 @@ class Layer extends EventEmitter {
 	 *
 	 * @param {Object} options - The layer options.
 	 * @param {Renderer} options.renderer - The layer renderer.
-	 * @param {Array} options.renderers - The layer renderers.
 	 * @param {Number} options.opacity - The layer opacity.
 	 * @param {boolean} options.hidden - Whether or not the layer is visible.
 	 * @param {boolean} options.muted - Whether or not the layer is muted.
 	 */
 	constructor(options = {}) {
 		super();
-		if (options.renderer) {
-			this.renderers = [ options.renderer ];
-		} else {
-			this.renderers = defaultTo(options.renderers, []);
-		}
 		this.opacity = defaultTo(options.opacity, 1.0);
 		this.hidden = defaultTo(options.hidden, false);
 		this.muted = defaultTo(options.muted, false);
 		this.pyramid = new TilePyramid(this, options);
+		this.renderer = defaultTo(options.renderer, null);
 		this.plot = null;
 	}
 
@@ -47,10 +42,12 @@ class Layer extends EventEmitter {
 		if (!plot) {
 			throw 'No plot argument provided';
 		}
+		// set plot
 		this.plot = plot;
-		this.renderers.forEach(renderer => {
-			renderer.onAdd(this);
-		});
+		// execute renderer hook
+		if (this.renderer) {
+			this.renderer.onAdd(this);
+		}
 		// request initial tiles.
 		this.refresh();
 		// emit on add
@@ -69,9 +66,11 @@ class Layer extends EventEmitter {
 		if (!plot) {
 			throw 'No plot argument provided';
 		}
-		this.renderers.forEach(renderer => {
-			renderer.onRemove(this);
-		});
+		// execute renderer hook
+		if (this.renderer) {
+			this.renderer.onRemove(this);
+		}
+		// remove plot
 		this.plot = null;
 		// clear the underlying pyramid
 		this.pyramid.clear();
@@ -87,39 +86,21 @@ class Layer extends EventEmitter {
 	 *
 	 * @returns {Layer} The layer object, for chaining.
 	 */
-	addRenderer(renderer) {
-		if (!renderer) {
-			throw 'No renderer argument provided';
-		}
-		if (this.renderers.indexOf(renderer) !== -1) {
-			throw 'Provided renderer is already attached to the layer';
-		}
-		this.renderers.push(renderer);
-		if (this.plot) {
-			renderer.onAdd(this);
-		}
+	setRenderer(renderer) {
+		this.renderer = renderer;
 		return this;
 	}
 
 	/**
-	 * Remove a renderer from the layer.
-	 *
-	 * @param {Renderer} renderer - The rendere to remove from the layer.
+	 * Remove the renderer from the layer.
 	 *
 	 * @returns {Layer} The layer object, for chaining.
 	 */
-	removeRenderer(renderer) {
-		if (!renderer) {
-			throw 'No renderer argument provided';
+	removeRenderer() {
+		if (!this.renderer) {
+			throw 'No renderer is currently attached to the layer';
 		}
-		const index = this.renderers.indexOf(renderer);
-		if (index === -1) {
-			throw 'Provided renderer is not attached to the layer';
-		}
-		this.renderers.splice(index, 1);
-		if (this.plot) {
-			renderer.onRemove(this);
-		}
+		this.renderer = null;
 		return this;
 	}
 
@@ -141,6 +122,15 @@ class Layer extends EventEmitter {
 	hide() {
 		this.hidden = true;
 		return this;
+	}
+
+	/**
+	 * Returns true if the layer is hidden.
+	 *
+	 * @returns {boolean} Whether or not the layer is hidden.
+	 */
+	isHidden() {
+		return this.hidden;
 	}
 
 	/**
@@ -166,6 +156,16 @@ class Layer extends EventEmitter {
 				Request.requestTiles(this.plot);
 			}
 		}
+		return this;
+	}
+
+	/**
+	 * Returns true if the layer is muted.
+	 *
+	 * @returns {boolean} Whether or not the layer is muted.
+	 */
+	isMuted() {
+		return this.muted;
 	}
 
 	/**
@@ -176,6 +176,7 @@ class Layer extends EventEmitter {
 	enable() {
 		this.show();
 		this.unmute();
+		return this;
 	}
 
 	/**
@@ -186,6 +187,16 @@ class Layer extends EventEmitter {
 	disable() {
 		this.hide();
 		this.mute();
+		return this;
+	}
+
+	/**
+	 * Returns true if the layer is disabled (muted and hidden).
+	 *
+	 * @returns {boolean} Whether or not the layer is disabled.
+	 */
+	isDisabled() {
+		return this.muted && this.hidden;
 	}
 
 	/**
@@ -197,11 +208,15 @@ class Layer extends EventEmitter {
 	 */
 	draw(timestamp) {
 		if (this.hidden) {
-			return;
+			if (this.renderer && this.renderer.clear) {
+				// clear DOM based renderer
+				this.renderer.clear();
+			}
+			return this;
 		}
-		this.renderers.forEach(renderer => {
-			renderer.draw(timestamp);
-		});
+		if (this.renderer) {
+			this.renderer.draw(timestamp);
+		}
 		return this;
 	}
 
@@ -245,9 +260,10 @@ class Layer extends EventEmitter {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	requestTiles(coords) {
-		if (!this.muted) {
-			this.pyramid.requestTiles(coords);
+		if (this.muted) {
+			return this;
 		}
+		this.pyramid.requestTiles(coords);
 		return this;
 	}
 }
