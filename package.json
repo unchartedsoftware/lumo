@@ -19,14 +19,14 @@
     "src"
   ],
   "dependencies": {
-    "lodash": "4.17.2",
+    "lodash": "4.17.4",
     "lru-cache": "4.0.2",
     "rbush": "2.0.1"
   },
   "devDependencies": {
     "babel-preset-es2015": "6.18.0",
     "babelify": "7.3.0",
-    "browserify": "13.1.1",
+    "browserify": "13.3.0",
     "del": "2.2.2",
     "gulp": "3.9.1",
     "gulp-eslint": "3.0.1",
