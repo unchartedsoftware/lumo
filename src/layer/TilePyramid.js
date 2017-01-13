@@ -17,7 +17,7 @@ const TileEvent = require('../event/TileEvent');
 const CACHE_SIZE = 256;
 
 /**
- * Number of persistant zoom levels held in the pyramids.
+ * Number of persistent zoom levels held in the pyramids.
  * @private
  * @constant {Number}
  */
@@ -47,14 +47,14 @@ const getLODOffset = function(descendant, ancestor) {
 };
 
 const add = function(pyramid, tile) {
-	if (tile.coord.z < pyramid.persistantLevels) {
-		// persistant tiles
-		if (pyramid.persistants.has(tile.coord.hash)) {
+	if (tile.coord.z < pyramid.persistentLevels) {
+		// persistent tiles
+		if (pyramid.persistents.has(tile.coord.hash)) {
 			throw `Tile of coord ${tile.coord.hash} already exists in the pyramid`;
 		}
-		pyramid.persistants.set(tile.coord.hash, tile);
+		pyramid.persistents.set(tile.coord.hash, tile);
 	} else {
-		// non-persistant tiles
+		// non-persistent tiles
 		if (pyramid.tiles.has(tile.coord.hash)) {
 			throw `Tile of coord ${tile.coord.hash} already exists in the pyramid`;
 		}
@@ -70,11 +70,13 @@ const add = function(pyramid, tile) {
 };
 
 const remove = function(pyramid, tile) {
-	if (tile.coord.z < pyramid.persistantLevels) {
-		throw `Tile of coord ${tile.coord.hash} is flagged as persistant and cannot be removed`;
-	}
-	if (!pyramid.tiles.has(tile.coord.hash)) {
-		throw `Tile of coord ${tile.coord.hash} does not exists in the pyramid`;
+	// only check for persistent since we it will already be removed from lru
+	// cache
+	if (tile.coord.z < pyramid.persistentLevels) {
+		if (!pyramid.persistents.has(tile.coord.hash)) {
+			throw `Tile of coord ${tile.coord.hash} does not exists in the pyramid`;
+		}
+		pyramid.persistents.delete(tile.coord.hash);
 	}
 	// remove from levels
 	const level = pyramid.levels.get(tile.coord.z);
@@ -139,18 +141,18 @@ class TilePyramid {
 	 * @param {Layer} layer - The layer object.
 	 * @param {Object} options - The pyramid options.
 	 * @param {Number} options.cacheSize - The size of the tile cache.
-	 * @param {Number} options.persistantLevels - The number of persistant levels in the pyramid.
+	 * @param {Number} options.persistentLevels - The number of persistent levels in the pyramid.
 	 */
 	constructor(layer, options = {}) {
 		if (!layer) {
 			throw 'No layer parameter provided';
 		}
 		this.cacheSize = defaultTo(options.cacheSize, CACHE_SIZE);
-		this.persistantLevels = defaultTo(options.persistantLevels, PERSISTANT_LEVELS);
-		this.totalCapacity = this.cacheSize + sumPowerOfFour(this.persistantLevels);
+		this.persistentLevels = defaultTo(options.persistentLevels, PERSISTANT_LEVELS);
+		this.totalCapacity = this.cacheSize + sumPowerOfFour(this.persistentLevels);
 		this.layer = layer;
 		this.levels = new Map();
-		this.persistants = new Map();
+		this.persistents = new Map();
 		this.pending = new Map();
 		this.stale = new Map();
 		this.tiles = new LRU({
@@ -172,16 +174,14 @@ class TilePyramid {
 	clear() {
 		// any pending tiles are now flagged as stale
 		this.stale = this.pending;
-		// clear all tile data
-		this.levels = new Map();
-		this.persistants = new Map();
-		this.pending = new Map();
-		this.tiles = new LRU({
-			max: this.cacheSize,
-			dispose: (key, tile) => {
-				remove(this, tile);
-			}
+		this.pending = new Map(); // fresh map
+		// clear persistent tiles
+		this.persistents.forEach(tile => {
+			remove(this, tile);
 		});
+		this.persistents.clear();
+		// clear lru cache
+		this.tiles.reset();
 	}
 
 	/**
@@ -192,8 +192,8 @@ class TilePyramid {
 	 * @returns {boolean} Whether or not the coord exists in the pyramid.
 	 */
 	has(coord) {
-		if (coord.z < this.persistantLevels) {
-			return this.persistants.has(coord.hash);
+		if (coord.z < this.persistentLevels) {
+			return this.persistents.has(coord.hash);
 		}
 		return this.tiles.has(coord.hash);
 	}
@@ -218,8 +218,8 @@ class TilePyramid {
 	 * @returns {Tile} The tile object.
 	 */
 	get(coord) {
-		if (coord.z < this.persistantLevels) {
-			return this.persistants.get(coord.hash);
+		if (coord.z < this.persistentLevels) {
+			return this.persistents.get(coord.hash);
 		}
 		return this.tiles.get(coord.hash);
 	}
