@@ -93,6 +93,76 @@ describe('preprocess', () => {
 		assert(evaluated.length === 3); // includes first / last empty lines
 		assert(evaluated[1].trim() === '1');
 	});
+	it('should evaluate basic #if N > M expressions', () => {
+		const source = `
+			#define TEST_0 0
+			#define TEST_1 1
+			#if (TEST_0 > 0)
+				1
+			#endif
+			#if TEST_1 > 0
+				2
+			#endif
+		`;
+		const evaluated = preprocess(source).split('\n');
+		assert(evaluated.length === 3); // includes first / last empty lines
+		assert(evaluated[1].trim() === '2');
+	});
+	it('should evaluate basic #if N >= M expressions', () => {
+		const source = `
+			#define TEST_0 0
+			#define TEST_1 1
+			#define TEST_2 2
+			#if (TEST_0 >= 1)
+				1
+			#endif
+			#if (TEST_1 >= 1)
+				2
+			#endif
+			#if TEST_2 >= 1
+				3
+			#endif
+		`;
+		const evaluated = preprocess(source).split('\n');
+		assert(evaluated.length === 4); // includes first / last empty lines
+		assert(evaluated[1].trim() === '2');
+		assert(evaluated[2].trim() === '3');
+	});
+	it('should evaluate basic #if N < M expressions', () => {
+		const source = `
+			#define TEST_0 0
+			#define TEST_1 1
+			#if (TEST_0 < 1)
+				1
+			#endif
+			#if TEST_1 < 1
+				2
+			#endif
+		`;
+		const evaluated = preprocess(source).split('\n');
+		assert(evaluated.length === 3); // includes first / last empty lines
+		assert(evaluated[1].trim() === '1');
+	});
+	it('should evaluate basic #if N <= M expressions', () => {
+		const source = `
+			#define TEST_0 0
+			#define TEST_1 1
+			#define TEST_2 2
+			#if (TEST_0 <= 1)
+				1
+			#endif
+			#if (TEST_1 <= 1)
+				2
+			#endif
+			#if TEST_2 <= 1
+				3
+			#endif
+		`;
+		const evaluated = preprocess(source).split('\n');
+		assert(evaluated.length === 4); // includes first / last empty lines
+		assert(evaluated[1].trim() === '1');
+		assert(evaluated[2].trim() === '2');
+	});
 	it('should evaluate #ifdef conditionals', () => {
 		const source = `
 			#define TEST_0
@@ -200,6 +270,82 @@ describe('preprocess', () => {
 		const evaluated = preprocess(source).split('\n');
 		assert(evaluated.length === 3); // includes first / last empty lines
 		assert(evaluated[1].trim() === '1');
+	});
+	it('should evaluate basic #elif N > M expressions', () => {
+		const source = `
+			#define TEST 2
+			#if (TEST == 0)
+				0
+			#elif (TEST > 1)
+				1
+			#endif
+			#if (TEST == 0)
+				0
+			#elif TEST > 2
+				2
+			#endif
+		`;
+		const evaluated = preprocess(source).split('\n');
+		assert(evaluated.length === 3); // includes first / last empty lines
+		assert(evaluated[1].trim() === '1');
+	});
+	it('should evaluate basic #elif N >= M expressions', () => {
+		const source = `
+			#define TEST 2
+			#if (TEST == 0)
+				0
+			#elif (TEST >= 1)
+				1
+			#endif
+			#if (TEST == 0)
+				0
+			#elif TEST >= 2
+				2
+			#endif
+		`;
+		const evaluated = preprocess(source).split('\n');
+		console.log(evaluated);
+		assert(evaluated.length === 4); // includes first / last empty lines
+		assert(evaluated[1].trim() === '1');
+		assert(evaluated[2].trim() === '2');
+	});
+	it('should evaluate basic #elif N < M expressions', () => {
+		const source = `
+			#define TEST 1
+			#if (TEST == 0)
+				0
+			#elif (TEST < 1)
+				1
+			#endif
+			#if (TEST == 0)
+				0
+			#elif TEST < 2
+				2
+			#endif
+		`;
+		const evaluated = preprocess(source).split('\n');
+		assert(evaluated.length === 3); // includes first / last empty lines
+		assert(evaluated[1].trim() === '2');
+	});
+	it('should evaluate basic #elif N <= M expressions', () => {
+		const source = `
+			#define TEST 2
+			#if (TEST == 0)
+				0
+			#elif (TEST <= 3)
+				1
+			#endif
+			#if (TEST == 0)
+				0
+			#elif TEST <= 2
+				2
+			#endif
+		`;
+		const evaluated = preprocess(source).split('\n');
+		console.log(evaluated);
+		assert(evaluated.length === 4); // includes first / last empty lines
+		assert(evaluated[1].trim() === '1');
+		assert(evaluated[2].trim() === '2');
 	});
 	it('should evaluate basic #else conditionals', () => {
 		const source = `
