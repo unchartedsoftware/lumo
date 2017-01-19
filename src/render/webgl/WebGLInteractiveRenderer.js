@@ -35,6 +35,10 @@ const ZOOM_START = Symbol();
 
 const getCollision = function(renderer, plotPx) {
 	const plot = renderer.layer.plot;
+	// don't return collision if zooming
+	if (plot.zoomAnimation) {
+		return null;
+	}
 	// points are hashed in un-scaled coordinates, unscale the point
 	const targetZoom = Math.round(plot.zoom);
 	const scale = Math.pow(2, targetZoom - plot.zoom);
