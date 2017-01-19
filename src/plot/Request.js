@@ -1,7 +1,6 @@
 'use strict';
 
 const throttle = require('lodash/throttle');
-const Coord = require('../core/Coord');
 
 // Constants
 
@@ -21,13 +20,6 @@ const PAN_REQUEST_THROTTLE_MS = 100;
 
 // Private
 
-const requestBaseTile = function(layer) {
-	// request tiles
-	layer.requestTiles([
-		new Coord(0, 0, 0)
-	]);
-};
-
 const requestTiles = function(plot, viewport = plot.viewport, zoom = plot.zoom) {
 	// get all visible coords in the target viewport
 	const coords = viewport.getVisibleCoords(
@@ -44,7 +36,6 @@ const requestTiles = function(plot, viewport = plot.viewport, zoom = plot.zoom) 
 
 module.exports = {
 	requestTiles: requestTiles,
-	requestBaseTile: requestBaseTile,
 	panRequest: throttle(requestTiles, PAN_REQUEST_THROTTLE_MS),
 	zoomRequest: throttle(requestTiles, ZOOM_REQUEST_THROTTLE_MS)
 };

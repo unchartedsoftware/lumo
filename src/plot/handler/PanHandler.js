@@ -239,6 +239,7 @@ class PanHandler {
 			};
 			// set pan animation
 			plot.panAnimation = new PanAnimation({
+				plot: plot,
 				start: start,
 				delta: delta,
 				easing: easing,
@@ -292,6 +293,7 @@ class PanHandler {
 			// animate pan
 			plot.emit(EventType.PAN_START, new PanEvent(plot));
 			plot.panAnimation = new PanAnimation({
+				plot: plot,
 				start: plot.viewport.getPosition(),
 				delta: delta,
 				easing: this.inertiaEasing,

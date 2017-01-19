@@ -107,12 +107,12 @@ const frame = function(plot) {
 
 	// apply the zoom animation
 	if (plot.zoomAnimation) {
-		plot.zoomAnimation.updatePlot(plot, timestamp);
+		plot.zoomAnimation.update(timestamp);
 	}
 
 	// apply the pan animation
 	if (plot.panAnimation) {
-		plot.panAnimation.updatePlot(plot, timestamp);
+		plot.panAnimation.update(timestamp);
 		Request.panRequest(plot);
 	}
 
@@ -144,7 +144,7 @@ class Plot extends EventEmitter {
 	 * @param {Number} options.zoom - The zoom of the plot.
 	 * @param {Number} options.minZoom - The minimum zoom of the plot.
 	 * @param {Number} options.maxZoom - The maximum zoom of the plot.
-	 * @param {Number} options.center - The center of the plot, in plot pixels.
+	 * @param {Object} options.center - The center of the plot, in plot pixels.
 	 * @param {boolean} options.wraparound - Whether or not the plot wraps around.
 	 *
 	 * @param {Number} options.inertia - Whether or not pan inertia is enabled.
@@ -206,13 +206,9 @@ class Plot extends EventEmitter {
 		this.zoom = clamp(this.zoom, this.minZoom, this.maxZoom);
 
 		// center the plot
-		const center = defaultTo(
-			options.center,
-			Math.pow(2, this.zoom) * this.tileSize / 2);
-		this.viewport.centerOn({
-			x: center,
-			y: center
-		});
+		const half = Math.pow(2, this.zoom) * this.tileSize / 2;
+		const center = defaultTo(options.center, { x: half, y: half });
+		this.viewport.centerOn(center);
 
 		// wraparound
 		this.wraparound = defaultTo(options.wraparound, false);
@@ -247,11 +243,6 @@ class Plot extends EventEmitter {
 		// stop animation loop
 		cancelAnimationFrame(this.frameRequest);
 		this.frameRequest = null;
-		// destroy context
-		this.gl = null;
-		this.canvas = null;
-		this.container = null;
-		this.renderBuffer = null;
 		// disable handlers
 		this.handlers.forEach(handler => {
 			handler.disable();
@@ -260,6 +251,13 @@ class Plot extends EventEmitter {
 		this.layers.forEach(layer => {
 			this.removeLayer(layer);
 		});
+		// destroy context
+		this.gl = null;
+		// remove canvas
+		this.container.removeChild(this.canvas);
+		this.canvas = null;
+		this.container = null;
+		this.renderBuffer = null;
 		return this;
 	}
 
@@ -406,6 +404,80 @@ class Plot extends EventEmitter {
 		}
 		// if not zooming, use the current viewport
 		return this.viewport;
+	}
+
+	/**
+	 * Returns the tile coordinatess currently visible in the viewport.
+	 *
+	 * @returns {Array} The array of visible tile coords.
+	 */
+	getVisibleCoords() {
+		return this.getTargetViewport().getVisibleCoords(
+			this.tileSize,
+			this.getTargetZoom(),
+			Math.round(this.getTargetZoom()),
+			this.wraparound);
+	}
+
+	/**
+	 * Pans to the target plot pixel coordinate.
+	 *
+	 * @param {Number} level - The target plot pixel.
+	 * @param {boolean} animate - Whether or not to animate the pan. Defaults to `true`.
+	 */
+	panTo(plotPx, animate = true) {
+		// cancel existing animations
+		if (this.panAnimation) {
+			this.panAnimation.cancel();
+		}
+		if (this.zoomAnimation) {
+			this.zoomAnimation.cancel();
+		}
+		this.handlers.get('pan').panTo(plotPx, animate);
+	}
+
+	/**
+	 * Zooms in to the target zoom level. This is bounded by the plot objects
+	 * minZoom and maxZoom attributes.
+	 *
+	 * @param {Number} level - The target zoom level.
+	 * @param {boolean} animate - Whether or not to animate the zoom. Defaults to `true`.
+	 */
+	zoomTo(level, animate = true) {
+		if (this.panAnimation) {
+			this.panAnimation.cancel();
+		}
+		if (this.zoomAnimation) {
+			this.zoomAnimation.cancel();
+		}
+		this.handlers.get('zoom').zoomTo(level, animate);
+	}
+
+	/**
+	 * Returns whether or not the plot is actively panning.
+	 *
+	 * @returns {bool} - Whether or not the plot is panning.
+	 */
+	isPanning() {
+		return !!this.panAnimation;
+	}
+
+	/**
+	 * Returns whether or not the plot is actively zooming.
+	 *
+	 * @returns {bool} - Whether or not the plot is zooming.
+	 */
+	isZooming() {
+		return !!this.zoomAnimation;
+	}
+
+	/**
+	 * Return the containing element of the plot.
+	 *
+	 * @returns {DOMElement} The container of the plot.
+	 */
+	getContainer() {
+		return this.container;
 	}
 }
 

@@ -2,7 +2,6 @@
 
 const defaultTo = require('lodash/defaultTo');
 const EventEmitter = require('events');
-const Request = require('../plot/Request');
 const EventType = require('../event/EventType');
 const LayerEvent = require('../event/LayerEvent');
 const TilePyramid = require('./TilePyramid');
@@ -26,8 +25,8 @@ class Layer extends EventEmitter {
 		this.opacity = defaultTo(options.opacity, 1.0);
 		this.hidden = defaultTo(options.hidden, false);
 		this.muted = defaultTo(options.muted, false);
-		this.pyramid = new TilePyramid(this, options);
 		this.renderer = defaultTo(options.renderer, null);
+		this.pyramid = new TilePyramid(this, options);
 		this.plot = null;
 	}
 
@@ -152,8 +151,10 @@ class Layer extends EventEmitter {
 		if (this.muted) {
 			this.muted = false;
 			if (this.plot) {
+				// get visible coords
+				const coords = this.plot.getVisibleCoords();
 				// request tiles
-				Request.requestTiles(this.plot);
+				this.requestTiles(coords);
 			}
 		}
 		return this;
@@ -228,16 +229,11 @@ class Layer extends EventEmitter {
 	refresh() {
 		// clear the underlying pyramid
 		this.pyramid.clear();
-		// request base tile, this ensures we at least have the lowest LOD
-		Request.requestBaseTile(this);
-		// check if we are currently zooming
-		const animation = this.plot.zoomAnimation;
-		if (animation) {
-			// initiate a zoom request
-			Request.zoomRequest(this.plot, animation.targetViewport, animation.targetZoom);
-		} else {
-			// request tiles for current viewport
-			Request.requestTiles(this.plot);
+		if (this.plot) {
+			// get visible coords
+			const coords = this.plot.getVisibleCoords();
+			// request tiles
+			this.requestTiles(coords);
 		}
 		return this;
 	}

@@ -126,6 +126,7 @@ const zoom = function(plot, targetPx, zoomDelta, duration) {
 		plot.panAnimation = null;
 		// set zoom animation
 		plot.zoomAnimation = new ZoomAnimation({
+			plot: plot,
 			duration: duration,
 			prevZoom: plot.zoom,
 			targetZoom: targetZoom,
@@ -299,19 +300,18 @@ class ZoomHandler {
 	 * minZoom and maxZoom attributes.
 	 *
 	 * @param {Number} level - The target zoom level.
-	 * @param {Object} plotPx - the target pixel to center the zoom around.
 	 * @param {boolean} animate - Whether or not to animate the zoom. Defaults to `true`.
 	 */
-	zoomTo(level, plotPx, animate = true) {
+	zoomTo(level, animate = true) {
 		const plot = this.plot;
-		//const targetPx = plot.viewport.getCenter();
+		const targetPx = this.plot.viewport.getCenter();
 		const zoomDelta = level - plot.zoom;
 		if (!animate) {
 			// do not animate
-			zoom(plot, plotPx, zoomDelta, 0);
+			zoom(plot, targetPx, zoomDelta, 0);
 		} else {
 			// animate
-			zoom(plot, plotPx, zoomDelta, this.zoomDuration);
+			zoom(plot, targetPx, zoomDelta, this.zoomDuration);
 		}
 	}
 }

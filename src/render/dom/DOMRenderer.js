@@ -41,19 +41,9 @@ const OPACITY_FADE_IN_MS = 400;
 
 // Private Methods
 
-const getVisibleCoords = function(plot) {
-	// always use target zoom since we don't care to create / remove intermediate
-	// DOM elements within a zoom
-	return plot.getTargetViewport().getVisibleCoords(
-		plot.tileSize,
-		plot.getTargetZoom(),
-		plot.getTargetZoom(),
-		plot.wraparound);
-};
-
 const getStaleCoords = function(plot, tiles) {
-	// get visible coords
-	const coords = getVisibleCoords(plot);
+	// get all currently visible tile coords
+	const coords = plot.getVisibleCoords();
 	const visible = new Map();
 	coords.forEach(coord => {
 		visible.set(coord.hash, coord);
@@ -70,7 +60,7 @@ const getStaleCoords = function(plot, tiles) {
 
 const getRenderables = function(plot, pyramid) {
 	// get all currently visible tile coords
-	const coords = getVisibleCoords(plot);
+	const coords = plot.getVisibleCoords();
 	// get available renderables
 	const renderables = new Map();
 	coords.forEach(coord => {
@@ -303,7 +293,8 @@ class DOMRenderer extends Renderer {
 			});
 		}
 
-		const scale = Math.pow(2, plot.zoom - plot.getTargetZoom());
+		// scale on difference between current zoom and rounded target zoom
+		const scale = Math.pow(2, plot.zoom - Math.round(plot.getTargetZoom()));
 
 		// update container
 		container.style.transform = `translate3d(${delta.x}px,${-delta.y}px,0) scale(${scale})`;
