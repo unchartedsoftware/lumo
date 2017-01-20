@@ -246,6 +246,8 @@ The following events are emitted by Lumo:
 - **tilediscard** emitted when a tile is received but is no longer in view and is discarded.
 - **tileremove** emitted when a tile is evicted from the layer.
 - **load** emitted when a all pending tiles have loaded for the layer.
+- **onadd** emitted when the layer is added to a plot.
+- **onremove** emitted when the layer is removed from a plot.
 
 ## Special Thanks
 
