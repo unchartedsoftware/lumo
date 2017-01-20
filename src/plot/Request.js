@@ -20,13 +20,9 @@ const PAN_REQUEST_THROTTLE_MS = 100;
 
 // Private
 
-const requestTiles = function(plot, viewport = plot.viewport, zoom = plot.zoom) {
+const requestTiles = function(plot) {
 	// get all visible coords in the target viewport
-	const coords = viewport.getVisibleCoords(
-		plot.tileSize,
-		zoom,
-		Math.round(zoom),
-		plot.wraparound);
+	const coords = plot.getVisibleCoords();
 	// for each layer
 	plot.layers.forEach(layer => {
 		// request tiles

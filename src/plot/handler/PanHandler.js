@@ -46,7 +46,7 @@ const PAN_TO_DURATION = 800;
 // Private Methods
 
 const pan = function(plot, delta) {
-	if (plot.zoomAnimation) {
+	if (plot.isZooming()) {
 		// no panning while zooming
 		return;
 	}
@@ -169,7 +169,7 @@ class PanHandler {
 			// flag as up
 			down = false;
 
-			if (plot.zoomAnimation) {
+			if (plot.isZooming()) {
 				// no panning while zooming
 				return;
 			}

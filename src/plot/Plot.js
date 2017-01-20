@@ -69,14 +69,14 @@ const reset = function(plot) {
 	// layer is past the left bound of the viewport
 	if (plot.viewport.x > layerRight) {
 		plot.viewport.x -= layerWidth * layerSpans;
-		if (plot.panAnimation) {
+		if (plot.isPanning()) {
 			plot.panAnimation.start.x -= layerWidth * layerSpans;
 		}
 	}
 	// layer is past the right bound of the viewport
 	if (plot.viewport.x + plot.viewport.width < layerLeft) {
 		plot.viewport.x += layerWidth * layerSpans;
-		if (plot.panAnimation) {
+		if (plot.isPanning()) {
 			plot.panAnimation.start.x += layerWidth * layerSpans;
 		}
 	}
@@ -106,12 +106,12 @@ const frame = function(plot) {
 		plot.viewport.height * window.devicePixelRatio);
 
 	// apply the zoom animation
-	if (plot.zoomAnimation) {
+	if (plot.isZooming()) {
 		plot.zoomAnimation.update(timestamp);
 	}
 
 	// apply the pan animation
-	if (plot.panAnimation) {
+	if (plot.isPanning()) {
 		plot.panAnimation.update(timestamp);
 		Request.panRequest(plot);
 	}
@@ -365,7 +365,7 @@ class Plot extends EventEmitter {
 	 * @returns {Number} The target zoom of the plot.
 	 */
 	getTargetZoom() {
-		if (this.zoomAnimation) {
+		if (this.isZooming()) {
 			// if zooming, use the target level
 			return this.zoomAnimation.targetZoom;
 		}
@@ -382,7 +382,7 @@ class Plot extends EventEmitter {
 	 * @returns {Object} The target center in plot pixel coordinates.
 	 */
 	getTargetCenter() {
-		if (this.zoomAnimation) {
+		if (this.isZooming()) {
 			// if zooming, use the target center
 			return this.zoomAnimation.targetViewport.getCenter();
 		}
@@ -398,7 +398,7 @@ class Plot extends EventEmitter {
 	 * @returns {Viewport} The target viewport of the plot.
 	 */
 	getTargetViewport() {
-		if (this.zoomAnimation) {
+		if (this.isZooming()) {
 			// if zooming, use the target viewport
 			return this.zoomAnimation.targetViewport;
 		}
@@ -427,10 +427,10 @@ class Plot extends EventEmitter {
 	 */
 	panTo(plotPx, animate = true) {
 		// cancel existing animations
-		if (this.panAnimation) {
+		if (this.isPanning()) {
 			this.panAnimation.cancel();
 		}
-		if (this.zoomAnimation) {
+		if (this.isZooming()) {
 			this.zoomAnimation.cancel();
 		}
 		this.handlers.get('pan').panTo(plotPx, animate);
@@ -444,10 +444,10 @@ class Plot extends EventEmitter {
 	 * @param {boolean} animate - Whether or not to animate the zoom. Defaults to `true`.
 	 */
 	zoomTo(level, animate = true) {
-		if (this.panAnimation) {
+		if (this.isPanning()) {
 			this.panAnimation.cancel();
 		}
-		if (this.zoomAnimation) {
+		if (this.isZooming()) {
 			this.zoomAnimation.cancel();
 		}
 		this.handlers.get('zoom').zoomTo(level, animate);

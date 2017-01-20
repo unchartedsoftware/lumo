@@ -135,7 +135,7 @@ const zoom = function(plot, targetPx, zoomDelta, duration) {
 			targetPx: targetPx
 		});
 		// request tiles
-		Request.zoomRequest(plot, targetViewport, targetZoom);
+		Request.zoomRequest(plot);
 		// emit zoom start
 		plot.emit(EventType.ZOOM_START, new ZoomEvent(plot, plot.zoom, plot.zoom, targetZoom));
 	}
