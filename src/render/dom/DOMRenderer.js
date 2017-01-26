@@ -312,12 +312,8 @@ class DOMRenderer extends Renderer {
 	clear() {
 		super.clear();
 		// remove all tiles and clear the container
-		if (this.container) {
-			this.container.innerHTML = '';
-		}
-		if (this.tiles) {
-			this.tiles.clear();
-		}
+		this.container.innerHTML = '';
+		this.tiles.clear();
 		// clear timeouts
 		clearTimeout(this.drawTimeout);
 		clearTimeout(this.eraseTimeout);

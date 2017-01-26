@@ -2,8 +2,6 @@
 
 const defaultTo = require('lodash/defaultTo');
 const EventEmitter = require('events');
-const EventType = require('../event/EventType');
-const LayerEvent = require('../event/LayerEvent');
 const TilePyramid = require('./TilePyramid');
 
 /**
@@ -49,8 +47,6 @@ class Layer extends EventEmitter {
 		}
 		// request initial tiles.
 		this.refresh();
-		// emit on add
-		this.emit(EventType.ON_ADD, new LayerEvent(this));
 		return this;
 	}
 
@@ -73,8 +69,6 @@ class Layer extends EventEmitter {
 		this.plot = null;
 		// clear the underlying pyramid
 		this.pyramid.clear();
-		// emit on remove
-		this.emit(EventType.ON_REMOVE, new LayerEvent(this));
 		return this;
 	}
 
@@ -229,11 +223,11 @@ class Layer extends EventEmitter {
 	refresh() {
 		// clear the underlying pyramid
 		this.pyramid.clear();
-		// clear renderer state
-		if (this.renderer) {
-			this.renderer.clear();
-		}
 		if (this.plot) {
+			// clear renderer state
+			if (this.renderer) {
+				this.renderer.clear();
+			}
 			// get visible coords
 			const coords = this.plot.getVisibleCoords();
 			// request tiles

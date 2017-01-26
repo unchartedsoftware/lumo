@@ -130,17 +130,5 @@ module.exports = {
 	 * Emitted when all visible tiles have been loaded for a layer.
 	 * @constant {String}
 	 */
-	LOAD: 'load',
-
-	/**
-	 * Emitted when the layer is added to a plot.
-	 * @constant {String}
-	 */
-	ON_ADD: 'onadd',
-
-	/**
-	 * Emitted when the layer is removed from a plot.
-	 * @constant {String}
-	 */
-	ON_REMOVE: 'onremove',
+	LOAD: 'load'
 };
