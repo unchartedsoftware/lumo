@@ -304,7 +304,6 @@ describe('preprocess', () => {
 			#endif
 		`;
 		const evaluated = preprocess(source).split('\n');
-		console.log(evaluated);
 		assert(evaluated.length === 4); // includes first / last empty lines
 		assert(evaluated[1].trim() === '1');
 		assert(evaluated[2].trim() === '2');
@@ -342,7 +341,6 @@ describe('preprocess', () => {
 			#endif
 		`;
 		const evaluated = preprocess(source).split('\n');
-		console.log(evaluated);
 		assert(evaluated.length === 4); // includes first / last empty lines
 		assert(evaluated[1].trim() === '1');
 		assert(evaluated[2].trim() === '2');
