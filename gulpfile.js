@@ -19,13 +19,23 @@ const paths = {
 	build: 'build'
 };
 
+function logError(err) {
+	if (err instanceof SyntaxError) {
+		console.error('Syntax Error:');
+		console.error(err.message);
+		console.error(err.codeFrame);
+	} else {
+		console.error(err.message);
+	}
+}
+
 function handleError(err) {
-	console.error(err);
+	logError(err);
 	this.emit('end');
 }
 
 function handleErrorTimeout(err) {
-	console.error(err);
+	logError(err);
 	setTimeout(() => {
 		// set delay for full mocha error message
 		this.emit('end');
