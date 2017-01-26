@@ -235,6 +235,12 @@ The following events are emitted by Lumo:
 - **mouseup** emitted when the mouse button is released over the plot.
 - **mouseover** emitted when the mouse is moved over the plot.
 - **mouseout** emitted when the mouse is moved outside of the plot.
+- **zoomstart** emitted when a new zoom event is handled.
+- **zoom** emitted during each frame of a zoom animation.
+- **zoomend** emitted when a zoom event is complete.
+- **panstart** emitted when a new pan event is handled.
+- **pan** emitted during each frame of a pan animation.
+- **panend** emitted when a pan event is complete.
 - **frame** emitted at the beginning of every render frame.
 - **resize** emitted whenever the plot dimensions change.
 
@@ -246,8 +252,12 @@ The following events are emitted by Lumo:
 - **tilediscard** emitted when a tile is received but is no longer in view and is discarded.
 - **tileremove** emitted when a tile is evicted from the layer.
 - **load** emitted when a all pending tiles have loaded for the layer.
-- **onadd** emitted when the layer is added to a plot.
-- **onremove** emitted when the layer is removed from a plot.
+- **zoomstart** emitted when a new zoom event is handled.
+- **zoom** emitted during each frame of a zoom animation.
+- **zoomend** emitted when a zoom event is complete.
+- **panstart** emitted when a new pan event is handled.
+- **pan** emitted during each frame of a pan animation.
+- **panend** emitted when a pan event is complete.
 
 ## Special Thanks
 
