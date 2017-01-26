@@ -209,8 +209,8 @@ class Layer extends EventEmitter {
 	 */
 	draw(timestamp) {
 		if (this.hidden) {
-			if (this.renderer && this.renderer.clear) {
-				// clear DOM based renderer
+			// clear renderer state
+			if (this.renderer) {
 				this.renderer.clear();
 			}
 			return this;
@@ -229,6 +229,10 @@ class Layer extends EventEmitter {
 	refresh() {
 		// clear the underlying pyramid
 		this.pyramid.clear();
+		// clear renderer state
+		if (this.renderer) {
+			this.renderer.clear();
+		}
 		if (this.plot) {
 			// get visible coords
 			const coords = this.plot.getVisibleCoords();

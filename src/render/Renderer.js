@@ -49,6 +49,15 @@ class Renderer extends EventEmitter {
 	}
 
 	/**
+	 * Clears any persisted state in the renderer.
+	 *
+	 * @returns {Renderer} The renderer object, for chaining.
+	 */
+	clear() {
+		return this;
+	}
+
+	/**
 	 * The draw function that is executed per frame.
 	 *
 	 * @param {Number} timestamp - The frame timestamp.
