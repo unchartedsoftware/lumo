@@ -310,9 +310,14 @@ class DOMRenderer extends Renderer {
 	 * @returns {DOMRenderer} The renderer object, for chaining.
 	 */
 	clear() {
+		super.clear();
 		// remove all tiles and clear the container
-		this.container.innerHTML = '';
-		this.tiles.clear();
+		if (this.container) {
+			this.container.innerHTML = '';
+		}
+		if (this.tiles) {
+			this.tiles.clear();
+		}
 		// clear timeouts
 		clearTimeout(this.drawTimeout);
 		clearTimeout(this.eraseTimeout);

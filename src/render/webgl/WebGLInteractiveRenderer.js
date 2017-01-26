@@ -71,6 +71,31 @@ const onClick = function(renderer, event) {
 	}
 };
 
+const active = new Map();
+const setCursor = function(renderer) {
+	const plot = renderer.layer.plot;
+	if (!active.has(plot)) {
+		active.set(plot, new Map());
+	}
+	const isActive = active.get(plot);
+	if (!isActive.has(renderer)) {
+		isActive.set(renderer, true);
+		plot.getContainer().style.cursor = 'pointer';
+	};
+};
+
+const resetCursor = function(renderer) {
+	const plot = renderer.layer.plot;
+	if (!active.has(plot)) {
+		return;
+	}
+	const isActive = active.get(plot);
+	isActive.delete(renderer);
+	if (isActive.size === 0) {
+		plot.getContainer().style.cursor = 'inherit';
+	}
+};
+
 const onMouseMove = function(renderer, event) {
 	const collision = getCollision(renderer, event.plotPx);
 	if (collision) {
@@ -102,12 +127,17 @@ const onMouseMove = function(renderer, event) {
 				event.button,
 				collision));
 		}
+		// set cursor
+		setCursor(renderer);
 		// flag as highlighted
 		renderer.highlighted = collision;
 		return;
 	}
 	// mouse out
 	if (renderer.highlighted) {
+		// reset cursor
+		resetCursor(renderer);
+		// emit mouse out
 		renderer.emit(EventType.MOUSE_OUT, new MouseEvent(
 			renderer.layer,
 			event.viewPx,
@@ -139,6 +169,21 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 		this.selected = null;
 		this.collisionType = defaultTo(options.collisionType, CollisionType.CIRCLE);
 		this.nodeCapacity = defaultTo(options.nodeCapacity, 32);
+	}
+
+	/**
+	 * Clears any selection / highlighted elements.
+	 *
+	 * @returns {WebGLVertexRenderer} The renderer object, for chaining.
+	 */
+	clear() {
+		super.clear();
+		// clear selected / highlighted
+		this.highlighted = null;
+		this.selected = null;
+		// reset the cursor
+		resetCursor(this);
+		return this;
 	}
 
 	/**
@@ -190,8 +235,7 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 		this.trees = null;
 		this.points = null;
 		// clear selected / highlighted
-		this.highlighted = null;
-		this.selected = null;
+		this.clear();
 		super.onRemove(layer);
 		return this;
 	}
