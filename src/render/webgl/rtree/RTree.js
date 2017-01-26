@@ -47,16 +47,15 @@ class RTree {
 	 *
 	 * @param {Number} x - The x component.
 	 * @param {Number} y - The y component.
-	 * @param {Number} radius - The radius of the search.
 	 *
 	 * @returns {Object} The collision object.
 	 */
-	search(x, y, radius = 0) {
+	search(x, y) {
 		const collisions = this.tree.search({
-			minX: x - radius,
-			maxX: x + radius,
-			minY: y - radius,
-			maxY: y + radius
+			minX: x,
+			maxX: x,
+			minY: y,
+			maxY: y
 		});
 		if (collisions.length === 0) {
 			return null;
@@ -68,9 +67,12 @@ class RTree {
 		// do a circle check
 		for (let i=0; i<collisions.length; i++) {
 			const collision = collisions[i];
+			// assume the boxes are squares
+			const radius = (collision.maxX - collision.minX) / 2;
+			// distance to center of square
 			const dx = ((collision.minX + collision.maxX) * 0.5) - x;
 			const dy = ((collision.minY + collision.maxY) * 0.5) - y;
-			if ((dx * dx + dy * dy) <= (collision.radius * collision.radius)) {
+			if ((dx * dx + dy * dy) <= (radius * radius)) {
 				return collision;
 			}
 		}
