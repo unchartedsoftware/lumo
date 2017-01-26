@@ -5,7 +5,7 @@
 [![npm version](https://badge.fury.io/js/lumo.svg)](http://badge.fury.io/js/lumo)
 [![Bower version](https://badge.fury.io/bo/lumo.svg)](http://badge.fury.io/bo/lumo)
 [![Build Status](https://travis-ci.org/kbirk/lumo.svg?branch=master)](https://travis-ci.org/kbirk/lumo)
-[![Dependency Status](https://david-dm.org/kbirk/lumo.svg)](https://david-dm.org/kbirk/lumo)
+[![Dependency Status](https://david-dm.org/kbirk/lumo/status.svg)](https://david-dm.org/kbirk/lumo)
 
 ## Introduction
 
