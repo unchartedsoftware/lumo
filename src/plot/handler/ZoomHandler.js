@@ -124,20 +124,31 @@ const zoom = function(plot, targetPx, zoomDelta, duration) {
 			targetPx);
 		// clear pan animation
 		plot.panAnimation = null;
-		// set zoom animation
-		plot.zoomAnimation = new ZoomAnimation({
-			plot: plot,
-			duration: duration,
-			prevZoom: plot.zoom,
-			targetZoom: targetZoom,
-			prevViewport: new Viewport(plot.viewport),
-			targetViewport: targetViewport,
-			targetPx: targetPx
-		});
+		// if there is a duration
+		if (duration > 0) {
+			// set zoom animation
+			plot.zoomAnimation = new ZoomAnimation({
+				plot: plot,
+				duration: duration,
+				prevZoom: plot.zoom,
+				targetZoom: targetZoom,
+				prevViewport: new Viewport(plot.viewport),
+				targetViewport: targetViewport,
+				targetPx: targetPx
+			});
+		}
 		// request tiles
 		Request.zoomRequest(plot);
 		// emit zoom start
 		plot.emit(EventType.ZOOM_START, new ZoomEvent(plot, plot.zoom, plot.zoom, targetZoom));
+		// if there isn't a duration
+		if (duration === 0) {
+			// immediately update plot
+			plot.zoom = targetZoom;
+			plot.viewport = targetViewport;
+			// emit zoom end
+			plot.emit(EventType.ZOOM_END,  new ZoomEvent(plot, targetZoom, targetZoom, targetZoom));
+		}
 	}
 };
 
