@@ -82,6 +82,14 @@ const reset = function(plot) {
 	}
 };
 
+const broadcast = function(plot, type) {
+	plot.on(type, event => {
+		plot.layers.forEach(layer => {
+			layer.emit(type, event);
+		});
+	});
+};
+
 const frame = function(plot) {
 
 	// get frame timestamp
@@ -228,6 +236,14 @@ class Plot extends EventEmitter {
 
 		// frame request
 		this.frameRequest = null;
+
+		// broadcast zoom / pan events to layers
+		broadcast(this, EventType.ZOOM_START);
+		broadcast(this, EventType.ZOOM);
+		broadcast(this, EventType.ZOOM_END);
+		broadcast(this, EventType.PAN_START);
+		broadcast(this, EventType.PAN);
+		broadcast(this, EventType.PAN_END);
 
 		// being frame loop
 		frame(this);
