@@ -1,11 +1,11 @@
-<img width="600" src="https://rawgit.com/kbirk/lumo/master/logo.svg" alt="lumo" />
+<img width="600" src="https://rawgit.com/unchartedsoftware/lumo/master/logo.svg" alt="lumo" />
 
 > A high performance WebGL tile rendering library
 
 [![npm version](https://badge.fury.io/js/lumo.svg)](http://badge.fury.io/js/lumo)
 [![Bower version](https://badge.fury.io/bo/lumo.svg)](http://badge.fury.io/bo/lumo)
-[![Build Status](https://travis-ci.org/kbirk/lumo.svg?branch=master)](https://travis-ci.org/kbirk/lumo)
-[![Dependency Status](https://david-dm.org/kbirk/lumo/status.svg)](https://david-dm.org/kbirk/lumo)
+[![Build Status](https://travis-ci.org/unchartedsoftware/lumo.svg?branch=master)](https://travis-ci.org/unchartedsoftware/lumo)
+[![Dependency Status](https://david-dm.org/unchartedsoftware/lumo/status.svg)](https://david-dm.org/unchartedsoftware/lumo)
 
 ## Introduction
 
@@ -258,7 +258,3 @@ The following events are emitted by Lumo:
 - **panstart** emitted when a new pan event is handled.
 - **pan** emitted during each frame of a pan animation.
 - **panend** emitted when a pan event is complete.
-
-## Special Thanks
-
- - [Derrek Pennock](http://derrekpennock.ca/) for the logo.
