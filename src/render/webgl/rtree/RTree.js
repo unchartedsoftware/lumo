@@ -13,32 +13,32 @@ class RTree {
 	 * Instantiates a new RTree object.
 	 *
 	 * @param {Object} options - The options object.
-	 * @param {boolean} options.collisionType - The collision type of the points.
+	 * @param {boolean} options.collisionType - The collision type of the collidables.
 	 * @param {boolean} options.nodeCapacity - The node capacity of the r-tree.
 	 */
 	constructor(options) {
 		this.collisionType = defaultTo(options.collisionType, CollisionType.CIRCLE);
-		this.tree = rbush(defaultTo(options.nodeCapcity, 32));
+		this.tree = rbush(defaultTo(options.nodeCapacity, 32));
 	}
 
 	/**
-	 * Inserts an array of points into the r-tree.
+	 * Inserts an array of collidables into the r-tree.
 	 *
-	 * @param {Array} points - The array of points to insert.
+	 * @param {Array} collidables - The array of collidables to insert.
 	 */
-	insert(points) {
-		this.tree.load(points);
+	insert(collidables) {
+		this.tree.load(collidables);
 	}
 
 	/**
-	 * Removes an array of points from the r-tree.
+	 * Removes an array of collidables from the r-tree.
 	 *
-	 * @param {Array} points - The array of points to remove.
+	 * @param {Array} collidables - The array of collidables to remove.
 	 */
-	remove(points) {
+	remove(collidables) {
 		const tree = this.tree;
-		for (let i=0; i<points.length; i++) {
-			tree.remove(points[i]);
+		for (let i=0; i<collidables.length; i++) {
+			tree.remove(collidables[i]);
 		}
 	}
 

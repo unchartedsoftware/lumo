@@ -40,6 +40,8 @@ module.exports = {
 	ResizeEvent: require('./event/ResizeEvent'),
 	TileEvent: require('./event/TileEvent'),
 	ZoomEvent: require('./event/ZoomEvent'),
+	// collision
+	RTree: require('./render/webgl/rtree/RTree.js'),
 	// collision types
 	CIRCLE: CollisionType.CIRCLE,
 	RECTANGLE: CollisionType.RECTANGLE,

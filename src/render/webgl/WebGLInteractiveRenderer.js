@@ -252,7 +252,7 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 		if (!this.trees.has(coord.z)) {
 			this.trees.set(coord.z, new RTree({
 				collisionType: this.collisionType,
-				nodeCapcity: this.nodeCapacity
+				nodeCapacity: this.nodeCapacity
 			}));
 		}
 		this.trees.get(coord.z).insert(points);
