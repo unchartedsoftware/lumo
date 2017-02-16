@@ -51,7 +51,7 @@ const getCollision = function(renderer, plotPx) {
 		// no data for tile
 		return null;
 	}
-	return tree.search(sx, sy);
+	return tree.searchPoint(sx, sy);
 };
 
 const onClick = function(renderer, event) {
