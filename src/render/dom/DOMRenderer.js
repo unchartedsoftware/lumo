@@ -1,9 +1,7 @@
 'use strict';
 
 const Renderer = require('../Renderer');
-const RTree = require('../webgl/rtree/RTree');
-const CollisionType = require('../webgl/rtree/CollisionType');
-const $ = require('jquery');
+
 // Constants
 
 /**
@@ -79,45 +77,7 @@ const getRenderables = function(plot, pyramid) {
 	return renderables;
 };
 
-const resolveCollisions = function() {
-	const $dc = $('.deconfliction-collider');
-	const tree = new RTree({
-			collisionType: CollisionType.RECTANGLE,
-			nodeCapacity: 32
-		});
-
-	$dc.sort(function(a,b){
-		const sizeA = $(a).outerHeight();
-		const sizeB = $(b).outerHeight();
-		if(sizeA < sizeB) {
-			return 1
-		}else if(sizeA > sizeB) {
-			return -1;
-		}
-		return 0;
-	});
-
-	$dc.each(function(index, element){
-		const $e = $(element);
-		const position = $e.offset();
-		const w = $e.width();
-		const h = $e.height();
-		const point = {
-			'minX': position.left,
-			'maxX': position.left + w,
-			'minY': position.top,
-			'maxY': position.top + h
-		}
-
-		if(tree.searchRectangle(point.minX, point.maxX, point.minY, point.maxY) !== null) {
-			$(element).css('visibility', 'hidden');
-		} else {
-			tree.insert([point]);
-		}
-	});
-};
-
-const drawTiles = function(renderer, container, tiles, plot, pyramid, ignoreFade = false) {
+const drawTiles = function(renderer, container, tiles, plot, pyramid, layer, ignoreFade = false) {
 	let requiresDeconfliction = false;
 	const tileSize = plot.tileSize;
 	// create document fragment
@@ -160,8 +120,10 @@ const drawTiles = function(renderer, container, tiles, plot, pyramid, ignoreFade
 	// append all new tiles to the container
 	container.appendChild(fragment);
 
-	if (requiresDeconfliction) {
-		resolveCollisions();
+	if (requiresDeconfliction) {		
+		if(layer.postUpdate){
+			layer.postUpdate();
+		}
 	}
 };
 
@@ -385,6 +347,7 @@ class DOMRenderer extends Renderer {
 			this.tiles,
 			this.layer.plot,
 			this.layer.pyramid,
+			this.layer,
 			ignoreFade);
 		return this;
 	}
