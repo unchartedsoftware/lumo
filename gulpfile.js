@@ -91,18 +91,17 @@ gulp.task('build-js',[ 'lint', 'clean' ], () => {
 gulp.task('build',[ 'build-js', 'build-min-js' ], () => {
 });
 
-gulp.task('test', () => {
+gulp.task('coverage', () => {
 	return gulp.src(paths.source)
-		.pipe(istanbul({
-			includeUntested: true
-		}))
-		.pipe(istanbul.hookRequire())
-		.on('finish', () => {
-			return gulp.src(paths.test)
-				.pipe(mocha({ reporter: 'list' })
-					.on('error', handleErrorTimeout))
-				.pipe(istanbul.writeReports());
-		});
+		.pipe(istanbul({ includeUntested: true }))
+		.pipe(istanbul.hookRequire());
+});
+
+gulp.task('test', [ 'coverage' ], () => {
+	return gulp.src(paths.test)
+		.pipe(mocha({ reporter: 'list' })
+			.on('error', handleErrorTimeout))
+		.pipe(istanbul.writeReports());
 });
 
 gulp.task('default', [ 'build' ], () => {
