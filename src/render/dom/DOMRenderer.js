@@ -118,10 +118,12 @@ const drawTiles = function(renderer, container, tiles, plot, pyramid, ignoreFade
 			});
 		}
 	});
-	// append all new tiles to the container
-	container.appendChild(fragment);
-	// emit a postdraw event
-	renderer.emit(EventType.POST_DRAW, new DrawEvent(renderables, null));
+	if (fragment.children.length > 0) {
+		// append all new tiles to the container
+		container.appendChild(fragment);
+		// emit a postdraw event
+		renderer.emit(EventType.POST_DRAW, new DrawEvent(renderables, null));
+	}
 };
 
 const eraseTiles = function(renderer, container, tiles, plot) {
