@@ -243,8 +243,10 @@ class DOMRenderer extends Renderer {
 
 		if (tiles.size > 0 && stale.size === tiles.size) {
 			// all tiles are stale, remove them all
-			clearTimeout(this.eraseTimeout);
-			this.eraseTimeout = null;
+			if (this.eraseTimeout) {
+				clearTimeout(this.eraseTimeout);
+				this.eraseTimeout = null;
+			}
 			tiles.clear();
 			container.innerHTML = '';
 		} else {
@@ -352,6 +354,7 @@ class DOMRenderer extends Renderer {
 			this.tiles,
 			this.layer.plot,
 			this.layer.pyramid,
+			this.layer,
 			ignoreFade);
 		return this;
 	}
