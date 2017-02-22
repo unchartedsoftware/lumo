@@ -43,14 +43,14 @@ class RTree {
 	}
 
 	/**
-	 * Searchs the r-tree.
+	 * Searchs the r-tree using a point.
 	 *
 	 * @param {Number} x - The x component.
 	 * @param {Number} y - The y component.
 	 *
 	 * @returns {Object} The collision object.
 	 */
-	search(x, y) {
+	searchPoint(x, y) {
 		const collisions = this.tree.search({
 			minX: x,
 			maxX: x,
@@ -64,15 +64,75 @@ class RTree {
 			// rectangle, return result as is
 			return collisions[0];
 		}
-		// do a circle check
+		// do a circle - point check
 		for (let i=0; i<collisions.length; i++) {
 			const collision = collisions[i];
-			// assume the boxes are squares
-			const radius = (collision.maxX - collision.minX) / 2;
 			// distance to center of square
-			const dx = ((collision.minX + collision.maxX) * 0.5) - x;
-			const dy = ((collision.minY + collision.maxY) * 0.5) - y;
+			const cx = (collision.minX + collision.maxX) * 0.5;
+			const cy = (collision.minY + collision.maxY) * 0.5;
+			const dx = cx - x;
+			const dy = cy - y;
+			// assume the boxes are squares
+			const radius = cx;
 			if ((dx * dx + dy * dy) <= (radius * radius)) {
+				return collision;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Searchs the r-tree using a rectangle.
+	 *
+	 * @param {Number} minX - The minimum x component.
+	 * @param {Number} maxX - The maximum x component.
+	 * @param {Number} minY - The minimum x component.
+	 * @param {Number} maxY - The maximum x component.
+	 * @param {Number} y - The y component.
+	 *
+	 * @returns {Object} The collision object.
+	 */
+	searchRectangle(minX, maxX, minY, maxY) {
+		const collisions = this.tree.search({
+			minX: minX,
+			maxX: maxX,
+			minY: minY,
+			maxY: maxY
+		});
+		if (collisions.length === 0) {
+			return null;
+		}
+		if (this.collisionType === CollisionType.RECTANGLE) {
+			// rectangle, return result as is
+			return collisions[0];
+		}
+
+		// get rect half width / height
+		const halfWidth = (minX + maxX) * 0.5;
+		const halfHeight = (minY + maxY) * 0.5;
+
+		// do a circle - rectangle check
+		for (let i=0; i<collisions.length; i++) {
+			const collision = collisions[i];
+			// circle position
+			const circleX = (collision.minX + collision.maxX) * 0.5;
+			const circleY = (collision.minY + collision.maxY) * 0.5;
+			// distance from rectangle bottom-left
+			const dx = Math.abs(circleX - minX);
+			const dy = Math.abs(circleY - minY);
+			// assume the boxes are squares
+			const radius = collision.minX + collision.maxX;
+			if ((dx > (halfWidth + radius)) ||
+				(dy > (halfHeight + radius))) {
+				return false;
+			}
+			if ((dx <= (halfWidth)) || (dy <= (halfHeight))) {
+				return collision;
+			}
+			const cornerDist =
+				Math.pow(2, dx - halfWidth) +
+				Math.pow(2, dy - halfHeight);
+			if (cornerDist <= (radius * radius)) {
 				return collision;
 			}
 		}
