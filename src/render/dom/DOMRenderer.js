@@ -1,5 +1,7 @@
 'use strict';
 
+const DrawEvent = require('../../event/DrawEvent');
+const EventType = require('../../event/EventType');
 const Renderer = require('../Renderer');
 
 // Constants
@@ -82,7 +84,8 @@ const drawTiles = function(renderer, container, tiles, plot, pyramid, ignoreFade
 	// create document fragment
 	const fragment = document.createDocumentFragment();
 	// add new tiles to the DOM
-	getRenderables(plot, pyramid).forEach((renderable, hash) => {
+	const renderables = getRenderables(plot, pyramid);
+	renderables.forEach((renderable, hash) => {
 		if (!tiles.has(hash)) {
 			const coord = renderable.coord;
 			// create tile element
@@ -117,6 +120,17 @@ const drawTiles = function(renderer, container, tiles, plot, pyramid, ignoreFade
 	});
 	// append all new tiles to the container
 	container.appendChild(fragment);
+	// emit a postdraw event
+	renderer.emit(EventType.POST_DRAW, new DrawEvent(renderables, null));
+};
+
+const eraseTiles = function(renderer, container, tiles, plot) {
+	// remove any stale tiles from DOM
+	const stale = getStaleCoords(plot, tiles);
+	stale.forEach((tile, hash) => {
+		tiles.delete(hash);
+		container.removeChild(tile.elem);
+	});
 };
 
 /**
@@ -229,10 +243,8 @@ class DOMRenderer extends Renderer {
 
 		if (tiles.size > 0 && stale.size === tiles.size) {
 			// all tiles are stale, remove them all
-			if (this.eraseTimeout) {
-				clearTimeout(this.eraseTimeout);
-				this.eraseTimeout = null;
-			}
+			clearTimeout(this.eraseTimeout);
+			this.eraseTimeout = null;
 			tiles.clear();
 			container.innerHTML = '';
 		} else {
@@ -242,10 +254,11 @@ class DOMRenderer extends Renderer {
 					// clear timeout
 					this.eraseTimeout = null;
 					// remove any stale tiles from DOM
-					getStaleCoords(plot, tiles).forEach((tile, hash) => {
-						tiles.delete(hash);
-						container.removeChild(tile.elem);
-					});
+					eraseTiles(
+						this,
+						this.container,
+						this.tiles,
+						this.layer.plot);
 				}, ERASE_DEBOUNCE_MS);
 			}
 		}

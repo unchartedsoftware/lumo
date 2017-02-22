@@ -30,10 +30,12 @@ module.exports = {
 	TILE_ADD: EventType.TILE_ADD,
 	TILE_DISCARD: EventType.TILE_DISCARD,
 	TILE_REMOVE: EventType.TILE_REMOVE,
+	POST_DRAW: EventType.POST_DRAW,
 	// event
 	Event: require('./event/Event'),
 	EventType: require('./event/EventType'),
 	ClickEvent: require('./event/ClickEvent'),
+	DrawEvent: require('./event/DrawEvent'),
 	FrameEvent: require('./event/FrameEvent'),
 	MouseEvent: require('./event/MouseEvent'),
 	PanEvent: require('./event/PanEvent'),
