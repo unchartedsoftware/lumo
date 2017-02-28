@@ -33,6 +33,7 @@
     "gulp-istanbul": "1.1.1",
     "gulp-mocha": "3.0.1",
     "gulp-uglify": "2.0.1",
+    "sinon": "1.17.7",
     "vinyl-buffer": "1.0.0",
     "vinyl-source-stream": "1.1.0"
   },

@@ -14,6 +14,22 @@ describe('Coord', () => {
 		});
 	});
 
+	describe('#xyz()', () => {
+		it('should return the portion of a URL for the XYZ tile specification', () => {
+			assert(new Coord(0, 0, 0).xyz() === '0/0/0');
+			assert(new Coord(1, 1, 1).xyz() === '1/1/0');
+			assert(new Coord(4, 5, 6).xyz() === '4/5/9');
+		});
+	});
+
+	describe('#tms()', () => {
+		it('should return the portion of a URL for the XYZ tile specification', () => {
+			assert(new Coord(0, 0, 0).tms() === '0/0/0');
+			assert(new Coord(1, 1, 1).tms() === '1/1/1');
+			assert(new Coord(4, 5, 6).tms() === '4/5/6');
+		});
+	});
+
 	describe('#equals()', () => {
 		it('should return true if the provided Coord is equal', () => {
 			assert(new Coord(0, 0, 0).equals(new Coord(0, 0, 0)));

@@ -126,7 +126,8 @@ const sortAroundCenter = function(plot, coords) {
 const removeDuplicates = function(coords) {
 	const seen = new Map();
 	return coords.filter(function(coord) {
-		return seen.has(coord.hash) ? false : (seen.set(coord.hash, true));
+		const ncoord = coord.normalize();
+		return seen.has(ncoord.hash) ? false : (seen.set(ncoord.hash, true));
 	});
 };
 
@@ -245,10 +246,7 @@ class TilePyramid {
 		// check for closest ancestor
 		for (let i=0; i<levels.length; i++) {
 			const level = levels[i];
-			const ancestor = coord.getAncestor(coord.z - level);
-			if (this.has(ancestor)) {
-				return ancestor;
-			}
+			return coord.getAncestor(coord.z - level);
 		}
 		return undefined;
 	}

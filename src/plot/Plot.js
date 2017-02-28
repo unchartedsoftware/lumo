@@ -60,7 +60,6 @@ const reset = function(plot) {
 	}
 	// resets the position of the viewport relative to the layer such that
 	// the layer native coordinate range is within the viewports bounds.
-	// NOTE: This does not have any observable effect.
 	const scale = Math.pow(2, plot.zoom);
 	const layerWidth = scale * plot.tileSize;
 	const layerSpans = Math.ceil(plot.viewport.width / layerWidth);

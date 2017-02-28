@@ -80,7 +80,16 @@ class Layer extends EventEmitter {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	setRenderer(renderer) {
+		if (!renderer) {
+			throw 'No renderer argument provided';
+		}
+		if (this.renderer && this.plot) {
+			this.renderer.onRemove(this);
+		}
 		this.renderer = renderer;
+		if (this.plot) {
+			this.renderer.onAdd(this);
+		}
 		return this;
 	}
 
@@ -92,6 +101,9 @@ class Layer extends EventEmitter {
 	removeRenderer() {
 		if (!this.renderer) {
 			throw 'No renderer is currently attached to the layer';
+		}
+		if (this.plot) {
+			this.renderer.onRemove(this);
 		}
 		this.renderer = null;
 		return this;
