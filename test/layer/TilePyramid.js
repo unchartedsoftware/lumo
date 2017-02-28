@@ -157,8 +157,12 @@ describe('TilePyramid', () => {
 		it('should return `undefined` if there is no ancestor for the the coord in the pyramid', () => {
 			const coordA = new Coord(0, 0, 0);
 			const coordB = new Coord(pyramid.persistentLevels + 1, 0, 0);
+			const coordC = new Coord(2, 3, 3);
+			const coordD = new Coord(1, 0, 0);
+			pyramid.requestTiles([ coordC ]);
 			assert(pyramid.getClosestAncestor(coordA) === undefined);
 			assert(pyramid.getClosestAncestor(coordB) === undefined);
+			assert(pyramid.getClosestAncestor(coordD) === undefined);
 		});
 	});
 

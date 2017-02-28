@@ -246,7 +246,10 @@ class TilePyramid {
 		// check for closest ancestor
 		for (let i=0; i<levels.length; i++) {
 			const level = levels[i];
-			return coord.getAncestor(coord.z - level);
+			const ancestor = coord.getAncestor(coord.z - level);
+			if (this.has(ancestor)) {
+				return ancestor;
+			}
 		}
 		return undefined;
 	}
