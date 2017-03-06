@@ -221,14 +221,16 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 		this.points = new Map();
 		// create handlers
 		this.handlers.set(CLICK, event => {
-			if (this.layer.isVisible()) {
-				onClick(this, event);
+			if (this.layer.isHidden()) {
+				return;
 			}
+			onClick(this, event);
 		});
 		this.handlers.set(MOUSE_MOVE, event => {
-			if (this.layer.isVisible()) {
-				onMouseMove(this, event);
+			if (this.layer.isHidden()) {
+				return;
 			}
+			onMouseMove(this, event);
 		});
 		this.handlers.set(ZOOM_START, () => {
 			this.selected = [];
