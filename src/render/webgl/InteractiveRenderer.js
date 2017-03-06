@@ -303,18 +303,19 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 			this.color);
 
 		// render selected
-		if (this.selected) {
+		this.selected.forEach(selected => {
 			renderPoint(
 				this.point,
 				shader,
 				plot,
-				this.selected,
+				selected,
 				this.color,
 				SELECTED_RADIUS_OFFSET);
-		}
+		});
 
 		// render highlighted
-		if (this.highlighted && this.highlighted !== this.selected) {
+		if (this.highlighted &&
+			this.selected.indexOf(this.highlighted) === -1) {
 			renderPoint(
 				this.point,
 				shader,

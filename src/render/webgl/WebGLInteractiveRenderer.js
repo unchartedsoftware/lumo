@@ -1,6 +1,7 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
+const Keyboard = require('../../core/Keyboard');
 const EventType = require('../../event/EventType');
 const ClickEvent = require('../../event/ClickEvent');
 const MouseEvent = require('../../event/MouseEvent');
@@ -55,19 +56,39 @@ const getCollision = function(renderer, plotPx) {
 };
 
 const onClick = function(renderer, event) {
+	const multiSelect = Keyboard.poll('ctrl') || Keyboard.poll('meta');
 	const collision = getCollision(renderer, event.plotPx);
 	if (collision) {
-		// flag as selected
-		renderer.selected = collision;
+		// add to collection if multi-selection is enabled
+		if (multiSelect) {
+			// add to collection if multi-selection is enabled
+			const index = renderer.selected.indexOf(collision);
+			if (index === -1) {
+				// select point
+				renderer.selected.push(collision);
+			} else {
+				// remove point if already selected
+				renderer.selected.splice(index, 1);
+			}
+		} else {
+			// clear selection, adding only the latest entry
+			renderer.selected = [ collision ];
+		}
+		// emit click event
 		renderer.emit(EventType.CLICK, new ClickEvent(
 			renderer.layer,
 			event.viewPx,
 			event.plotPx,
 			event.button,
-			collision));
+			renderer.selected.length > 1 ? renderer.selected : collision));
 	} else {
+		if (multiSelect) {
+			// if multi-select is held, don't clear selection, it implies user
+			// may have misclicked
+			return;
+		}
 		// flag as unselected
-		renderer.selected = null;
+		renderer.selected = [];
 	}
 };
 
@@ -166,7 +187,7 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 		this.trees = null;
 		this.points = null;
 		this.highlighted = null;
-		this.selected = null;
+		this.selected = [];
 		this.collisionType = defaultTo(options.collisionType, CollisionType.CIRCLE);
 		this.nodeCapacity = defaultTo(options.nodeCapacity, 32);
 	}
@@ -180,7 +201,7 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 		super.clear();
 		// clear selected / highlighted
 		this.highlighted = null;
-		this.selected = null;
+		this.selected = [];
 		// reset the cursor
 		resetCursor(this);
 		return this;
@@ -206,7 +227,7 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 			onMouseMove(this, event);
 		});
 		this.handlers.set(ZOOM_START, () => {
-			this.selected = null;
+			this.selected = [];
 			this.highlighted = null;
 		});
 		// attach handlers
@@ -231,9 +252,12 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 		// destroy handlers
 		this.handlers.delete(CLICK);
 		this.handlers.delete(MOUSE_MOVE);
+		this.handlers.delete(ZOOM_START);
 		// destroy rtree and point maps
 		this.trees = null;
 		this.points = null;
+		this.selected = [];
+		this.highlighted = null;
 		// clear selected / highlighted
 		this.clear();
 		super.onRemove(layer);
