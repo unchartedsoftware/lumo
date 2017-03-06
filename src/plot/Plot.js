@@ -131,6 +131,11 @@ const frame = function(plot) {
 		layer.draw(timestamp);
 	});
 
+	// render each overlay
+	plot.overlays.forEach(overlays => {
+		overlays.draw(timestamp);
+	});
+
 	// request next frame
 	plot.frameRequest = requestAnimationFrame(() => {
 		frame(plot);
@@ -233,6 +238,9 @@ class Plot extends EventEmitter {
 		// layers
 		this.layers = [];
 
+		// overlays
+		this.overlay = [];
+
 		// frame request
 		this.frameRequest = null;
 
@@ -312,6 +320,45 @@ class Plot extends EventEmitter {
 		}
 		this.layers.splice(index, 1);
 		layer.onRemove(this);
+		return this;
+	}
+
+	/**
+	 * Adds an overlay to the plot.
+	 *
+	 * @param {Overlay} overlay - The overlay to add to the plot.
+	 *
+	 * @returns {Plot} The plot object, for chaining.
+	 */
+	addOverlay(overlay) {
+		if (!overlay) {
+			throw 'No overlay argument provided';
+		}
+		if (this.overlays.indexOf(overlay) !== -1) {
+			throw 'Provided overlay is already attached to the plot';
+		}
+		this.overlays.push(overlay);
+		overlay.onAdd(this);
+		return this;
+	}
+
+	/**
+	 * Removes an overlay from the plot.
+	 *
+	 * @param {Overlay} overlay - The overlay to remove from the plot.
+	 *
+	 * @returns {Plot} The plot object, for chaining.
+	 */
+	removeOverlay(overlay) {
+		if (!overlay) {
+			throw 'No overlay argument provided';
+		}
+		const index = this.overlays.indexOf(overlay);
+		if (index === -1) {
+			throw 'Provided overlay is not attached to the plot';
+		}
+		this.overlays.splice(index, 1);
+		overlay.onRemove(this);
 		return this;
 	}
 
