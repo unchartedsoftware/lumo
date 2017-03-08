@@ -239,7 +239,7 @@ class Plot extends EventEmitter {
 		this.layers = [];
 
 		// overlays
-		this.overlay = [];
+		this.overlays = [];
 
 		// frame request
 		this.frameRequest = null;
