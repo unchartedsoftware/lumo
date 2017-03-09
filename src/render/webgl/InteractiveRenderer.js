@@ -79,8 +79,7 @@ const createPoint = function(gl) {
 		{
 			0: {
 				size: 2,
-				type: 'FLOAT',
-				byteOffset: 0
+				type: 'FLOAT'
 			}
 		},
 		{
