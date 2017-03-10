@@ -65,6 +65,7 @@ class PointRenderer extends WebGLVertexRenderer {
 		super(options);
 		this.shader = null;
 		this.atlas = null;
+		this.ext = null;
 		this.color = defaultTo(options.color, [ 1.0, 0.4, 0.1, 0.8 ]);
 	}
 

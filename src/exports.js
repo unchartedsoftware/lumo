@@ -55,6 +55,7 @@ module.exports = {
 	Overlay: require('./overlay/Overlay'),
 	WebGLOverlay: require('./overlay/webgl/WebGLOverlay'),
 	WebGLLineOverlay: require('./overlay/webgl/WebGLLineOverlay'),
+	WebGLPointOverlay: require('./overlay/webgl/WebGLPointOverlay'),
 	// render
 	Renderer: require('./render/Renderer'),
 	// dom
