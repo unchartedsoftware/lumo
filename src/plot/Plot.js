@@ -14,6 +14,15 @@ const MouseHandler = require('./handler/MouseHandler');
 const PanHandler = require('./handler/PanHandler');
 const ZoomHandler = require('./handler/ZoomHandler');
 
+// Constants
+
+/**
+ * The maximum zoom level supported.
+ * @private
+ * @constant {Number}
+ */
+const MAX_ZOOM = 24;
+
 // Private Methods
 
 const resize = function(plot) {
@@ -180,9 +189,8 @@ class Plot extends EventEmitter {
 		this.container.appendChild(this.canvas);
 
 		// get WebGL context
-		try {
-			this.gl = this.canvas.getContext('webgl', options);
-		} catch(err) {
+		this.gl = this.canvas.getContext('webgl', options);
+		if (!this.gl) {
 			throw 'Unable to create a WebGLRenderingContext, please ensure your browser supports WebGL';
 		}
 
@@ -206,7 +214,7 @@ class Plot extends EventEmitter {
 
 		// min and max zoom of the plot
 		this.minZoom = defaultTo(options.minZoom, 0);
-		this.maxZoom = defaultTo(options.maxZoom, 30);
+		this.maxZoom = defaultTo(options.maxZoom, MAX_ZOOM);
 
 		// current zoom of the plot
 		this.zoom = defaultTo(options.zoom, 0);
