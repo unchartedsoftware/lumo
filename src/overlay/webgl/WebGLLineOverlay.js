@@ -17,14 +17,14 @@ const SHADER_GLSL = {
 		`
 		precision highp float;
 		attribute vec2 aPosition;
-		attribute vec2 aNormal;
+		//attribute vec2 aNormal;
 		uniform vec2 uViewOffset;
-		uniform float uLineWidth;
+		//uniform float uLineWidth;
 		uniform float uExtent;
-		uniform float uPixelRatio;
+		//uniform float uPixelRatio;
 		uniform mat4 uProjectionMatrix;
 		void main() {
-			vec2 wPosition = (aPosition * uExtent) + (aNormal * uLineWidth * uPixelRatio) + uViewOffset;
+			vec2 wPosition = (aPosition * uExtent) + uViewOffset;
 			gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
 		}
 		`,
@@ -38,31 +38,337 @@ const SHADER_GLSL = {
 		`
 };
 
+// http://labs.hyperandroid.com/efficient-webgl-stroking
+
+const EPSILON = 0.0001;
+
+const scalarMult = function(a, s) {
+	return [
+		a[0] * s,
+		a[1] * s
+	];
+};
+
+const perpendicular = function(a) {
+	return [
+		-a[1],
+		a[0]
+	];
+};
+
+const invert = function(a) {
+	return [
+		-a[0],
+		-a[1]
+	];
+};
+
+const length = function(a) {
+	return Math.sqrt(a[0] * a[0] + a[1] * a[1]);
+};
+
+const normalize = function(a) {
+	const mod = Math.sqrt(a[0] * a[0] + a[1] * a[1]);
+	return [
+		a[0] / mod,
+		a[1] / mod
+	];
+};
+
+// const angle = function(a) {
+// 	return a[1] / a[0];
+// };
+//
+// const angleBetween = function(p0, p1) {
+// 	return Math.atan2(p1[0]-p0[0], p1[1]-p0[1]) ;
+// };
+
+const add = function(p0, p1) {
+	return [
+		p0[0] + p1[0],
+		p0[1] + p1[1]
+	];
+};
+
+const sub = function(p0, p1) {
+	return [
+		p0[0] - p1[0],
+		p0[1] - p1[1]
+	];
+};
+
+const middle = function(p0, p1) {
+	return scalarMult(add(p0, p1), 0.5);
+};
+
+const equal = function(p0, p1) {
+	return p0[0] === p1[0] && p0[1] === p1[1];
+};
+
+const signedArea = function(p0, p1, p2) {
+	return (p1[0] - p0[0]) * (p2[1] - p0[1]) - (p2[0] - p0[0]) * (p1[1] - p0[1]);
+};
+
+const getStrokeGeometry = function(points, strokeWidth = 0.01) {
+	if (points.length < 2) {
+		return;
+	}
+
+	const lineWidth = strokeWidth / 2;
+	const vertices = [];
+	const middlePoints = [];  // middle points per each line segment.
+	let closed = false;
+
+	if (points.length === 2) {
+		createTriangles(
+			points[0],
+			middle(points[0], points[1]),
+			points[1],
+			vertices,
+			lineWidth);
+	} else {
+
+		// if (equal(points[0], points[points.length - 1])) {
+		// 	const p0 = middle(points.shift(), points[0]);
+		// 	points.unshift(p0);
+		// 	points.push(p0);
+		// 	closed = true;
+		// }
+
+		for (let i=0; i<points.length-1; i++) {
+			if (i === 0) {
+				middlePoints.push(points[0]);
+			} else if (i === points.length - 2) {
+				middlePoints.push(points[points.length - 1]);
+			} else {
+				middlePoints.push(middle(points[i], points[i + 1]));
+			}
+		}
+
+		for (let i=1; i<middlePoints.length; i++) {
+			createTriangles(
+				middlePoints[i - 1],
+				points[i],
+				middlePoints[i],
+				vertices,
+				lineWidth);
+		}
+	}
+
+	if (!closed) {
+		const p00 = vertices[0];
+		const p01 = vertices[1];
+		const p02 = points[1];
+		const p10 = vertices[vertices.length - 1];
+		const p11 = vertices[vertices.length - 3];
+		const p12 = points[points.length - 2];
+		createRoundCap(points[0], p00, p01, p02, vertices);
+		createRoundCap(points[points.length - 1], p10, p11, p12, vertices);
+	}
+
+	return vertices;
+};
+
+const createRoundCap = function(center, _p0, _p1, nextPointInLine, verts) {
+
+	const radius = length(sub(center, _p0));
+	let angle0 = Math.atan2((_p1[1] - center[1]), (_p1[0] - center[0]));
+	let angle1 = Math.atan2((_p0[1] - center[1]), (_p0[0] - center[0]));
+
+	const orgAngle0 = angle0;
+
+	if (angle1 > angle0) {
+		if (angle1 - angle0 >= Math.P - EPSILON) {
+			angle1 = angle1 - (2 * Math.PI);
+		}
+	}
+	else {
+		if (angle0 - angle1 >= Math.PI - EPSILON) {
+			angle0 = angle0 - (2 * Math.PI);
+		}
+	}
+
+	let angleDiff = angle1 - angle0;
+
+	if (Math.abs(angleDiff) >= Math.PI - EPSILON &&
+		Math.abs(angleDiff) <= Math.PI + EPSILON) {
+		const r1 = sub(center, nextPointInLine);
+		if (r1[0] === 0) {
+			if (r1[1] > 0) {
+				angleDiff = -angleDiff;
+			}
+		} else if (r1[0] >= -EPSILON) {
+			angleDiff = -angleDiff;
+		}
+	}
+
+	let nsegments = (Math.abs(angleDiff * radius) / 7) >> 0;
+	nsegments++;
+
+	const angleInc = angleDiff / nsegments;
+
+	for (let i = 0; i < nsegments; i++) {
+		verts.push([ center[0], center[1] ]);
+		verts.push([
+			center[0] + radius * Math.cos(orgAngle0 + angleInc * i),
+			center[1] + radius * Math.sin(orgAngle0 + angleInc * i)
+		]);
+		verts.push([
+			center[0] + radius * Math.cos(orgAngle0 + angleInc * (1 + i)),
+			center[1] + radius * Math.sin(orgAngle0 + angleInc * (1 + i))
+		]);
+	}
+};
+
+function lineIntersection(p0, p1, p2, p3) {
+
+	const a0 = p1[1] - p0[1];
+	const b0 = p0[0] - p1[0];
+
+	const a1 = p3[1] - p2[1];
+	const b1 = p2[0] - p3[0];
+
+	const det = a0 * b1 - a1 * b0;
+	if (det > -EPSILON && det < EPSILON) {
+		return null;
+	}
+	const c0 = a0 * p0[0] + b0 * p0[1];
+	const c1 = a1 * p2[0] + b1 * p2[1];
+
+	const x = (b1 * c0 - b0 * c1) / det;
+	const y = (a0 * c1 - a1 * c0) / det;
+	return [ x, y ];
+}
+
+function createTriangles(p0, p1, p2, verts, width) {
+	let t0 = sub(p1, p0);
+	let t2 = sub(p2, p1);
+
+	t0 = perpendicular(t0);
+	t2 = perpendicular(t2);
+
+	// triangle composed by the 3 points if clockwise or counter-clockwise.
+	// if counter-clockwise, we must invert the line threshold points, otherwise
+	// the intersection point could be erroneous and lead to odd results.
+	if (signedArea(p0, p1, p2) > 0) {
+		t0 = invert(t0);
+		t2 = invert(t2);
+	}
+
+	t0 = normalize(t0);
+	t2 = normalize(t2);
+	t0 = scalarMult(t0, width);
+	t2 = scalarMult(t2, width);
+
+	const pintersect = lineIntersection(
+		add(t0, p0),
+		add(t0, p1),
+		add(t2, p2),
+		add(t2, p1));
+
+	let anchor = null;
+	let anchorLength = Number.MAX_VALUE;
+	if (pintersect) {
+		anchor = sub(pintersect, p1);
+		anchorLength = length(anchor);
+	}
+	const p0p1 = sub(p0, p1);
+	const p0p1Length = length(p0p1);
+	const p1p2 = sub(p1, p2);
+	const p1p2Length = length(p1p2);
+
+	// the cross point exceeds any of the segments dimension.
+	// do not use cross point as reference.
+	if (anchorLength > p0p1Length || anchorLength > p1p2Length) {
+
+		verts.push(add(p0, t0));
+		verts.push(sub(p0, t0));
+		verts.push(add(p1, t0));
+
+		verts.push(sub(p0, t0));
+		verts.push(add(p1, t0));
+		verts.push(sub(p1, t0));
+
+		createRoundCap(p1, add(p1,t0), add(p1,t2), p2, verts);
+
+		verts.push(add(p2, t2));
+		verts.push(sub(p1, t2));
+		verts.push(add(p1, t2));
+
+		verts.push(add(p2, t2));
+		verts.push(sub(p1, t2));
+		verts.push(sub(p2, t2));
+
+	} else {
+
+		verts.push(add(p0, t0));
+		verts.push(sub(p0, t0));
+		verts.push(sub(p1, anchor));
+
+		verts.push(add(p0, t0));
+		verts.push(sub(p1, anchor));
+		verts.push(add(p1, t0));
+
+		const _p0 = add(p1, t0);
+		const _p1 = add(p1, t2);
+		const _p2 = sub(p1, anchor);
+
+		const center = p1;
+
+		verts.push(_p0);
+		verts.push(center);
+		verts.push(_p2);
+
+		createRoundCap(center, _p0, _p1, _p2, verts);
+
+		verts.push(center);
+		verts.push(_p1);
+		verts.push(_p2);
+
+		verts.push(add(p2, t2));
+		verts.push(sub(p1, anchor));
+		verts.push(add(p1, t2));
+
+		verts.push(add(p2, t2));
+		verts.push(sub(p1, anchor));
+		verts.push(sub(p2, t2));
+	}
+}
+
 const bufferPolyLine = function(points) {
-	const normals = polylineNormals(points);
-	const buffer = new Float32Array(points.length * 8);
+	// const normals = polylineNormals(points);
+	// const buffer = new Float32Array(points.length * 8);
+	// for (let i=0; i<points.length; i++) {
+	// 	const point = points[i];
+	// 	const normal = normals[i][0];
+	// 	const magnitude = normals[i][1];
+	// 	// left position
+	// 	buffer[i*8] = point[0];
+	// 	buffer[i*8+1] = point[1];
+	// 	// left normal
+	// 	buffer[i*8+2] = normal[0] * magnitude;
+	// 	buffer[i*8+3] = normal[1] * magnitude;
+	// 	// right position
+	// 	buffer[i*8+4] = point[0];
+	// 	buffer[i*8+5] = point[1];
+	// 	// right normal
+	// 	buffer[i*8+6] = -normal[0] * magnitude;
+	// 	buffer[i*8+7] = -normal[1] * magnitude;
+	// }
+	// return buffer;
+	const buffer = new Float32Array(points.length * 2);
 	for (let i=0; i<points.length; i++) {
 		const point = points[i];
-		const normal = normals[i][0];
-		const magnitude = normals[i][1];
-		// left position
-		buffer[i*8] = point[0];
-		buffer[i*8+1] = point[1];
-		// left normal
-		buffer[i*8+2] = normal[0] * magnitude;
-		buffer[i*8+3] = normal[1] * magnitude;
-		// right position
-		buffer[i*8+4] = point[0];
-		buffer[i*8+5] = point[1];
-		// right normal
-		buffer[i*8+6] = -normal[0] * magnitude;
-		buffer[i*8+7] = -normal[1] * magnitude;
+		buffer[i*2] = point[0];
+		buffer[i*2+1] = point[1];
 	}
 	return buffer;
 };
 
 const createVertexBuffer = function(gl, points) {
-	const data = bufferPolyLine(points);
+	const geometry = getStrokeGeometry(points);
+	console.log(geometry);
+	const data = bufferPolyLine(geometry);
 	return new VertexBuffer(
 		gl,
 		data,
@@ -72,15 +378,15 @@ const createVertexBuffer = function(gl, points) {
 				type: 'FLOAT',
 				byteOffset: 0
 			},
-			1: {
-				size: 2,
-				type: 'FLOAT',
-				byteOffset: 2 * 4
-			}
+			// 1: {
+			// 	size: 2,
+			// 	type: 'FLOAT',
+			// 	byteOffset: 2 * 4
+			// }
 		},
 		{
-			mode: 'TRIANGLE_STRIP',
-			count: points.length * 2
+			mode: 'TRIANGLES',
+			count: geometry.length // 3
 		});
 };
 
@@ -202,9 +508,9 @@ class WebGLLineOverlay extends WebGLOverlay {
 		shader.setUniform('uProjectionMatrix', proj);
 		shader.setUniform('uViewOffset', offset);
 		shader.setUniform('uLineColor', this.lineColor);
-		shader.setUniform('uLineWidth', this.lineWidth / 2);
+		//shader.setUniform('uLineWidth', this.lineWidth / 2);
 		shader.setUniform('uExtent', extent);
-		shader.setUniform('uPixelRatio', plot.pixelRatio);
+		//shader.setUniform('uPixelRatio', plot.pixelRatio);
 
 		// for each polyline buffer
 		buffers.forEach(buffer => {
