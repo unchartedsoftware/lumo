@@ -174,7 +174,16 @@ class TilePyramid {
 	 */
 	clear() {
 		// any pending tiles are now flagged as stale
-		this.stale = this.pending;
+		this.pending.forEach((pending, hash) => {
+			// increment count of stale tiles for the hash, can't simply flag as
+			// a bool since multiple requests / refreshes in succession can
+			// cause multiple incoming stale tiles for the same hash
+			if (this.stale.has(hash)) {
+				this.stale.set(hash, this.stale.get(hash) + 1);
+			} else {
+				this.stale.set(hash, 1);
+			}
+		});
 		this.pending = new Map(); // fresh map
 		// clear persistent tiles
 		this.persistents.forEach(tile => {
@@ -266,7 +275,13 @@ class TilePyramid {
 		// check if it is flagged as stale
 		const ncoord = coord.normalize();
 		if (this.stale.has(ncoord.hash)) {
-			this.stale.delete(ncoord.hash);
+			// decrement stale count, remove if 0
+			const count = this.stale.get(ncoord.hash);
+			if (count === 1) {
+				this.stale.delete(ncoord.hash);
+			} else {
+				this.stale.set(ncoord.hash, count - 1);
+			}
 			return true;
 		}
 		const plot = this.layer.plot;

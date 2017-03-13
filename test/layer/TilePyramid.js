@@ -118,6 +118,30 @@ describe('TilePyramid', () => {
 			};
 			pyramid.requestTiles([ coordA, coordB ]);
 		});
+		it('should handle multiple stale requests for the same tile', done => {
+			const coord = new Coord(0, 0, 0);
+			const hash = coord.normalize().hash;
+			let count = 0;
+			layer.requestTile = (_, callback) => {
+				setTimeout(() => {
+					count++;
+					callback(null, {});
+					if (count === 3) {
+						assert(!pyramid.isStale(coord));
+						done();
+					}
+				}, 100);
+			};
+			pyramid.requestTiles([ coord ]);
+			pyramid.clear();
+			assert(pyramid.stale.get(hash) === 1);
+			pyramid.requestTiles([ coord ]);
+			pyramid.clear();
+			assert(pyramid.stale.get(hash) === 2);
+			pyramid.requestTiles([ coord ]);
+			pyramid.clear();
+			assert(pyramid.stale.get(hash) === 3);
+		});
 	});
 
 	describe('#isStale()', () => {
