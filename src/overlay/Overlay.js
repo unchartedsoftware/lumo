@@ -1,5 +1,6 @@
 'use strict';
 
+const defaultTo = require('lodash/defaultTo');
 const EventEmitter = require('events');
 
 /**
@@ -10,8 +11,9 @@ class Overlay extends EventEmitter {
 	/**
 	 * Instantiates a new DOMOverlay object.
 	 */
-	constructor() {
+	constructor(options = {}) {
 		super();
+		this.opacity = defaultTo(options.opacity, 1.0);
 		this.plot = null;
 	}
 
