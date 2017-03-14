@@ -1,6 +1,6 @@
 'use strict';
 
-const polylineNormals = require('polyline-normals');
+//const polylineNormals = require('polyline-normals');
 const defaultTo = require('lodash/defaultTo');
 const VertexBuffer = require('../../render/webgl/vertex/VertexBuffer');
 const WebGLOverlay = require('./WebGLOverlay');
@@ -40,7 +40,7 @@ const SHADER_GLSL = {
 
 // http://labs.hyperandroid.com/efficient-webgl-stroking
 
-const EPSILON = 0.0001;
+const EPSILON = 0.000001;
 
 const scalarMult = function(a, s) {
 	return [
@@ -74,14 +74,6 @@ const normalize = function(a) {
 		a[1] / mod
 	];
 };
-
-// const angle = function(a) {
-// 	return a[1] / a[0];
-// };
-//
-// const angleBetween = function(p0, p1) {
-// 	return Math.atan2(p1[0]-p0[0], p1[1]-p0[1]) ;
-// };
 
 const add = function(p0, p1) {
 	return [
@@ -128,12 +120,12 @@ const getStrokeGeometry = function(points, strokeWidth = 0.01) {
 			lineWidth);
 	} else {
 
-		// if (equal(points[0], points[points.length - 1])) {
-		// 	const p0 = middle(points.shift(), points[0]);
-		// 	points.unshift(p0);
-		// 	points.push(p0);
-		// 	closed = true;
-		// }
+		if (equal(points[0], points[points.length - 1])) {
+			const p0 = middle(points.shift(), points[0]);
+			points.unshift(p0);
+			points.push(p0);
+			closed = true;
+		}
 
 		for (let i=0; i<points.length-1; i++) {
 			if (i === 0) {
@@ -162,27 +154,25 @@ const getStrokeGeometry = function(points, strokeWidth = 0.01) {
 		const p10 = vertices[vertices.length - 1];
 		const p11 = vertices[vertices.length - 3];
 		const p12 = points[points.length - 2];
-		createRoundCap(points[0], p00, p01, p02, vertices);
-		createRoundCap(points[points.length - 1], p10, p11, p12, vertices);
+		createRoundCap(points[0], p00, p01, p02, vertices, lineWidth);
+		createRoundCap(points[points.length - 1], p10, p11, p12, vertices, lineWidth);
 	}
 
 	return vertices;
 };
 
-const createRoundCap = function(center, _p0, _p1, nextPointInLine, verts) {
+const createRoundCap = function(center, _p0, _p1, nextPointInLine, verts, lineWidth) {
 
-	const radius = length(sub(center, _p0));
 	let angle0 = Math.atan2((_p1[1] - center[1]), (_p1[0] - center[0]));
 	let angle1 = Math.atan2((_p0[1] - center[1]), (_p0[0] - center[0]));
 
 	const orgAngle0 = angle0;
 
 	if (angle1 > angle0) {
-		if (angle1 - angle0 >= Math.P - EPSILON) {
+		if (angle1 - angle0 >= Math.PI - EPSILON) {
 			angle1 = angle1 - (2 * Math.PI);
 		}
-	}
-	else {
+	} else {
 		if (angle0 - angle1 >= Math.PI - EPSILON) {
 			angle0 = angle0 - (2 * Math.PI);
 		}
@@ -190,8 +180,8 @@ const createRoundCap = function(center, _p0, _p1, nextPointInLine, verts) {
 
 	let angleDiff = angle1 - angle0;
 
-	if (Math.abs(angleDiff) >= Math.PI - EPSILON &&
-		Math.abs(angleDiff) <= Math.PI + EPSILON) {
+	if (Math.abs(angleDiff) >= (Math.PI - EPSILON) &&
+		Math.abs(angleDiff) <= (Math.PI + EPSILON)) {
 		const r1 = sub(center, nextPointInLine);
 		if (r1[0] === 0) {
 			if (r1[1] > 0) {
@@ -202,20 +192,20 @@ const createRoundCap = function(center, _p0, _p1, nextPointInLine, verts) {
 		}
 	}
 
-	let nsegments = (Math.abs(angleDiff * radius) / 7) >> 0;
-	nsegments++;
+	const segmentsPerSemi = 8;
+	const nsegments = Math.ceil(Math.abs(angleDiff / Math.PI) * segmentsPerSemi);
 
 	const angleInc = angleDiff / nsegments;
 
-	for (let i = 0; i < nsegments; i++) {
+	for (let i=0; i<nsegments; i++) {
 		verts.push([ center[0], center[1] ]);
 		verts.push([
-			center[0] + radius * Math.cos(orgAngle0 + angleInc * i),
-			center[1] + radius * Math.sin(orgAngle0 + angleInc * i)
+			center[0] + lineWidth * Math.cos(orgAngle0 + angleInc * i),
+			center[1] + lineWidth * Math.sin(orgAngle0 + angleInc * i)
 		]);
 		verts.push([
-			center[0] + radius * Math.cos(orgAngle0 + angleInc * (1 + i)),
-			center[1] + radius * Math.sin(orgAngle0 + angleInc * (1 + i))
+			center[0] + lineWidth * Math.cos(orgAngle0 + angleInc * (1 + i)),
+			center[1] + lineWidth * Math.sin(orgAngle0 + angleInc * (1 + i))
 		]);
 	}
 };
@@ -240,7 +230,7 @@ function lineIntersection(p0, p1, p2, p3) {
 	return [ x, y ];
 }
 
-function createTriangles(p0, p1, p2, verts, width) {
+function createTriangles(p0, p1, p2, verts, lineWidth) {
 	let t0 = sub(p1, p0);
 	let t2 = sub(p2, p1);
 
@@ -257,8 +247,8 @@ function createTriangles(p0, p1, p2, verts, width) {
 
 	t0 = normalize(t0);
 	t2 = normalize(t2);
-	t0 = scalarMult(t0, width);
-	t2 = scalarMult(t2, width);
+	t0 = scalarMult(t0, lineWidth);
+	t2 = scalarMult(t2, lineWidth);
 
 	const pintersect = lineIntersection(
 		add(t0, p0),
@@ -289,7 +279,7 @@ function createTriangles(p0, p1, p2, verts, width) {
 		verts.push(add(p1, t0));
 		verts.push(sub(p1, t0));
 
-		createRoundCap(p1, add(p1,t0), add(p1,t2), p2, verts);
+		createRoundCap(p1, add(p1,t0), add(p1,t2), p2, verts, lineWidth);
 
 		verts.push(add(p2, t2));
 		verts.push(sub(p1, t2));
@@ -319,7 +309,7 @@ function createTriangles(p0, p1, p2, verts, width) {
 		verts.push(center);
 		verts.push(_p2);
 
-		createRoundCap(center, _p0, _p1, _p2, verts);
+		createRoundCap(center, _p0, _p1, _p2, verts, lineWidth);
 
 		verts.push(center);
 		verts.push(_p1);
@@ -356,6 +346,7 @@ const bufferPolyLine = function(points) {
 	// 	buffer[i*8+7] = -normal[1] * magnitude;
 	// }
 	// return buffer;
+
 	const buffer = new Float32Array(points.length * 2);
 	for (let i=0; i<points.length; i++) {
 		const point = points[i];
@@ -365,9 +356,33 @@ const bufferPolyLine = function(points) {
 	return buffer;
 };
 
+const bufferLine = function(points) {
+	const buffer = new Float32Array(points.length * 12);
+	for (let i=0; i<points.length; i+=3) {
+		const a = points[i];
+		const b = points[i+1];
+		const c = points[i+2];
+		// l0
+		buffer[i*12] = a[0];
+		buffer[i*12+1] = a[1];
+		buffer[i*12+2] = b[0];
+		buffer[i*12+3] = b[1];
+		// l1
+		buffer[i*12+4] = b[0];
+		buffer[i*12+5] = b[1];
+		buffer[i*12+6] = c[0];
+		buffer[i*12+7] = c[1];
+		// l2
+		buffer[i*12+8] = c[0];
+		buffer[i*12+9] = c[1];
+		buffer[i*12+10] = a[0];
+		buffer[i*12+11] = a[1];
+	}
+	return buffer;
+};
+
 const createVertexBuffer = function(gl, points) {
 	const geometry = getStrokeGeometry(points);
-	console.log(geometry);
 	const data = bufferPolyLine(geometry);
 	return new VertexBuffer(
 		gl,
@@ -390,6 +405,24 @@ const createVertexBuffer = function(gl, points) {
 		});
 };
 
+const createLineBuffer = function(gl, points) {
+	const geometry = getStrokeGeometry(points);
+	const data = bufferLine(geometry);
+	return new VertexBuffer(
+		gl,
+		data,
+		{
+			0: {
+				size: 2,
+				type: 'FLOAT',
+				byteOffset: 0
+			},
+		},
+		{
+			mode: 'LINES',
+			count: data.length / 2 // 3
+		});
+};
 /**
  * Class representing an overlay.
  */
@@ -400,10 +433,11 @@ class WebGLLineOverlay extends WebGLOverlay {
 	 */
 	constructor(options = {}) {
 		super(options);
-		this.lineColor = defaultTo(options.lineColor, [ 1.0, 0.0, 1.0, 1.0 ]);
+		this.lineColor = defaultTo(options.lineColor, [ 0.6, 0.0, 0.4, 1.0 ]);
 		this.lineWidth = defaultTo(options.lineWidth, 2);
 		this.polyLines = new Map();
 		this.buffers = new Map();
+		this.lines = new Map();
 	}
 
 	/**
@@ -417,10 +451,12 @@ class WebGLLineOverlay extends WebGLOverlay {
 		super.onAdd(plot);
 		this.shader = this.createShader(SHADER_GLSL);
 		this.buffers = new Map();
+		this.lines = new Map();
 		if (this.polyLines.size > 0) {
 			this.polyLines.forEach((points, id) => {
 				const buffer = createVertexBuffer(this.gl, points);
 				this.buffers.set(id, buffer);
+				this.lines.set(id, createLineBuffer(this.gl, points));
 			});
 		}
 		return this;
@@ -437,6 +473,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 		super.onAdd(plot);
 		this.shader = null;
 		this.buffers = new Map();
+		this.lines = new Map();
 		return this;
 	}
 
@@ -452,7 +489,8 @@ class WebGLLineOverlay extends WebGLOverlay {
 		this.polyLines.set(id, points);
 		if (this.plot) {
 			const buffer = createVertexBuffer(this.gl, points);
-			this.buffers.push(buffer);
+			this.buffers.set(id, buffer);
+			this.lines.set(id, createLineBuffer(this.gl, points));
 		}
 		return this;
 	}
@@ -492,6 +530,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 		const gl = this.gl;
 		const shader = this.shader;
 		const buffers = this.buffers;
+		const lines = this.lines;
 		const plot = this.plot;
 		const proj = this.getOrthoMatrix();
 		const extent = Math.pow(2, plot.zoom) * plot.tileSize;
@@ -514,6 +553,14 @@ class WebGLLineOverlay extends WebGLOverlay {
 
 		// for each polyline buffer
 		buffers.forEach(buffer => {
+			// draw the points
+			buffer.bind();
+			buffer.draw();
+		});
+
+		shader.setUniform('uLineColor', [1.0, 1.0, 1.0, 1.0]);
+
+		lines.forEach(buffer => {
 			// draw the points
 			buffer.bind();
 			buffer.draw();
