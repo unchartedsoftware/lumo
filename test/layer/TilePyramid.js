@@ -8,7 +8,6 @@ const Layer = require('../../src/layer/Layer');
 const TilePyramid = require('../../src/layer/TilePyramid');
 const Viewport = require('../../src/plot/Viewport');
 
-
 describe('TilePyramid', () => {
 
 	let layer;
@@ -113,34 +112,85 @@ describe('TilePyramid', () => {
 			const coordB = new Coord(pyramid.persistentLevels + 1, 0, 0);
 			layer.requestTile = (coord, callback) => {
 				pyramid.clear();
-				assert(pyramid.isStale(coord));
 				callback(null, {});
+				assert(!pyramid.has(coord));
 			};
 			pyramid.requestTiles([ coordA, coordB ]);
 		});
-	});
-
-	describe('#isStale()', () => {
-		it('should return true if the tile coordinate is no longer within the viewport', () => {
-			layer.plot.viewport.centerOn({
-				x: 10000,
-				y: 10000
-			});
-			assert(pyramid.isStale(new Coord(0, 0, 0)));
-		});
-		it('should return true if the pyramid\'s layer is not longer attached to a plot', () => {
-			layer.plot = null;
-			assert(pyramid.isStale(new Coord(0, 0, 0)));
-		});
-		it('should return true if the pyramid has been cleared since issuing the request', () => {
-			layer.pyramid = pyramid;
+		it('should handle multiple stale requests for the same coord', done => {
 			const coord = new Coord(0, 0, 0);
-			layer.requestTile = (c, callback) => {
-				pyramid.clear();
-				assert(pyramid.isStale(coord));
-				callback(null, {});
+			const hash = coord.normalize().hash;
+			let count = 0;
+			layer.requestTile = (_, callback) => {
+				setTimeout(() => {
+					count++;
+					callback(null, {});
+					if (count === 3) {
+						// no more stale tiles
+						assert(!pyramid.stale.has(hash));
+						// pyramid has discarded all tiles as stale
+						assert(!pyramid.has(coord));
+						done();
+					}
+				}, 100);
 			};
-			layer.requestTiles([coord]);
+			pyramid.requestTiles([ coord ]);
+			pyramid.clear();
+			assert(pyramid.stale.get(hash).size === 1);
+			pyramid.requestTiles([ coord ]);
+			pyramid.clear();
+			assert(pyramid.stale.get(hash).size === 2);
+			pyramid.requestTiles([ coord ]);
+			pyramid.clear();
+			assert(pyramid.stale.get(hash).size === 3);
+		});
+		it('should handle multiple out of sync stale request responses for the same coord', done => {
+			const coord = new Coord(0, 0, 0);
+			const hash = coord.normalize().hash;
+			let r0, r1, r2;
+			const p0 = new Promise(resolve => {
+				r0 = resolve;
+			});
+			const p1 = new Promise(resolve => {
+				r1 = resolve;
+			});
+			const p2 = new Promise(resolve => {
+				r2 = resolve;
+			});
+			layer.requestTile = (_, callback) => {
+				p0.then(() => {
+					callback(null, {});
+					// discarded the last stale tile
+					assert(!pyramid.stale.has(hash));
+					done();
+				});
+			};
+			pyramid.requestTiles([ coord ]);
+			pyramid.clear();
+			assert(pyramid.stale.get(hash).size === 1);
+			layer.requestTile = (_, callback) => {
+				p1.then(() => {
+					callback(null, {});
+					// discarded the tile, one stale tile left
+					assert(pyramid.stale.get(hash).size === 1);
+				});
+			};
+			pyramid.requestTiles([ coord ]);
+			pyramid.clear();
+			assert(pyramid.stale.get(hash).size === 2);
+			layer.requestTile = (_, callback) => {
+				p2.then(() => {
+					callback(null, {});
+					// two stale tiles
+					assert(pyramid.stale.get(hash).size === 2);
+					// did not discard the latest request
+					assert(pyramid.has(coord));
+				});
+			};
+			pyramid.requestTiles([ coord ]);
+			r2();
+			r1();
+			r0();
 		});
 	});
 
@@ -176,30 +226,6 @@ describe('TilePyramid', () => {
 			assert(pyramid.getAvailableLOD(coordA).tile.coord.equals(coordA));
 			assert(pyramid.getAvailableLOD(coordC).tile.coord.equals(coordA));
 			assert(pyramid.getAvailableLOD(coordD).tile.coord.equals(coordB));
-		});
-		it('should return the closest available tile', done => {
-			const coordA = new Coord(0, 0, 0);
-			const coordB = new Coord(pyramid.persistentLevels + 1, 0, 0);
-			const coordC = new Coord(1, 0, 0);
-			const coordD = new Coord(pyramid.persistentLevels + 2, 0, 0);
-			const promises = [];
-			layer.requestTile = (coord, callback) => {
-				const promise = new Promise(resolve => {
-					setTimeout(() => {
-						callback(null, coord.hash);
-						resolve();
-					}, 100);
-				});
-				promises.push(promise);
-			};
-			pyramid.requestTiles([ coordA, coordB ]);
-			Promise.all(promises).then(() => {
-				const lodA = pyramid.getAvailableLOD(coordC);
-				const lodB = pyramid.getAvailableLOD(coordD);
-				assert(lodA.tile.data === coordA.hash);
-				assert(lodB.tile.data === coordB.hash);
-				done();
-			});
 		});
 		it('should return `undefined` if there is no available tile', () => {
 			const coordA = new Coord(0, 0, 0);
@@ -264,6 +290,26 @@ describe('TilePyramid', () => {
 				new Coord(0, 0, 0)
 			]);
 		});
+		it('should emit a `TILE_DISCARD` ', done => {
+			let resolve;
+			const promise = new Promise(res => {
+				resolve = res;
+			});
+			layer.requestTile = (coord, callback) => {
+				promise.then(() => {
+					callback(null, {});
+				});
+			};
+			layer.on(EventType.TILE_DISCARD, () => {
+				done();
+			});
+			pyramid.requestTiles([
+				new Coord(0, 0, 0)
+			]);
+			plot.layer = null;
+			layer.plot = null;
+			resolve();
+		});
 		it('should emit a `TILE_DISCARD` event from the layer if the tile request succeeds but the tile is no longer in view', done => {
 			layer.requestTile = (coord, callback) => {
 				// move tile out of view
@@ -280,5 +326,26 @@ describe('TilePyramid', () => {
 				new Coord(0, 0, 0)
 			]);
 		});
+		it('should emit a `LOAD` event from the layer if all pending tile requests have completed', done => {
+			const coords = [
+				new Coord(0, 0, 0),
+				new Coord(1, 0, 0),
+				new Coord(2, 0, 0),
+				new Coord(3, 0, 0)
+			];
+			let count = 0;
+			layer.requestTile = (coord, callback) => {
+				setTimeout(() => {
+					count++;
+					callback(null, {});
+				}, 100);
+			};
+			pyramid.requestTiles(coords);
+			layer.on(EventType.LOAD, function() {
+				assert(count === coords.length);
+				done();
+			});
+		});
 	});
+
 });
