@@ -131,6 +131,31 @@ const removeDuplicates = function(coords) {
 	});
 };
 
+const isTileStale = function(pyramid, tile) {
+	// NOTE: coord is already normalized
+	const ncoord = tile.coord;
+	if (pyramid.stale.has(ncoord.hash)) {
+		// check if uid is flagged as stale
+		const uids = pyramid.stale.get(ncoord.hash);
+		if (uids.has(tile.uid)) {
+			uids.delete(tile.uid);
+			if (uids.size === 0) {
+				pyramid.stale.delete(ncoord.hash);
+			}
+			return true;
+		}
+	}
+	const plot = pyramid.layer.plot;
+	if (!plot) {
+		// layer has been removed from plot, tile is stale
+		return true;
+	}
+	// if zooming, use target zoom, if not use current zoom
+	const viewport = plot.getTargetViewport();
+	const zoom = plot.getTargetZoom();
+	return !viewport.isInView(plot.tileSize, tile.coord, zoom);
+};
+
 /**
  * Class representing a pyramid of tiles.
  */
@@ -174,15 +199,14 @@ class TilePyramid {
 	 */
 	clear() {
 		// any pending tiles are now flagged as stale
-		this.pending.forEach((pending, hash) => {
-			// increment count of stale tiles for the hash, can't simply flag as
-			// a bool since multiple requests / refreshes in succession can
-			// cause multiple incoming stale tiles for the same hash
-			if (this.stale.has(hash)) {
-				this.stale.set(hash, this.stale.get(hash) + 1);
-			} else {
-				this.stale.set(hash, 1);
+		this.pending.forEach((tile, hash) => {
+			// flag uid as stale
+			let uids = this.stale.get(hash);
+			if (!uids) {
+				uids = new Map();
+				this.stale.set(hash, uids);
 			}
+			uids.set(tile.uid, true);
 		});
 		this.pending = new Map(); // fresh map
 		// clear persistent tiles
@@ -264,38 +288,6 @@ class TilePyramid {
 	}
 
 	/**
-	 * Returns true if the coordinate is no in the current or target
-	 * viewport.
-	 *
-	 * @param {Coord} coord - The coord to test.
-	 *
-	 * @returns {boolean} Whether or not the tile is stale.
-	 */
-	isStale(coord) {
-		// check if it is flagged as stale
-		const ncoord = coord.normalize();
-		if (this.stale.has(ncoord.hash)) {
-			// decrement stale count, remove if 0
-			const count = this.stale.get(ncoord.hash);
-			if (count === 1) {
-				this.stale.delete(ncoord.hash);
-			} else {
-				this.stale.set(ncoord.hash, count - 1);
-			}
-			return true;
-		}
-		const plot = this.layer.plot;
-		if (!plot) {
-			// layer has been removed from plot, tile is stale
-			return true;
-		}
-		// if zooming, use target zoom, if not use current zoom
-		const viewport = plot.getTargetViewport();
-		const zoom = plot.getTargetZoom();
-		return !viewport.isInView(plot.tileSize, coord, zoom);
-	}
-
-	/**
 	 * Requests tiles for the provided coords. If the tiles already exist
 	 * in the pyramid or is currently pending no request is made.
 	 *
@@ -326,7 +318,7 @@ class TilePyramid {
 			const ncoord = coord.normalize();
 			// create the new tile
 			const tile = new Tile(ncoord);
-			// add tile to pending array
+			// add uuid to pending array
 			this.pending.set(ncoord.hash, tile);
 			// emit request
 			this.layer.emit(EventType.TILE_REQUEST, new TileEvent(this.layer, tile));
@@ -347,7 +339,7 @@ class TilePyramid {
 				// add data to the tile
 				tile.data = data;
 				// check if tile is stale
-				if (this.isStale(coord)) {
+				if (isTileStale(this, tile)) {
 					// emit discard
 					this.layer.emit(EventType.TILE_DISCARD, new TileEvent(this.layer, tile));
 					// check if loaded
