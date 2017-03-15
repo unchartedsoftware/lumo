@@ -1,6 +1,6 @@
 {
   "name": "lumo",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "A high performance WebGL tile rendering library",
   "main": "src/exports.js",
   "author": "Kevin Birk <birk.kevin@gmail.com>",
@@ -33,7 +33,7 @@
     "gulp-istanbul": "1.1.1",
     "gulp-mocha": "3.0.1",
     "gulp-uglify": "2.1.0",
-    "sinon": "1.17.7",
+    "sinon": "2.0.0",
     "vinyl-buffer": "1.0.0",
     "vinyl-source-stream": "1.1.0"
   },

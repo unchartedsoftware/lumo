@@ -132,25 +132,28 @@ const removeDuplicates = function(coords) {
 };
 
 const isTileStale = function(pyramid, tile) {
-	// NOTE: coord is already normalized
-	const ncoord = tile.coord;
-	if (pyramid.stale.has(ncoord.hash)) {
+	const coord = tile.coord;
+	if (pyramid.stale.has(coord.hash)) {
 		// check if uid is flagged as stale
-		const uids = pyramid.stale.get(ncoord.hash);
+		const uids = pyramid.stale.get(coord.hash);
 		if (uids.has(tile.uid)) {
+			// tile is stale
 			uids.delete(tile.uid);
 			if (uids.size === 0) {
-				pyramid.stale.delete(ncoord.hash);
+				pyramid.stale.delete(coord.hash);
 			}
 			return true;
 		}
 	}
+};
+
+const shouldDiscard = function(pyramid, tile) {
 	const plot = pyramid.layer.plot;
 	if (!plot) {
-		// layer has been removed from plot, tile is stale
+		// layer has been removed from plot, discard tile
 		return true;
 	}
-	// if zooming, use target zoom, if not use current zoom
+	// check if tile is in view, if not, discard
 	const viewport = plot.getTargetViewport();
 	const zoom = plot.getTargetZoom();
 	return !viewport.isInView(plot.tileSize, tile.coord, zoom);
@@ -311,39 +314,51 @@ class TilePyramid {
 		// sort coords by distance from viewport center
 		coords = sortAroundCenter(this.layer.plot, coords);
 
-		// request tiles
-		coords.forEach(coord => {
+		// generate tiles and flag as pending
+		const tiles = coords.map(coord => {
 			// get normalized coord, we use normalized coords for requests
 			// so that we do not track / request the same tiles
 			const ncoord = coord.normalize();
 			// create the new tile
 			const tile = new Tile(ncoord);
-			// add uuid to pending array
+			// add tile to pending array
 			this.pending.set(ncoord.hash, tile);
+			// return tile
+			return tile;
+		});
+
+		// request tiles
+		tiles.forEach(tile => {
 			// emit request
 			this.layer.emit(EventType.TILE_REQUEST, new TileEvent(this.layer, tile));
 			// request tile
-			this.layer.requestTile(ncoord, (err, data) => {
+			this.layer.requestTile(tile.coord, (err, data) => {
 				// remove tile from pending
-				this.pending.delete(ncoord.hash);
+				this.pending.delete(tile.coord.hash);
+				// check if stale, clears tiles any flagged as stale
+				const isStale = isTileStale(this, tile);
 				// check err
 				if (err !== null) {
 					// add err
 					tile.err = err;
 					// emit failure
 					this.layer.emit(EventType.TILE_FAILURE, new TileEvent(this.layer, tile));
-					// check if loaded
-					checkIfLoaded(this);
+					// if not stale, check if loaded
+					if (!isStale) {
+						checkIfLoaded(this);
+					}
 					return;
 				}
 				// add data to the tile
 				tile.data = data;
-				// check if tile is stale
-				if (isTileStale(this, tile)) {
+				// check if tile should be discarded
+				if (isStale || shouldDiscard(this, tile)) {
 					// emit discard
 					this.layer.emit(EventType.TILE_DISCARD, new TileEvent(this.layer, tile));
-					// check if loaded
-					checkIfLoaded(this);
+					// if not stale, check if loaded
+					if (!isStale) {
+						checkIfLoaded(this);
+					}
 					return;
 				}
 				// add to tile pyramid
