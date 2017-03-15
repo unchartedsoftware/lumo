@@ -118,7 +118,7 @@ const signedArea = function(p0, p1, p2) {
 
 const getStrokeGeometry = function(points, strokeWidth) {
 	if (points.length < 2) {
-		return;
+		throw 'A valid polyline must consist of at least 2 points';
 	}
 
 	const lineWidth = strokeWidth / 2;
@@ -235,22 +235,23 @@ const createRoundCap = function(center, p0, p1, nextPointInLine, positions, norm
 	const nsegments = Math.ceil(Math.abs(angleDiff / Math.PI) * segmentsPerSemi);
 
 	const angleInc = angleDiff / nsegments;
+	const n0 = [ 0, 0 ];
 
 	for (let i=0; i<nsegments; i++) {
-		const n0 = [
+		const n1 = [
 			Math.cos(orgAngle0 + angleInc * i),
 			Math.sin(orgAngle0 + angleInc * i)
 		];
-		const n1 = [
+		const n2 = [
 			Math.cos(orgAngle0 + angleInc * (1 + i)),
 			Math.sin(orgAngle0 + angleInc * (1 + i))
 		];
-		positions.push([ center[0], center[1] ]);
-		positions.push([ center[0], center[1] ]);
-		positions.push([ center[0], center[1] ]);
-		normals.push([ 0, 0 ]);
-		normals.push(normalize(n0));
-		normals.push(normalize(n1));
+		positions.push(center);
+		positions.push(center);
+		positions.push(center);
+		normals.push(n0);
+		normals.push(n1);
+		normals.push(n2);
 	}
 };
 
@@ -376,12 +377,6 @@ function createTriangles(p0, p1, p2, positions, normals, lineWidth) {
 		normals.push(ian);
 		normals.push(n0);
 
-		const _p0 = add(p1, t0);
-		const _p1 = add(p1, t2);
-		const _p2 = sub(p1, anchor);
-
-		const center = p1;
-
 		positions.push(p1);
 		positions.push(p1);
 		positions.push(p1);
@@ -391,10 +386,10 @@ function createTriangles(p0, p1, p2, positions, normals, lineWidth) {
 		normals.push(ian);
 
 		createRoundCap(
-			center,
-			_p0,
-			_p1,
-			_p2,
+			p1,
+			add(p1, t0),
+			add(p1, t2),
+			sub(p1, anchor),
 			positions,
 			normals);
 
@@ -475,7 +470,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 	constructor(options = {}) {
 		super(options);
 		this.lineColor = defaultTo(options.lineColor, [ 1.0, 0.4, 0.1, 0.8 ]);
-		this.lineWidth = defaultTo(options.lineWidth, 4);
+		this.lineWidth = defaultTo(options.lineWidth, 2);
 		this.polyLines = new Map();
 		this.buffers = null;
 		this.shader = null;
