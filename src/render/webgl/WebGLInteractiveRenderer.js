@@ -26,7 +26,7 @@ const CLICK = Symbol();
 const MOUSE_MOVE = Symbol();
 
 /**
- * Zoom end event handler symbol.
+ * Zoom start event handler symbol.
  * @private
  * @constant
  */

@@ -15,6 +15,7 @@ class Overlay extends EventEmitter {
 		super();
 		this.opacity = defaultTo(options.opacity, 1.0);
 		this.plot = null;
+		this.handlers = null;
 	}
 
 	/**
@@ -30,6 +31,7 @@ class Overlay extends EventEmitter {
 		}
 		// set plot
 		this.plot = plot;
+		this.handlers = new Map();
 		return this;
 	}
 
@@ -46,6 +48,7 @@ class Overlay extends EventEmitter {
 		}
 		// remove plot
 		this.plot = null;
+		this.handlers = null;
 		return this;
 	}
 

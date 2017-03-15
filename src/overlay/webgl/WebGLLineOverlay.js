@@ -2,9 +2,24 @@
 
 const defaultTo = require('lodash/defaultTo');
 const VertexBuffer = require('../../render/webgl/vertex/VertexBuffer');
+const EventType = require('../../event/EventType');
 const WebGLOverlay = require('./WebGLOverlay');
 
 // Constants
+
+/**
+ * Zoom start event handler symbol.
+ * @private
+ * @constant
+ */
+const ZOOM_START = Symbol();
+
+/**
+ * Zoom end event handler symbol.
+ * @private
+ * @constant
+ */
+const ZOOM_END = Symbol();
 
 /**
  * Shader GLSL source.
@@ -24,6 +39,30 @@ const SHADER_GLSL = {
 		uniform mat4 uProjectionMatrix;
 		void main() {
 			vec2 wPosition = (aPosition * uExtent) + (aNormal * uLineWidth * uPixelRatio) + uViewOffset;
+			gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
+		}
+		`,
+	frag:
+		`
+		precision highp float;
+		uniform vec4 uLineColor;
+		uniform float uOpacity;
+		void main() {
+			gl_FragColor = vec4(uLineColor.rgb, uLineColor.a * uOpacity);
+		}
+		`
+};
+
+const LINE_SHADER = {
+	vert:
+		`
+		precision highp float;
+		attribute vec2 aPosition;
+		uniform vec2 uViewOffset;
+		uniform float uExtent;
+		uniform mat4 uProjectionMatrix;
+		void main() {
+			vec2 wPosition = (aPosition * uExtent) + uViewOffset;
 			gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
 		}
 		`,
@@ -101,7 +140,7 @@ const signedArea = function(p0, p1, p2) {
 	return (p1[0] - p0[0]) * (p2[1] - p0[1]) - (p2[0] - p0[0]) * (p1[1] - p0[1]);
 };
 
-const getStrokeGeometry = function(points, strokeWidth = 0.01) {
+const getStrokeGeometry = function(points, strokeWidth) {
 	if (points.length < 2) {
 		return;
 	}
@@ -181,6 +220,7 @@ const getStrokeGeometry = function(points, strokeWidth = 0.01) {
 	}
 
 	return {
+		vertices: vertices,
 		positions: positions,
 		normals: normals
 	};
@@ -297,13 +337,11 @@ function createTriangles(p0, p1, p2, vertices, positions, normals, lineWidth) {
 
 	let anchor = null;
 	let anchorLength = Number.MAX_VALUE;
-	let an = null;
 	let ian = null;
 	if (pintersect) {
 		anchor = sub(pintersect, p1);
 		anchorLength = length(anchor);
-		an = normalize(anchor);
-		ian = normalize(invert(an));
+		ian = invert(scalarMult(anchor, 1.0 / lineWidth));
 	}
 	const p0p1 = sub(p0, p1);
 	const p0p1Length = length(p0p1);
@@ -345,8 +383,8 @@ function createTriangles(p0, p1, p2, vertices, positions, normals, lineWidth) {
 
 		createRoundCap(
 			p1,
-			add(p1,t0),
-			add(p1,t2),
+			add(p1, t0),
+			add(p1, t2),
 			p2,
 			vertices,
 			positions,
@@ -482,11 +520,13 @@ const bufferPolyLine = function(points, normals) {
 	return buffer;
 };
 
-const createVertexBuffer = function(gl, points) {
-	const geometry = getStrokeGeometry(points);
+const createVertexBuffer = function(overlay, points) {
+	const scale = Math.pow(2, Math.floor(overlay.plot.getTargetZoom()));
+	const lineWidth = overlay.lineWidth / (scale * overlay.plot.tileSize);
+	const geometry = getStrokeGeometry(points, lineWidth);
 	const data = bufferPolyLine(geometry.positions, geometry.normals);
 	return new VertexBuffer(
-		gl,
+		overlay.gl,
 		data,
 		{
 			0: {
@@ -506,6 +546,53 @@ const createVertexBuffer = function(gl, points) {
 		});
 };
 
+const bufferLine = function(points) {
+	const buffer = new Float32Array(points.length * 4);
+	for (let i=0; i<points.length; i+=3) {
+		const a = points[i];
+		const b = points[i+1];
+		const c = points[i+2];
+
+		buffer[i*4] = a[0];
+		buffer[i*4+1] = a[1];
+		buffer[i*4+2] = b[0];
+		buffer[i*4+3] = b[1];
+
+		buffer[i*4+4] = b[0];
+		buffer[i*4+5] = b[1];
+		buffer[i*4+6] = c[0];
+		buffer[i*4+7] = c[1];
+
+		buffer[i*4+8] = c[0];
+		buffer[i*4+9] = c[1];
+		buffer[i*4+10] = a[0];
+		buffer[i*4+11] = a[1];
+	}
+	return buffer;
+};
+
+const createLineBuffer = function(overlay, points) {
+	const plot = overlay.plot;
+	const scale = Math.pow(2, Math.floor(plot.getTargetZoom()));
+	const lineWidth = (overlay.lineWidth * plot.pixelRatio) / (scale * plot.tileSize);
+	const geometry = getStrokeGeometry(points, lineWidth);
+	const data = bufferLine(geometry.vertices);
+	return new VertexBuffer(
+		overlay.gl,
+		data,
+		{
+			0: {
+				size: 2,
+				type: 'FLOAT',
+				byteOffset: 0
+			}
+		},
+		{
+			mode: 'LINES',
+			count: geometry.vertices.length * 2
+		});
+};
+
 /**
  * Class representing an overlay.
  */
@@ -517,7 +604,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 	constructor(options = {}) {
 		super(options);
 		this.lineColor = defaultTo(options.lineColor, [ 0.6, 0.0, 0.4, 1.0 ]);
-		this.lineWidth = defaultTo(options.lineWidth, 32);
+		this.lineWidth = defaultTo(options.lineWidth, 8);
 		this.polyLines = new Map();
 		this.buffers = null;
 	}
@@ -532,13 +619,43 @@ class WebGLLineOverlay extends WebGLOverlay {
 	onAdd(plot) {
 		super.onAdd(plot);
 		this.shader = this.createShader(SHADER_GLSL);
+		this.lineShader = this.createShader(LINE_SHADER);
 		this.buffers = new Map();
-		if (this.polyLines.size > 0) {
+		this.lines = new Map();
+		this.polyLines.forEach((points, id) => {
+			this.buffers.set(id, createVertexBuffer(this, points));
+			this.lines.set(id, createLineBuffer(this, points));
+		});
+		const zoomstart = () => {
+			// NOTE: only re-buffer on ZOOM_START if we are zooming OUT, as
+			// line normals may not scale well at extreme angles.
+			if (this.plot.getTargetZoom() > this.plot.zoom) {
+				return;
+			}
+			this.buffers.clear();
+			this.lines.clear();
 			this.polyLines.forEach((points, id) => {
-				const buffer = createVertexBuffer(this.gl, points);
-				this.buffers.set(id, buffer);
+				this.buffers.set(id, createVertexBuffer(this, points));
+				this.lines.set(id, createLineBuffer(this, points));
 			});
-		}
+		};
+		const zoomend = () => {
+			// NOTE: only re-buffer on ZOOM_START if we are zooming IN, as
+			// line normals may not scale well at extreme angles.
+			if (this.plot.getTargetZoom() < this.plot.zoom) {
+				return;
+			}
+			this.buffers.clear();
+			this.lines.clear();
+			this.polyLines.forEach((points, id) => {
+				this.buffers.set(id, createVertexBuffer(this, points));
+				this.lines.set(id, createLineBuffer(this, points));
+			});
+		};
+		this.handlers.set(ZOOM_START, zoomstart);
+		this.handlers.set(ZOOM_END, zoomend);
+		this.plot.on(EventType.ZOOM_START, zoomstart);
+		this.plot.on(EventType.ZOOM_END, zoomend);
 		return this;
 	}
 
@@ -551,6 +668,10 @@ class WebGLLineOverlay extends WebGLOverlay {
 	 */
 	onRemove(plot) {
 		super.onAdd(plot);
+		this.plot.removeListener(EventType.ZOOM_START, this.handlers.get(ZOOM_START));
+		this.plot.removeListener(EventType.ZOOM_END, this.handlers.get(ZOOM_END));
+		this.handlers.delete(ZOOM_START);
+		this.handlers.delete(ZOOM_END);
 		this.shader = null;
 		this.buffers = null;
 		return this;
@@ -567,8 +688,8 @@ class WebGLLineOverlay extends WebGLOverlay {
 	addPolyLine(id, points) {
 		this.polyLines.set(id, points);
 		if (this.plot) {
-			const buffer = createVertexBuffer(this.gl, points);
-			this.buffers.set(id, buffer);
+			this.buffers.set(id, createVertexBuffer(this, points));
+			this.lines.set(id, createLineBuffer(this, points));
 		}
 		return this;
 	}
@@ -631,6 +752,21 @@ class WebGLLineOverlay extends WebGLOverlay {
 
 		// for each polyline buffer
 		buffers.forEach(buffer => {
+			// draw the points
+			buffer.bind();
+			buffer.draw();
+		});
+
+		this.lineShader.use();
+
+		this.lineShader.setUniform('uProjectionMatrix', proj);
+		this.lineShader.setUniform('uViewOffset', offset);
+		this.lineShader.setUniform('uLineColor', this.lineColor);
+		this.lineShader.setUniform('uExtent', extent);
+		this.lineShader.setUniform('uOpacity', this.opacity);
+		this.lineShader.setUniform('uLineColor', [ 1.0, 1.0, 1.0, 1.0 ]);
+
+		this.lines.forEach(buffer => {
 			// draw the points
 			buffer.bind();
 			buffer.draw();
