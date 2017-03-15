@@ -53,30 +53,6 @@ const SHADER_GLSL = {
 		`
 };
 
-const LINE_SHADER = {
-	vert:
-		`
-		precision highp float;
-		attribute vec2 aPosition;
-		uniform vec2 uViewOffset;
-		uniform float uExtent;
-		uniform mat4 uProjectionMatrix;
-		void main() {
-			vec2 wPosition = (aPosition * uExtent) + uViewOffset;
-			gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
-		}
-		`,
-	frag:
-		`
-		precision highp float;
-		uniform vec4 uLineColor;
-		uniform float uOpacity;
-		void main() {
-			gl_FragColor = vec4(uLineColor.rgb, uLineColor.a * uOpacity);
-		}
-		`
-};
-
 // http://labs.hyperandroid.com/efficient-webgl-stroking
 
 const EPSILON = 0.000001;
@@ -146,21 +122,21 @@ const getStrokeGeometry = function(points, strokeWidth) {
 	}
 
 	const lineWidth = strokeWidth / 2;
-	const vertices = [];
 	const positions = [];
 	const normals = [];
 	const middlePoints = []; // middle points per each line segment
 	let closed = false;
 
 	if (points.length === 2) {
+
 		createTriangles(
 			points[0],
 			middle(points[0], points[1]),
 			points[1],
-			vertices,
 			positions,
 			normals,
 			lineWidth);
+
 	} else {
 
 		if (equal(points[0], points[points.length - 1])) {
@@ -185,7 +161,6 @@ const getStrokeGeometry = function(points, strokeWidth) {
 				middlePoints[i - 1],
 				points[i],
 				middlePoints[i],
-				vertices,
 				positions,
 				normals,
 				lineWidth);
@@ -193,43 +168,42 @@ const getStrokeGeometry = function(points, strokeWidth) {
 	}
 
 	if (!closed) {
-		const p00 = vertices[0];
-		const p01 = vertices[1];
-		const p02 = points[1];
-		const p10 = vertices[vertices.length - 1];
-		const p11 = vertices[vertices.length - 3];
-		const p12 = points[points.length - 2];
+
+		// start cap
+		let p0 = points[0];
+		let p1 = points[1];
+		let t = perpendicular(sub(p1, p0));
 		createRoundCap(
-			points[0],
-			p00,
-			p01,
-			p02,
-			vertices,
+			p0,
+			add(p0, t),
+			sub(p0, t),
+			p1,
 			positions,
-			normals,
-			lineWidth);
+			normals);
+
+		// end cap
+		p0 = points[points.length - 1];
+		p1 = points[points.length - 2];
+		t = perpendicular(sub(p1, p0));
 		createRoundCap(
-			points[points.length - 1],
-			p10,
-			p11,
-			p12,
-			vertices,
+			p0,
+			add(p0, t),
+			sub(p0, t),
+			p1,
 			positions,
-			normals,
-			lineWidth);
+			normals);
 	}
 
 	return {
-		vertices: vertices,
 		positions: positions,
 		normals: normals
 	};
 };
 
-const createRoundCap = function(center, _p0, _p1, nextPointInLine, vertices, positions, normals, lineWidth) {
+const createRoundCap = function(center, p0, p1, nextPointInLine, positions, normals) {
 
-	let angle0 = Math.atan2((_p1[1] - center[1]), (_p1[0] - center[0]));
-	let angle1 = Math.atan2((_p0[1] - center[1]), (_p0[0] - center[0]));
+	let angle0 = Math.atan2((p1[1] - center[1]), (p1[0] - center[0]));
+	let angle1 = Math.atan2((p0[1] - center[1]), (p0[0] - center[0]));
 
 	const orgAngle0 = angle0;
 
@@ -271,15 +245,6 @@ const createRoundCap = function(center, _p0, _p1, nextPointInLine, vertices, pos
 			Math.cos(orgAngle0 + angleInc * (1 + i)),
 			Math.sin(orgAngle0 + angleInc * (1 + i))
 		];
-		vertices.push([ center[0], center[1] ]);
-		vertices.push([
-			center[0] + lineWidth * n0[0],
-			center[1] + lineWidth * n0[1]
-		]);
-		vertices.push([
-			center[0] + lineWidth * n1[0],
-			center[1] + lineWidth * n1[1]
-		]);
 		positions.push([ center[0], center[1] ]);
 		positions.push([ center[0], center[1] ]);
 		positions.push([ center[0], center[1] ]);
@@ -290,26 +255,22 @@ const createRoundCap = function(center, _p0, _p1, nextPointInLine, vertices, pos
 };
 
 function lineIntersection(p0, p1, p2, p3) {
-
 	const a0 = p1[1] - p0[1];
 	const b0 = p0[0] - p1[0];
-
 	const a1 = p3[1] - p2[1];
 	const b1 = p2[0] - p3[0];
-
 	const det = a0 * b1 - a1 * b0;
 	if (det > -EPSILON && det < EPSILON) {
 		return null;
 	}
 	const c0 = a0 * p0[0] + b0 * p0[1];
 	const c1 = a1 * p2[0] + b1 * p2[1];
-
 	const x = (b1 * c0 - b0 * c1) / det;
 	const y = (a0 * c1 - a1 * c0) / det;
 	return [ x, y ];
 }
 
-function createTriangles(p0, p1, p2, vertices, positions, normals, lineWidth) {
+function createTriangles(p0, p1, p2, positions, normals, lineWidth) {
 	let t0 = sub(p1, p0);
 	let t2 = sub(p2, p1);
 
@@ -357,10 +318,6 @@ function createTriangles(p0, p1, p2, vertices, positions, normals, lineWidth) {
 	// do not use cross point as reference.
 	if (anchorLength > p0p1Length || anchorLength > p1p2Length) {
 
-		vertices.push(add(p0, t0));
-		vertices.push(sub(p0, t0));
-		vertices.push(add(p1, t0));
-
 		positions.push(p0);
 		positions.push(p0);
 		positions.push(p1);
@@ -368,10 +325,6 @@ function createTriangles(p0, p1, p2, vertices, positions, normals, lineWidth) {
 		normals.push(n0);
 		normals.push(in0);
 		normals.push(n0);
-
-		vertices.push(sub(p0, t0));
-		vertices.push(add(p1, t0));
-		vertices.push(sub(p1, t0));
 
 		positions.push(p0);
 		positions.push(p1);
@@ -386,14 +339,8 @@ function createTriangles(p0, p1, p2, vertices, positions, normals, lineWidth) {
 			add(p1, t0),
 			add(p1, t2),
 			p2,
-			vertices,
 			positions,
-			normals,
-			lineWidth);
-
-		vertices.push(add(p2, t2));
-		vertices.push(sub(p1, t2));
-		vertices.push(add(p1, t2));
+			normals);
 
 		positions.push(p2);
 		positions.push(p1);
@@ -402,10 +349,6 @@ function createTriangles(p0, p1, p2, vertices, positions, normals, lineWidth) {
 		normals.push(n2);
 		normals.push(in2);
 		normals.push(n2);
-
-		vertices.push(add(p2, t2));
-		vertices.push(sub(p1, t2));
-		vertices.push(sub(p2, t2));
 
 		positions.push(p2);
 		positions.push(p1);
@@ -417,10 +360,6 @@ function createTriangles(p0, p1, p2, vertices, positions, normals, lineWidth) {
 
 	} else {
 
-		vertices.push(add(p0, t0));
-		vertices.push(sub(p0, t0));
-		vertices.push(sub(p1, anchor));
-
 		positions.push(p0);
 		positions.push(p0);
 		positions.push(p1);
@@ -428,10 +367,6 @@ function createTriangles(p0, p1, p2, vertices, positions, normals, lineWidth) {
 		normals.push(n0);
 		normals.push(in0);
 		normals.push(ian);
-
-		vertices.push(add(p0, t0));
-		vertices.push(sub(p1, anchor));
-		vertices.push(add(p1, t0));
 
 		positions.push(p0);
 		positions.push(p1);
@@ -447,10 +382,6 @@ function createTriangles(p0, p1, p2, vertices, positions, normals, lineWidth) {
 
 		const center = p1;
 
-		vertices.push(_p0);
-		vertices.push(center);
-		vertices.push(_p2);
-
 		positions.push(p1);
 		positions.push(p1);
 		positions.push(p1);
@@ -464,14 +395,8 @@ function createTriangles(p0, p1, p2, vertices, positions, normals, lineWidth) {
 			_p0,
 			_p1,
 			_p2,
-			vertices,
 			positions,
-			normals,
-			lineWidth);
-
-		vertices.push(center);
-		vertices.push(_p1);
-		vertices.push(_p2);
+			normals);
 
 		positions.push(p1);
 		positions.push(p1);
@@ -481,10 +406,6 @@ function createTriangles(p0, p1, p2, vertices, positions, normals, lineWidth) {
 		normals.push(n2);
 		normals.push(ian);
 
-		vertices.push(add(p2, t2));
-		vertices.push(sub(p1, anchor));
-		vertices.push(add(p1, t2));
-
 		positions.push(p2);
 		positions.push(p1);
 		positions.push(p1);
@@ -492,10 +413,6 @@ function createTriangles(p0, p1, p2, vertices, positions, normals, lineWidth) {
 		normals.push(n2);
 		normals.push(ian);
 		normals.push(n2);
-
-		vertices.push(add(p2, t2));
-		vertices.push(sub(p1, anchor));
-		vertices.push(sub(p2, t2));
 
 		positions.push(p2);
 		positions.push(p1);
@@ -521,8 +438,9 @@ const bufferPolyLine = function(points, normals) {
 };
 
 const createVertexBuffer = function(overlay, points) {
-	const scale = Math.pow(2, Math.floor(overlay.plot.getTargetZoom()));
-	const lineWidth = overlay.lineWidth / (scale * overlay.plot.tileSize);
+	const plot = overlay.plot;
+	const scale = Math.pow(2, Math.floor(plot.getTargetZoom()));
+	const lineWidth = (overlay.lineWidth * plot.pixelRatio) / (scale * plot.tileSize);
 	const geometry = getStrokeGeometry(points, lineWidth);
 	const data = bufferPolyLine(geometry.positions, geometry.normals);
 	return new VertexBuffer(
@@ -546,53 +464,6 @@ const createVertexBuffer = function(overlay, points) {
 		});
 };
 
-const bufferLine = function(points) {
-	const buffer = new Float32Array(points.length * 4);
-	for (let i=0; i<points.length; i+=3) {
-		const a = points[i];
-		const b = points[i+1];
-		const c = points[i+2];
-
-		buffer[i*4] = a[0];
-		buffer[i*4+1] = a[1];
-		buffer[i*4+2] = b[0];
-		buffer[i*4+3] = b[1];
-
-		buffer[i*4+4] = b[0];
-		buffer[i*4+5] = b[1];
-		buffer[i*4+6] = c[0];
-		buffer[i*4+7] = c[1];
-
-		buffer[i*4+8] = c[0];
-		buffer[i*4+9] = c[1];
-		buffer[i*4+10] = a[0];
-		buffer[i*4+11] = a[1];
-	}
-	return buffer;
-};
-
-const createLineBuffer = function(overlay, points) {
-	const plot = overlay.plot;
-	const scale = Math.pow(2, Math.floor(plot.getTargetZoom()));
-	const lineWidth = (overlay.lineWidth * plot.pixelRatio) / (scale * plot.tileSize);
-	const geometry = getStrokeGeometry(points, lineWidth);
-	const data = bufferLine(geometry.vertices);
-	return new VertexBuffer(
-		overlay.gl,
-		data,
-		{
-			0: {
-				size: 2,
-				type: 'FLOAT',
-				byteOffset: 0
-			}
-		},
-		{
-			mode: 'LINES',
-			count: geometry.vertices.length * 2
-		});
-};
-
 /**
  * Class representing an overlay.
  */
@@ -603,10 +474,11 @@ class WebGLLineOverlay extends WebGLOverlay {
 	 */
 	constructor(options = {}) {
 		super(options);
-		this.lineColor = defaultTo(options.lineColor, [ 0.6, 0.0, 0.4, 1.0 ]);
-		this.lineWidth = defaultTo(options.lineWidth, 8);
+		this.lineColor = defaultTo(options.lineColor, [ 1.0, 0.4, 0.1, 0.8 ]);
+		this.lineWidth = defaultTo(options.lineWidth, 4);
 		this.polyLines = new Map();
 		this.buffers = null;
+		this.shader = null;
 	}
 
 	/**
@@ -619,12 +491,9 @@ class WebGLLineOverlay extends WebGLOverlay {
 	onAdd(plot) {
 		super.onAdd(plot);
 		this.shader = this.createShader(SHADER_GLSL);
-		this.lineShader = this.createShader(LINE_SHADER);
 		this.buffers = new Map();
-		this.lines = new Map();
 		this.polyLines.forEach((points, id) => {
 			this.buffers.set(id, createVertexBuffer(this, points));
-			this.lines.set(id, createLineBuffer(this, points));
 		});
 		const zoomstart = () => {
 			// NOTE: only re-buffer on ZOOM_START if we are zooming OUT, as
@@ -633,10 +502,8 @@ class WebGLLineOverlay extends WebGLOverlay {
 				return;
 			}
 			this.buffers.clear();
-			this.lines.clear();
 			this.polyLines.forEach((points, id) => {
 				this.buffers.set(id, createVertexBuffer(this, points));
-				this.lines.set(id, createLineBuffer(this, points));
 			});
 		};
 		const zoomend = () => {
@@ -646,10 +513,8 @@ class WebGLLineOverlay extends WebGLOverlay {
 				return;
 			}
 			this.buffers.clear();
-			this.lines.clear();
 			this.polyLines.forEach((points, id) => {
 				this.buffers.set(id, createVertexBuffer(this, points));
-				this.lines.set(id, createLineBuffer(this, points));
 			});
 		};
 		this.handlers.set(ZOOM_START, zoomstart);
@@ -689,7 +554,6 @@ class WebGLLineOverlay extends WebGLOverlay {
 		this.polyLines.set(id, points);
 		if (this.plot) {
 			this.buffers.set(id, createVertexBuffer(this, points));
-			this.lines.set(id, createLineBuffer(this, points));
 		}
 		return this;
 	}
@@ -715,7 +579,9 @@ class WebGLLineOverlay extends WebGLOverlay {
 	 */
 	clearPolylines() {
 		this.polyLines = new Map();
-		this.buffers = new Map();
+		if (this.plot) {
+			this.buffers = new Map();
+		}
 	}
 
 	/**
@@ -752,21 +618,6 @@ class WebGLLineOverlay extends WebGLOverlay {
 
 		// for each polyline buffer
 		buffers.forEach(buffer => {
-			// draw the points
-			buffer.bind();
-			buffer.draw();
-		});
-
-		this.lineShader.use();
-
-		this.lineShader.setUniform('uProjectionMatrix', proj);
-		this.lineShader.setUniform('uViewOffset', offset);
-		this.lineShader.setUniform('uLineColor', this.lineColor);
-		this.lineShader.setUniform('uExtent', extent);
-		this.lineShader.setUniform('uOpacity', this.opacity);
-		this.lineShader.setUniform('uLineColor', [ 1.0, 1.0, 1.0, 1.0 ]);
-
-		this.lines.forEach(buffer => {
 			// draw the points
 			buffer.bind();
 			buffer.draw();

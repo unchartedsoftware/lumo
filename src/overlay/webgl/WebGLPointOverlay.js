@@ -91,7 +91,7 @@ class WebGLPointOverlay extends WebGLOverlay {
 		this.pointColor = defaultTo(options.pointColor, [ 1.0, 0.0, 1.0, 1.0 ]);
 		this.pointRadius = defaultTo(options.pointRadius, 4);
 		this.points = new Map();
-		this.buffers = new Map();
+		this.buffers = null;
 		this.ext = null;
 	}
 
@@ -107,12 +107,9 @@ class WebGLPointOverlay extends WebGLOverlay {
 		this.ext = this.gl.getExtension('OES_standard_derivatives');
 		this.shader = this.createShader(SHADER_GLSL);
 		this.buffers = new Map();
-		if (this.points.size > 0) {
-			this.points.forEach((points, id) => {
-				const buffer = createVertexBuffer(this.gl, points);
-				this.buffers.set(id, buffer);
-			});
-		}
+		this.points.forEach((points, id) => {
+			this.buffers.set(id, createVertexBuffer(this.gl, points));
+		});
 		return this;
 	}
 
@@ -126,7 +123,7 @@ class WebGLPointOverlay extends WebGLOverlay {
 	onRemove(plot) {
 		super.onAdd(plot);
 		this.shader = null;
-		this.buffers = new Map();
+		this.buffers = null;
 		this.ext = null;
 		return this;
 	}
@@ -142,8 +139,7 @@ class WebGLPointOverlay extends WebGLOverlay {
 	addPoints(id, points) {
 		this.points.set(id, points);
 		if (this.plot) {
-			const buffer = createVertexBuffer(this.gl, points);
-			this.buffers.push(buffer);
+			this.buffers.set(id, createVertexBuffer(this.gl, points));
 		}
 		return this;
 	}
@@ -169,7 +165,9 @@ class WebGLPointOverlay extends WebGLOverlay {
 	 */
 	clearPolylines() {
 		this.points = new Map();
-		this.buffers = new Map();
+		if (this.plot) {
+			this.buffers = new Map();
+		}
 	}
 
 	/**
