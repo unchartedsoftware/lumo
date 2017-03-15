@@ -59,17 +59,17 @@ describe('Layer', () => {
 		});
 		it('should call `onAdd` on the renderer if the layer is attached to a plot', () => {
 			const layer = new Layer();
-			sinon.stub(layer, 'refresh', noop);
+			sinon.stub(layer, 'refresh').callsFake(noop);
 			layer.onAdd(plot);
-			const onAdd = sinon.stub(renderer, 'onAdd', noop);
+			const onAdd = sinon.stub(renderer, 'onAdd').callsFake(noop);
 			layer.setRenderer(renderer);
 			assert(onAdd.calledOnce);
 		});
 		it('should call `onRemove` on the previous renderer if the layer is attached to a plot', () => {
 			const layer = new Layer();
-			sinon.stub(layer, 'refresh', noop);
+			sinon.stub(layer, 'refresh').callsFake(noop);
 			layer.onAdd(plot);
-			const onRemove = sinon.stub(renderer, 'onRemove', noop);
+			const onRemove = sinon.stub(renderer, 'onRemove').callsFake(noop);
 			layer.setRenderer(renderer);
 			layer.setRenderer(new Renderer());
 			assert(onRemove.calledOnce);
@@ -95,9 +95,9 @@ describe('Layer', () => {
 		});
 		it('should call `onRemove` on the attached renderer if the layer is attached to a plot', () => {
 			const layer = new Layer();
-			sinon.stub(layer, 'refresh', noop);
+			sinon.stub(layer, 'refresh').callsFake(noop);
 			layer.onAdd(plot);
-			const onRemove = sinon.stub(renderer, 'onRemove', noop);
+			const onRemove = sinon.stub(renderer, 'onRemove').callsFake(noop);
 			layer.setRenderer(renderer);
 			layer.removeRenderer();
 			assert(onRemove.calledOnce);
@@ -124,7 +124,7 @@ describe('Layer', () => {
 		it('should call `draw` on the attached renderer if the layer is not hidden', () => {
 			const layer = new Layer();
 			layer.setRenderer(renderer);
-			const draw = sinon.stub(renderer, 'draw', noop);
+			const draw = sinon.stub(renderer, 'draw').callsFake(noop);
 			layer.draw();
 			assert(draw.calledOnce);
 		});
@@ -132,7 +132,7 @@ describe('Layer', () => {
 			const layer = new Layer();
 			layer.hide();
 			layer.setRenderer(renderer);
-			const clear = sinon.stub(renderer, 'clear', noop);
+			const clear = sinon.stub(renderer, 'clear').callsFake(noop);
 			layer.draw();
 			assert(clear.calledOnce);
 		});
@@ -141,14 +141,14 @@ describe('Layer', () => {
 	describe('#refresh()', () => {
 		it('should call `clear` on the layer\'s tile pyramid', () => {
 			const layer = new Layer();
-			const clear = sinon.stub(layer.pyramid, 'clear', noop);
+			const clear = sinon.stub(layer.pyramid, 'clear').callsFake(noop);
 			layer.refresh();
 			assert(clear.calledOnce);
 		});
 		it('should call `requestTiles` if the layer is attached to a plot', () => {
 			const layer = new Layer();
-			const requestTiles = sinon.stub(layer, 'requestTiles', noop);
-			sinon.stub(layer.pyramid, 'requestTiles', noop);
+			const requestTiles = sinon.stub(layer, 'requestTiles').callsFake(noop);
+			sinon.stub(layer.pyramid, 'requestTiles').callsFake(noop);
 			layer.onAdd(plot);
 			layer.refresh();
 			assert(requestTiles.called);
@@ -156,9 +156,9 @@ describe('Layer', () => {
 		it('should call `clear` on the renderer if the layer is attached to a plot', () => {
 			const layer = new Layer();
 			layer.setRenderer(renderer);
-			sinon.stub(layer, 'requestTiles', noop);
-			sinon.stub(layer.pyramid, 'requestTiles', noop);
-			const clear = sinon.stub(layer.renderer, 'clear', noop);
+			sinon.stub(layer, 'requestTiles').callsFake(noop);
+			sinon.stub(layer.pyramid, 'requestTiles').callsFake(noop);
+			const clear = sinon.stub(layer.renderer, 'clear').callsFake(noop);
 			layer.onAdd(plot);
 			layer.refresh();
 			assert(clear.called);
@@ -168,13 +168,13 @@ describe('Layer', () => {
 	describe('#onAdd()', () => {
 		it('should set the plot property of the layer', () => {
 			const layer = new Layer();
-			sinon.stub(layer, 'refresh', noop);
+			sinon.stub(layer, 'refresh').callsFake(noop);
 			layer.onAdd(plot);
 			assert(layer.plot === plot);
 		});
 		it('should call `refresh` to refresh the layer', () => {
 			const layer = new Layer();
-			const refresh = sinon.stub(layer, 'refresh', noop);
+			const refresh = sinon.stub(layer, 'refresh').callsFake(noop);
 			layer.onAdd(plot);
 			assert(refresh.calledOnce);
 		});
@@ -182,8 +182,8 @@ describe('Layer', () => {
 			const layer = new Layer({
 				renderer: renderer
 			});
-			sinon.stub(layer, 'refresh', noop);
-			const onAdd = sinon.stub(renderer, 'onAdd', noop);
+			sinon.stub(layer, 'refresh').callsFake(noop);
+			const onAdd = sinon.stub(renderer, 'onAdd').callsFake(noop);
 			layer.onAdd(plot);
 			assert(onAdd.calledOnce);
 		});
@@ -203,10 +203,10 @@ describe('Layer', () => {
 		it('should remove the plot property from the layer', () => {
 			const layer = new Layer();
 
-			sinon.stub(layer, 'refresh', noop);
+			sinon.stub(layer, 'refresh').callsFake(noop);
 			layer.onAdd(plot);
 
-			const clear = sinon.stub(layer.pyramid, 'clear', noop);
+			const clear = sinon.stub(layer.pyramid, 'clear').callsFake(noop);
 
 			layer.onRemove(plot);
 			assert(layer.plot === null);
@@ -216,8 +216,8 @@ describe('Layer', () => {
 			const layer = new Layer({
 				renderer: renderer
 			});
-			sinon.stub(layer, 'refresh', noop);
-			const clear = sinon.stub(layer.pyramid, 'clear', noop);
+			sinon.stub(layer, 'refresh').callsFake(noop);
+			const clear = sinon.stub(layer.pyramid, 'clear').callsFake(noop);
 			layer.onAdd(plot);
 			layer.onRemove(plot);
 			assert(clear.calledOnce);
@@ -226,8 +226,8 @@ describe('Layer', () => {
 			const layer = new Layer({
 				renderer: renderer
 			});
-			sinon.stub(layer, 'refresh', noop);
-			const onRemove = sinon.stub(renderer, 'onRemove', noop);
+			sinon.stub(layer, 'refresh').callsFake(noop);
+			const onRemove = sinon.stub(renderer, 'onRemove').callsFake(noop);
 			layer.onAdd(plot);
 			layer.onRemove(plot);
 			assert(onRemove.calledOnce);
@@ -289,7 +289,7 @@ describe('Layer', () => {
 		});
 		it('should called `requestTiles` if the layer is attached to a plot and the layer was previously muted', () => {
 			const layer = new Layer();
-			const requestTiles = sinon.stub(layer, 'requestTiles', noop);
+			const requestTiles = sinon.stub(layer, 'requestTiles').callsFake(noop);
 			layer.onAdd(plot);
 			layer.mute();
 			layer.unmute();
@@ -365,7 +365,7 @@ describe('Layer', () => {
 		});
 		it('should call `requestTiles` on the layer\'s tile pyramid if the layer is not muted', () => {
 			const layer = new Layer();
-			const requestTiles = sinon.stub(layer.pyramid, 'requestTiles', noop);
+			const requestTiles = sinon.stub(layer.pyramid, 'requestTiles').callsFake(noop);
 			layer.requestTiles([]);
 			assert(requestTiles.calledOnce);
 		});
