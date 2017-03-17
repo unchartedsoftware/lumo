@@ -39,6 +39,18 @@ class Bounds {
 	}
 
 	/**
+	 * Get the center coordinate of the bounds.
+	 *
+	 * @returns {Object} The center coordinate of the bounds.
+	 */
+	center() {
+		return {
+			x: this.left + (this.width() / 2),
+			y: this.bottom + (this.height() / 2)
+		};
+	}
+
+	/**
 	 * Test if the bounds equals another.
 	 *
 	 * @param {Bounds} bounds - The bounds object to test.

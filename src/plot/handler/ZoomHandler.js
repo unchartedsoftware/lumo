@@ -137,8 +137,6 @@ const zoom = function(plot, targetPx, zoomDelta, duration) {
 				targetPx: targetPx
 			});
 		}
-		// request tiles
-		Request.zoomRequest(plot);
 		// emit zoom start
 		plot.emit(EventType.ZOOM_START, new ZoomEvent(plot, plot.zoom, plot.zoom, targetZoom));
 		// if there isn't a duration
@@ -149,6 +147,8 @@ const zoom = function(plot, targetPx, zoomDelta, duration) {
 			// emit zoom end
 			plot.emit(EventType.ZOOM_END,  new ZoomEvent(plot, targetZoom, targetZoom, targetZoom));
 		}
+		// request tiles
+		Request.zoomRequest(plot);
 	}
 };
 
