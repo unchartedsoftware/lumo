@@ -64,15 +64,15 @@ base.requestTile = (coord, done) => {
 
 plot.addLayer(base);
 
-// WebGL Point Overlay Layer
+// WebGL Point Layer
 
-const overlay = new lumo.Layer({
+const points = new lumo.Layer({
 	renderer: new lumo.PointRenderer({
 		color: [ 0.4, 1.0, 0.1, 0.8 ]
 	})
 });
 
-overlay.requestTile = (coord, done) => {
+points.requestTile = (coord, done) => {
 	const NUM_POINTS = 256 * 32;
 	const buffer = new Float32Array(3 * NUM_POINTS);
 	for (let i=0; i<NUM_POINTS; i++) {
@@ -83,7 +83,7 @@ overlay.requestTile = (coord, done) => {
 	done(null, buffer);
 };
 
-plot.addLayer(overlay);
+plot.addLayer(points);
 ```
 
 ## Usage
@@ -214,11 +214,20 @@ There are three coordinate systems used by Lumo. Tile coordinates, plot coordina
 
 - **Tile Coordinates** have three components and follow the TMS specification in the format of {z, x, y}. Each zoom level increases the number of tiles in each dimension by a power of two.
 
-- **Plot Coordinates** have two components and are relative to the bottom-left corner of the plot.
+- **Plot Coordinates** have two components and are the pixel offsets relative to the bottom-left corner of the plot.
 
-- **Viewport Coordinates** have two components and are relative to the bottom-left corner of the viewport.
+- **Normalized Plot Coordinates** have two components in the range [0 : 1] and are relative to the bottom-left corner of the plot.
 
-The `lumo.Plot` object has convenience methods (`plot.viewPxToPlotPx` and `plot.plotPxToViewPx`) for converting between pixel coordinates. It also has two methods for converting from a native DOM MouseEvent to the respective coordinates (`plot.mouseToPlotPX` and `plot.mouseToViewPx`).
+- **Viewport Coordinates** have two components and are the pixel offsets relative to the bottom-left corner of the viewport.
+
+The `lumo.Plot` object has a set of transitive convenience methods for converting between coordinates:
+
+- **mouseToViewPx**: Converts a native DOM MouseEvent to the view pixel coordinates.
+- **mouseToPlotPx**: Converts a native DOM MouseEvent to the plot pixel coordinates.
+- **viewPxToPlotPx**: Converts a view pixel coordinate to plot pixel coordinates.
+- **plotPxToViewPx**: Converts a plot pixel coordinate to view pixel coordinates.
+- **normalizedPlotToPlotPx**: Converts a normalized plot coordinate to plot pixel coordinates.
+- **plotPxToNormalizedPlot**: Converts a plot pixel coordinate to normalized plot coordinates.
 
 ### Events
 
@@ -228,33 +237,33 @@ The following events are emitted by Lumo:
 
 #### Plot
 
-- **click** emitted when the plot is clicked.
-- **dblclick** emitted when the plot is double clicked.
-- **mousemove** emitted when the mouse is moved over the plot.
-- **mousedown** emitted when the mouse button is pressed over the plot.
-- **mouseup** emitted when the mouse button is released over the plot.
-- **mouseover** emitted when the mouse is moved over the plot.
-- **mouseout** emitted when the mouse is moved outside of the plot.
-- **zoomstart** emitted when a new zoom event is handled.
-- **zoom** emitted during each frame of a zoom animation.
-- **zoomend** emitted when a zoom event is complete.
-- **panstart** emitted when a new pan event is handled.
-- **pan** emitted during each frame of a pan animation.
-- **panend** emitted when a pan event is complete.
-- **frame** emitted at the beginning of every render frame.
-- **resize** emitted whenever the plot dimensions change.
+- **click**: Emitted when the plot is clicked.
+- **dblclick**: Emitted when the plot is double clicked.
+- **mousemove**: Emitted when the mouse is moved over the plot.
+- **mousedown**: Emitted when the mouse button is pressed over the plot.
+- **mouseup**: Emitted when the mouse button is released over the plot.
+- **mouseover**: Emitted when the mouse is moved over the plot.
+- **mouseout**: Emitted when the mouse is moved outside of the plot.
+- **zoomstart**: Emitted when a new zoom event is handled.
+- **zoom**: Emitted during each frame of a zoom animation.
+- **zoomend**: Emitted when a zoom event is complete.
+- **panstart**: Emitted when a new pan event is handled.
+- **pan**: Emitted during each frame of a pan animation.
+- **panend**: Emitted when a pan event is complete.
+- **frame**: Emitted at the beginning of every render frame.
+- **resize**: Emitted whenever the plot dimensions change.
 
 #### Layer
 
-- **tilerequest** emitted when a tile is requested for a layer.
-- **tileadd** emitted when a tile is received and added to the layer.
-- **tilefailure** emitted when a tile request fails and the tile cannot be added to the layer.
-- **tilediscard** emitted when a tile is received but is no longer in view and is discarded.
-- **tileremove** emitted when a tile is evicted from the layer.
-- **load** emitted when a all pending tiles have loaded for the layer.
-- **zoomstart** emitted when a new zoom event is handled.
-- **zoom** emitted during each frame of a zoom animation.
-- **zoomend** emitted when a zoom event is complete.
-- **panstart** emitted when a new pan event is handled.
-- **pan** emitted during each frame of a pan animation.
-- **panend** emitted when a pan event is complete.
+- **tilerequest**: Emitted when a tile is requested for a layer.
+- **tileadd**: Emitted when a tile is received and added to the layer.
+- **tilefailure**: Emitted when a tile request fails and the tile cannot be added to the layer.
+- **tilediscard**: Emitted when a tile is received but is no longer in view and is discarded.
+- **tileremove**: Emitted when a tile is evicted from the layer.
+- **load**: Emitted when a all pending tiles have loaded for the layer.
+- **zoomstart**: Emitted when a new zoom event is handled.
+- **zoom**: Emitted during each frame of a zoom animation.
+- **zoomend**: Emitted when a zoom event is complete.
+- **panstart**: Emitted when a new pan event is handled.
+- **pan**: Emitted during each frame of a pan animation.
+- **panend**: Emitted when a pan event is complete.
