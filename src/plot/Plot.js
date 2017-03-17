@@ -381,6 +381,39 @@ class Plot extends EventEmitter {
 	}
 
 	/**
+	 * Takes a normalized plot position and returns the corresponding plot pixel
+	 * position. Coordinate [0, 0] is bottom-left of the plot.
+	 *
+	 * @param {Object} pos - The normalized plot position.
+	 *
+	 * @returns {Object} The plot pixel position.
+	 */
+	normalizedPlotToPlotPx(pos) {
+		const extent = Math.pow(2, this.getTargetZoom()) * this.tileSize;
+		return {
+			x: pos.x * extent,
+			y: pos.y * extent
+		};
+	}
+
+	/**
+	 * Takes a plot pixel position and returns the corresponding normalized
+	 * plot position. Coordinate [0, 0] is bottom-left of the plot and [1, 1] is
+	 * the top-right.
+	 *
+	 * @param {Object} px - The plot pixel position.
+	 *
+	 * @returns {Object} The normalized plot position.
+	 */
+	plotPxToNormalizedPlot(px) {
+		const extent = Math.pow(2, this.getTargetZoom()) * this.tileSize;
+		return {
+			x: px.x / extent,
+			y: px.y / extent
+		};
+	}
+
+	/**
 	 * Returns the target zoom of the plot. If the plot is actively zooming, it
 	 * will return the destination zoom. If the plot is not actively zooming, it
 	 * will return the current zoom.
@@ -447,6 +480,8 @@ class Plot extends EventEmitter {
 	 *
 	 * @param {Number} level - The target plot pixel.
 	 * @param {boolean} animate - Whether or not to animate the pan. Defaults to `true`.
+	 *
+	 * @returns {Plot} The plot object, for chaining.
 	 */
 	panTo(plotPx, animate = true) {
 		// cancel existing animations
@@ -457,6 +492,7 @@ class Plot extends EventEmitter {
 			this.zoomAnimation.cancel();
 		}
 		this.handlers.get('pan').panTo(plotPx, animate);
+		return this;
 	}
 
 	/**
@@ -465,6 +501,8 @@ class Plot extends EventEmitter {
 	 *
 	 * @param {Number} level - The target zoom level.
 	 * @param {boolean} animate - Whether or not to animate the zoom. Defaults to `true`.
+	 *
+	 * @returns {Plot} The plot object, for chaining.
 	 */
 	zoomTo(level, animate = true) {
 		if (this.isPanning()) {
@@ -474,6 +512,39 @@ class Plot extends EventEmitter {
 			this.zoomAnimation.cancel();
 		}
 		this.handlers.get('zoom').zoomTo(level, animate);
+		return this;
+	}
+
+	/**
+	 * Fit the plot to a provided bounds in normalized plot coordinates.
+	 *
+	 * @param {Bounds} bounds - The bounds object, in normalized plot coordinates.
+	 *
+	 * @returns {Plot} The plot object, for chaining.
+	 */
+	fitToBounds(bounds) {
+		const currentZoom = this.getTargetZoom();
+		const extent = Math.pow(2, currentZoom) * this.tileSize;
+		const vWidth = this.viewport.width;
+		const vHeight = this.viewport.height;
+		const bWidth = bounds.width() * extent;
+		const bHeight = bounds.height() * extent;
+		const scaleX = vWidth / bWidth;
+		const scaleY = vHeight / bHeight;
+		const scale = Math.min(scaleX, scaleY);
+		let zoom = Math.log2(scale) + currentZoom;
+		zoom = clamp(zoom, this.minZoom, this.maxZoom);
+		if (!this.continuousZoom) {
+			zoom = Math.floor(zoom);
+		}
+		const bCenter = bounds.center();
+		const center = {
+			x: bCenter.x * Math.pow(2, zoom) * this.tileSize,
+			y: bCenter.y * Math.pow(2, zoom) * this.tileSize
+		};
+		this.zoomTo(zoom, false);
+		this.panTo(center, false);
+		return this;
 	}
 
 	/**
