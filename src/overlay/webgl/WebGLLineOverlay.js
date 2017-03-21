@@ -8,6 +8,13 @@ const WebGLOverlay = require('./WebGLOverlay');
 // Constants
 
 /**
+ * Max zoom supported by the overlay.
+ * @private
+ * @constant
+ */
+const MAX_ZOOM = 16;
+
+/**
  * Zoom start event handler symbol.
  * @private
  * @constant
@@ -38,7 +45,7 @@ const SHADER_GLSL = {
 		uniform float uPixelRatio;
 		uniform mat4 uProjectionMatrix;
 		void main() {
-			vec2 wPosition = (aPosition * uExtent) + (aNormal * uLineWidth * uPixelRatio) + uViewOffset;
+			vec2 wPosition = (aPosition * uExtent) - uViewOffset + (aNormal * uLineWidth * uPixelRatio);
 			gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
 		}
 		`,
@@ -571,12 +578,14 @@ class WebGLLineOverlay extends WebGLOverlay {
 	/**
 	 * Remove all polylines from the layer.
 	 *
+	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
 	 */
 	clearPolylines() {
 		this.polyLines = new Map();
 		if (this.plot) {
 			this.buffers = new Map();
 		}
+		return this;
 	}
 
 	/**
@@ -587,13 +596,17 @@ class WebGLLineOverlay extends WebGLOverlay {
 	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
 	 */
 	draw() {
+		if (this.plot.zoom > MAX_ZOOM) {
+			return;
+		}
+
 		const gl = this.gl;
 		const shader = this.shader;
 		const buffers = this.buffers;
 		const plot = this.plot;
 		const proj = this.getOrthoMatrix();
 		const extent = Math.pow(2, plot.zoom) * plot.tileSize;
-		const offset = [ -plot.viewport.x, -plot.viewport.y ];
+		const offset = [ plot.viewport.x, plot.viewport.y ];
 
 		// set blending func
 		gl.enable(gl.BLEND);
