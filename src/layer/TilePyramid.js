@@ -156,7 +156,7 @@ const shouldDiscard = function(pyramid, tile) {
 	// check if tile is in view, if not, discard
 	const viewport = plot.getTargetViewport();
 	const zoom = plot.getTargetZoom();
-	return !viewport.isInView(plot.tileSize, tile.coord, zoom);
+	return !viewport.isInView(plot.tileSize, tile.coord, zoom, plot.wraparound);
 };
 
 /**

@@ -46,9 +46,11 @@ describe('Viewport', () => {
 			});
 			const bounds = viewport.getPixelBounds();
 			assert(bounds.left === 0);
-			assert(bounds.right === 255);
+			assert(bounds.right === 256);
 			assert(bounds.bottom === 0);
-			assert(bounds.top === 255);
+			assert(bounds.top === 256);
+			assert(bounds.width() === 256);
+			assert(bounds.height() === 256);
 		});
 	});
 
