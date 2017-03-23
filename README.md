@@ -32,7 +32,7 @@ Lumo is written in ES6 and requires a 6.x+ distribution of [node](http://nodejs.
 
 ## Example
 
-The following is a simple application that creates a single `lumo.Plot` and attaches two `lumo.Layer` objects. The first layer `base` retrieves [CARTO Basemap tiles](https://carto.com/location-data-services/basemaps/) and renders them using the `lumo.TextureRenderer`. The `overlay` layer generates random points of varying radius and renders them with the `lumo.PointRenderer`.
+The following is a simple application that creates a single `lumo.Plot` and attaches two `lumo.Layer` objects. The first layer `base` retrieves [CARTO Basemap tiles](https://carto.com/location-data-services/basemaps/) and renders them using the `lumo.TextureRenderer`. The `points` layer generates random points of varying radius and renders them with the `lumo.PointRenderer`.
 
 * [JSFiddle Example](https://jsfiddle.net/1rmbdmsw/)
 

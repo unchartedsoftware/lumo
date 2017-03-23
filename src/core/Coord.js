@@ -1,7 +1,5 @@
 'use strict';
 
-const Bounds = require('./Bounds');
-
 // Private Methods
 
 const mod = function(n, m) {
