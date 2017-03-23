@@ -594,7 +594,7 @@ class Plot extends EventEmitter {
 		if (this.isZooming()) {
 			this.zoomAnimation.cancel();
 		}
-		this.handlers.get('pan').panTo(plotPx, animate);
+		this.handlers.get(PAN).panTo(plotPx, animate);
 		return this;
 	}
 
@@ -614,7 +614,7 @@ class Plot extends EventEmitter {
 		if (this.isZooming()) {
 			this.zoomAnimation.cancel();
 		}
-		this.handlers.get('zoom').zoomTo(level, animate);
+		this.handlers.get(ZOOM).zoomTo(level, animate);
 		return this;
 	}
 
