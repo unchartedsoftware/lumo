@@ -2,12 +2,13 @@
 
 const clamp = require('lodash/clamp');
 const defaultTo = require('lodash/defaultTo');
+const throttle = require('lodash/throttle');
 const EventEmitter = require('events');
+const Coord = require('../core/Coord');
 const EventType = require('../event/EventType');
 const FrameEvent = require('../event/FrameEvent');
 const ResizeEvent = require('../event/ResizeEvent');
 const RenderBuffer = require('../render/webgl/texture/RenderBuffer');
-const Request = require('./Request');
 const Viewport = require('./Viewport');
 const ClickHandler = require('./handler/ClickHandler');
 const MouseHandler = require('./handler/MouseHandler');
@@ -17,13 +18,73 @@ const ZoomHandler = require('./handler/ZoomHandler');
 // Constants
 
 /**
+ * Pan request throttle in milliseconds.
+ * @private
+ * @constant {Number}
+ */
+const PAN_THROTTLE_MS = 100;
+
+/**
+ * Resize request throttle in milliseconds.
+ * @private
+ * @constant {Number}
+ */
+const RESIZE_THROTTLE_MS = 200;
+
+/**
+ * Zoom request throttle in milliseconds.
+ * @private
+ * @constant {Number}
+ */
+const ZOOM_THROTTLE_MS = 400;
+
+/**
  * The maximum zoom level supported.
  * @private
  * @constant {Number}
  */
 const MAX_ZOOM = 24;
 
+/**
+ * Click handler symbol.
+ * @private
+ * @constant
+ */
+const CLICK = Symbol();
+
+/**
+ * Mouse handler symbol.
+ * @private
+ * @constant
+ */
+const MOUSE = Symbol();
+
+/**
+ * Pan handler symbol.
+ * @private
+ * @constant
+ */
+const PAN = Symbol();
+
+/**
+ * Zoom handler symbol.
+ * @private
+ * @constant
+ */
+const ZOOM = Symbol();
+
 // Private Methods
+
+const requestTiles = function() {
+	// get all visible coords in the target viewport
+	const coords = this.getVisibleCoords();
+	// for each layer
+	this.layers.forEach(layer => {
+		// request tiles
+		layer.requestTiles(coords);
+	});
+	return this;
+};
 
 const resize = function(plot) {
 	const current = {
@@ -56,7 +117,7 @@ const resize = function(plot) {
 		// re-center viewport
 		plot.viewport.centerOn(center);
 		// request tiles
-		Request.requestTiles(plot);
+		plot.resizeRequest();
 		// emit resize
 		plot.emit(EventType.RESIZE, new ResizeEvent(plot, prev, current));
 	}
@@ -129,7 +190,7 @@ const frame = function(plot) {
 	// apply the pan animation
 	if (plot.isPanning()) {
 		plot.panAnimation.update(timestamp);
-		Request.panRequest(plot);
+		plot.panRequest();
 	}
 
 	// reset viewport / plot
@@ -167,6 +228,10 @@ class Plot extends EventEmitter {
 	 * @param {Number} options.maxZoom - The maximum zoom of the plot.
 	 * @param {Object} options.center - The center of the plot, in plot pixels.
 	 * @param {boolean} options.wraparound - Whether or not the plot wraps around.
+	 *
+	 * @param {Number} options.panThrottle - Pan request throttle timeout in ms.
+	 * @param {Number} options.resizeThrottle - Resize request throttle timeout in ms.
+	 * @param {Number} options.zoomThrottle - Zoom request throttle timeout in ms.
 	 *
 	 * @param {Number} options.inertia - Whether or not pan inertia is enabled.
 	 * @param {Number} options.inertiaEasing - The inertia easing factor.
@@ -235,12 +300,26 @@ class Plot extends EventEmitter {
 
 		// create and enable handlers
 		this.handlers = new Map();
-		this.handlers.set('click', new ClickHandler(this, options));
-		this.handlers.set('mouse', new MouseHandler(this, options));
-		this.handlers.set('pan', new PanHandler(this, options));
-		this.handlers.set('zoom', new ZoomHandler(this, options));
+		this.handlers.set(CLICK, new ClickHandler(this, options));
+		this.handlers.set(MOUSE, new MouseHandler(this, options));
+		this.handlers.set(PAN, new PanHandler(this, options));
+		this.handlers.set(ZOOM, new ZoomHandler(this, options));
 		this.handlers.forEach(handler => {
 			handler.enable();
+		});
+
+		// throttled request methods
+		const panThrottle = defaultTo(options.panThrottle, PAN_THROTTLE_MS);
+		const resizeThrottle = defaultTo(options.resizeThrottle, RESIZE_THROTTLE_MS);
+		const zoomThrottle = defaultTo(options.zoomThrottle, ZOOM_THROTTLE_MS);
+		this.panRequest = throttle(requestTiles, panThrottle, {
+			leading: false // invoke only on trailing edge
+		});
+		this.resizeRequest = throttle(requestTiles, resizeThrottle, {
+			leading: false // invoke only on trailing edge
+		});
+		this.zoomRequest = throttle(requestTiles, zoomThrottle, {
+			leading: false // invoke only on trailing edge
 		});
 
 		// layers
@@ -436,7 +515,10 @@ class Plot extends EventEmitter {
 	 * @returns {Object} The plot pixel position.
 	 */
 	normalizedPlotToPlotPx(pos) {
-		const extent = Math.pow(2, this.getTargetZoom()) * this.tileSize;
+		const tileZoom = Math.round(this.zoom);
+		const scale = Math.pow(2, this.zoom - tileZoom);
+		const scaledTileSize = this.tileSize * scale;
+		const extent = Math.pow(2, this.zoom) * scaledTileSize;
 		return {
 			x: pos.x * extent,
 			y: pos.y * extent
@@ -453,11 +535,32 @@ class Plot extends EventEmitter {
 	 * @returns {Object} The normalized plot position.
 	 */
 	plotPxToNormalizedPlot(px) {
-		const extent = Math.pow(2, this.getTargetZoom()) * this.tileSize;
+		const tileZoom = Math.round(this.zoom);
+		const scale = Math.pow(2, this.zoom - tileZoom);
+		const scaledTileSize = this.tileSize * scale;
+		const extent = Math.pow(2, this.zoom) * scaledTileSize;
 		return {
 			x: px.x / extent,
 			y: px.y / extent
 		};
+	}
+
+	/**
+	 * Takes a plot pixel position and returns the corresponding tile
+	 * coordinate it is inside.
+	 *
+	 * @param {Object} px - The plot pixel position.
+	 *
+	 * @returns {Coord} The tile coordinate position.
+	 */
+	plotPxToCoord(px) {
+		const tileZoom = Math.round(this.zoom);
+		const scale = Math.pow(2, this.zoom - tileZoom);
+		const scaledTileSize = this.tileSize * scale;
+		return new Coord(
+			tileZoom,
+			Math.floor(px.x / scaledTileSize),
+			Math.floor(px.y / scaledTileSize));
 	}
 
 	/**

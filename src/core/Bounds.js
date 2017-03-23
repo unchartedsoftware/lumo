@@ -39,6 +39,48 @@ class Bounds {
 	}
 
 	/**
+	 * Extends the bounds by the provided point or bounds object.
+	 *
+	 * @param {Object|Bounds} arg - The point or bounds to extend the bounds by.
+	 *
+	 * @returns {Bounds} - The bounds object, for chaining.
+	 */
+	extend(arg) {
+		if (arg.left !== undefined &&
+			arg.right !== undefined &&
+			arg.bottom !== undefined &&
+			arg.top !== undefined) {
+			// bounds
+			if (arg.left < this.left) {
+				this.left = arg.left;
+			}
+			if (arg.right > this.right) {
+				this.right = arg.right;
+			}
+			if (arg.bottom < this.bottom) {
+				this.bottom = arg.bottom;
+			}
+			if (arg.top > this.top) {
+				this.top = arg.top;
+			}
+		} else {
+			// point
+			if (arg.x < this.left) {
+				this.left = arg.x;
+			}
+			if (arg.x > this.right) {
+				this.right = arg.x;
+			}
+			if (arg.y < this.bottom) {
+				this.bottom = arg.y;
+			}
+			if (arg.y > this.top) {
+				this.top = arg.y;
+			}
+		}
+	}
+
+	/**
 	 * Get the center coordinate of the bounds.
 	 *
 	 * @returns {Object} The center coordinate of the bounds.
@@ -67,7 +109,7 @@ class Bounds {
 	/**
 	 * Test if the bounds overlaps another. Test is inclusive of edges.
 	 *
-	 * @param {Bounds} other - The bounds object to test.
+	 * @param {Bounds} bounds - The bounds object to test.
 	 *
 	 * @returns {boolean} Whether or not the bounds overlap eachother.
 	 */
@@ -83,7 +125,7 @@ class Bounds {
 	 * Return the intersection of the bounds. Test is inclusive of edges. If
 	 * the bounds do not intersect, returns undefined.
 	 *
-	 * @param {Bounds} other - The bounds object to intersect.
+	 * @param {Bounds} bounds - The bounds object to intersect.
 	 *
 	 * @returns {Bounds} The intersection of both bounds.
 	 */

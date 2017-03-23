@@ -4,7 +4,6 @@ const defaultTo = require('lodash/defaultTo');
 const PanAnimation = require('../animation/PanAnimation');
 const EventType = require('../../event/EventType');
 const PanEvent = require('../../event/PanEvent');
-const Request = require('./../Request');
 
 // Constants
 
@@ -59,7 +58,7 @@ const pan = function(plot, delta) {
 	plot.viewport.x = current.x;
 	plot.viewport.y = current.y;
 	// request tiles
-	Request.panRequest(plot);
+	plot.panRequest();
 	// emit pan
 	plot.emit(EventType.PAN, new PanEvent(plot, prev, current));
 };

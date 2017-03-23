@@ -38,6 +38,42 @@ describe('Bounds', () => {
 		});
 	});
 
+	describe('#extend()', () => {
+		it('should extend the bounds by the provided point', () => {
+			const bounds = new Bounds(0, 1, 0, 1);
+			bounds.extend({
+				x: -2,
+				y: -2
+			});
+			bounds.extend({
+				x: 2,
+				y: 2
+			});
+			assert(bounds.left === -2);
+			assert(bounds.right === 2);
+			assert(bounds.bottom === -2);
+			assert(bounds.top === 2);
+		});
+		it('should extend the bounds by the provided point', () => {
+			const bounds = new Bounds(0, 1, 0, 1);
+			bounds.extend(new Bounds(-2, 2, -2, 2));
+			assert(bounds.left === -2);
+			assert(bounds.right === 2);
+			assert(bounds.bottom === -2);
+			assert(bounds.top === 2);
+			bounds.extend(new Bounds(4, 8, 4, 8));
+			assert(bounds.left === -2);
+			assert(bounds.right === 8);
+			assert(bounds.bottom === -2);
+			assert(bounds.top === 8);
+			bounds.extend(new Bounds(-8, -4, -8, -4));
+			assert(bounds.left === -8);
+			assert(bounds.right === 8);
+			assert(bounds.bottom === -8);
+			assert(bounds.top === 8);
+		});
+	});
+
 	describe('#center()', () => {
 		it('should return the center coordinate of the bounds', () => {
 			const bounds = new Bounds(

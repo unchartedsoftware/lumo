@@ -6,7 +6,6 @@ const Browser = require('../../core/Browser');
 const EventType = require('../../event/EventType');
 const ZoomEvent = require('../../event/ZoomEvent');
 const ZoomAnimation = require('../animation/ZoomAnimation');
-const Request = require('../Request');
 const Viewport = require('../Viewport');
 
 // Constants
@@ -148,7 +147,7 @@ const zoom = function(plot, targetPx, zoomDelta, duration) {
 			plot.emit(EventType.ZOOM_END,  new ZoomEvent(plot, targetZoom, targetZoom, targetZoom));
 		}
 		// request tiles
-		Request.zoomRequest(plot);
+		plot.zoomRequest();
 	}
 };
 
