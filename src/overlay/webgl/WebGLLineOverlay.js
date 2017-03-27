@@ -426,7 +426,7 @@ function createTriangles(p0, p1, p2, positions, normals, lineWidth) {
 	}
 }
 
-const bufferPolyLine = function(points, normals) {
+const bufferPolyline = function(points, normals) {
 	const buffer = new Float32Array(points.length * 4);
 	for (let i=0; i<points.length; i++) {
 		const point = points[i];
@@ -444,7 +444,7 @@ const createVertexBuffer = function(overlay, points) {
 	const scale = Math.pow(2, Math.floor(plot.getTargetZoom()));
 	const lineWidth = (overlay.lineWidth * plot.pixelRatio) / (scale * plot.tileSize);
 	const geometry = getStrokeGeometry(points, lineWidth);
-	const data = bufferPolyLine(geometry.positions, geometry.normals);
+	const data = bufferPolyline(geometry.positions, geometry.normals);
 	return new VertexBuffer(
 		overlay.gl,
 		data,
@@ -552,7 +552,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 	 *
 	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
 	 */
-	addPolyLine(id, points) {
+	addPolyline(id, points) {
 		this.polyLines.set(id, points);
 		if (this.plot) {
 			this.buffers.set(id, createVertexBuffer(this, points));
