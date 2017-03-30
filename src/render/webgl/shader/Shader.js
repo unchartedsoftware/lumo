@@ -63,12 +63,28 @@ const setAttributesAndUniforms = function(shader, vertSource, fragSource) {
 	});
 };
 
+const formatLine = function(str, num) {
+	str = str.toString();
+	const diff = num - str.length;
+	str += ':';
+	for (let i=0; i<diff; i++) {
+		str += ' ';
+	}
+	return str;
+};
+
 const compileShader = function(gl, shaderSource, type) {
 	const shader = gl.createShader(gl[type]);
 	gl.shaderSource(shader, shaderSource);
 	gl.compileShader(shader);
 	if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-		throw `An error occurred compiling the shader:\n${gl.getShaderInfoLog(shader)}`;
+		const split = shaderSource.split('\n');
+		const maxDigits = (split.length).toString().length + 1;
+		const srcByLines = split.map((line, index) => {
+			return `${formatLine(index+1, maxDigits)} ${line}`;
+		}).join('\n');
+		const shaderLog = gl.getShaderInfoLog(shader);
+		throw `An error occurred compiling the shader:\n\n${shaderLog.slice(0, shaderLog.length-1)}\n${srcByLines}`;
 	}
 	return shader;
 };
