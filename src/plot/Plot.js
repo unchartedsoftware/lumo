@@ -48,28 +48,28 @@ const MAX_ZOOM = 24;
 /**
  * Click handler symbol.
  * @private
- * @constant
+ * @constant {Symbol}
  */
 const CLICK = Symbol();
 
 /**
  * Mouse handler symbol.
  * @private
- * @constant
+ * @constant {Symbol}
  */
 const MOUSE = Symbol();
 
 /**
  * Pan handler symbol.
  * @private
- * @constant
+ * @constant {Symbol}
  */
 const PAN = Symbol();
 
 /**
  * Zoom handler symbol.
  * @private
- * @constant
+ * @constant {Symbol}
  */
 const ZOOM = Symbol();
 
@@ -628,7 +628,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Pans to the target plot pixel coordinate.
 	 *
-	 * @param {Number} level - The target plot pixel.
+	 * @param {Number} plotPx - The target plot pixel.
 	 * @param {boolean} animate - Whether or not to animate the pan. Defaults to `true`.
 	 *
 	 * @returns {Plot} The plot object, for chaining.

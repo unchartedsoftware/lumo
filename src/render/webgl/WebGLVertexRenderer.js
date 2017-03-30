@@ -10,14 +10,14 @@ const VertexAtlas = require('./vertex/VertexAtlas');
 /**
  * Add tile handler symbol.
  * @private
- * @constant
+ * @constant {Symbol}
  */
 const TILE_ADD = Symbol();
 
 /**
  * Remove tile handler symbol.
  * @private
- * @constant
+ * @constant {Symbol}
  */
 const TILE_REMOVE = Symbol();
 

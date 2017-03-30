@@ -14,21 +14,21 @@ const WebGLVertexRenderer = require('./WebGLVertexRenderer');
 /**
  * Click event handler symbol.
  * @private
- * @constant
+ * @constant {Symbol}
  */
 const CLICK = Symbol();
 
 /**
  * Mousemove event handler symbol.
  * @private
- * @constant
+ * @constant {Symbol}
  */
 const MOUSE_MOVE = Symbol();
 
 /**
  * Zoom start event handler symbol.
  * @private
- * @constant
+ * @constant {Symbol}
  */
 const ZOOM_START = Symbol();
 

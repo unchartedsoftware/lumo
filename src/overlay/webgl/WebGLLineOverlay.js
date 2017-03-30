@@ -4,27 +4,20 @@ const defaultTo = require('lodash/defaultTo');
 const VertexBuffer = require('../../render/webgl/vertex/VertexBuffer');
 const EventType = require('../../event/EventType');
 const WebGLOverlay = require('./WebGLOverlay');
+const Encode = require('./Encode');
 
 // Constants
 
 /**
- * Max zoom supported by the overlay.
- * @private
- * @constant
- */
-const MAX_ZOOM = 16;
-
-/**
  * Zoom start event handler symbol.
  * @private
- * @constant
+ * @constant {Symbol}
  */
 const ZOOM_START = Symbol();
 
 /**
- * Zoom end event handler symbol.
- * @private
- * @constant
+ * Zoom end ev
+ * @constant {Symbol}
  */
 const ZOOM_END = Symbol();
 
@@ -39,14 +32,20 @@ const SHADER_GLSL = {
 		precision highp float;
 		attribute vec2 aPosition;
 		attribute vec2 aNormal;
-		uniform vec2 uViewOffset;
+		uniform vec4 uViewOffset;
+		uniform vec2 uPlotExtent;
 		uniform float uLineWidth;
-		uniform float uExtent;
 		uniform float uPixelRatio;
 		uniform mat4 uProjectionMatrix;
+		${Encode.decodeGLSL}
 		void main() {
-			vec2 wPosition = (aPosition * uExtent) - uViewOffset + (aNormal * uLineWidth * uPixelRatio);
-			gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
+			vec4 wPosition64 = vec4(
+				(aPosition * HIGH_64(uPlotExtent)) - HIGH_VEC2_64(uViewOffset),
+				(aPosition * LOW_64(uPlotExtent)) - LOW_VEC2_64(uViewOffset)
+			);
+			vec2 wPosition32 = decodeVec2From64(wPosition64);
+			vec2 normalOffset = aNormal * uLineWidth * uPixelRatio;
+			gl_Position = uProjectionMatrix * vec4(wPosition32 + normalOffset, 0.0, 1.0);
 		}
 		`,
 	frag:
@@ -60,7 +59,15 @@ const SHADER_GLSL = {
 		`
 };
 
-// http://labs.hyperandroid.com/efficient-webgl-stroking
+// Private Methods
+
+// NOTE: smooth / round lines implemented using code modified from:
+// http://labs.hyperandroid.com/efficient-webgl-stroking . Instead of baking in
+// the positions of the lines, this implementation instead generates the points
+// along the middle of the line and stores the tangents as normals, allowing
+// the thickness to be arbtrarily scaled outwards independant of scale.
+// In order to prevent degeneration of normals due to self-intersections, the
+// triangles are generated upon zoom.
 
 const EPSILON = 0.000001;
 
@@ -238,7 +245,7 @@ const createRoundCap = function(center, p0, p1, nextPointInLine, positions, norm
 		}
 	}
 
-	const segmentsPerSemi = 8;
+	const segmentsPerSemi = 16;
 	const nsegments = Math.ceil(Math.abs(angleDiff / Math.PI) * segmentsPerSemi);
 
 	const angleInc = angleDiff / nsegments;
@@ -467,7 +474,7 @@ const createVertexBuffer = function(overlay, points) {
 };
 
 /**
- * Class representing an overlay.
+ * Class representing a webgl polyline overlay.
  */
 class WebGLLineOverlay extends WebGLOverlay {
 
@@ -477,7 +484,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 	constructor(options = {}) {
 		super(options);
 		this.lineColor = defaultTo(options.lineColor, [ 1.0, 0.4, 0.1, 0.8 ]);
-		this.lineWidth = defaultTo(options.lineWidth, 2);
+		this.lineWidth = defaultTo(options.lineWidth, 8);
 		this.polyLines = new Map();
 		this.buffers = null;
 		this.shader = null;
@@ -596,10 +603,6 @@ class WebGLLineOverlay extends WebGLOverlay {
 	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
 	 */
 	draw() {
-		if (this.plot.zoom > MAX_ZOOM) {
-			return;
-		}
-
 		const gl = this.gl;
 		const shader = this.shader;
 		const buffers = this.buffers;
@@ -617,12 +620,12 @@ class WebGLLineOverlay extends WebGLOverlay {
 
 		// set global uniforms
 		shader.setUniform('uProjectionMatrix', proj);
-		shader.setUniform('uViewOffset', offset);
-		shader.setUniform('uLineColor', this.lineColor);
-		shader.setUniform('uLineWidth', this.lineWidth / 2);
-		shader.setUniform('uExtent', extent);
-		shader.setUniform('uOpacity', this.opacity);
+		shader.setUniform('uViewOffset', Encode.encodeVec2From64(offset));
+		shader.setUniform('uPlotExtent', Encode.encodeFrom64(extent));
 		shader.setUniform('uPixelRatio', plot.pixelRatio);
+		shader.setUniform('uLineWidth', this.lineWidth / 2);
+		shader.setUniform('uLineColor', this.lineColor);
+		shader.setUniform('uOpacity', this.opacity);
 
 		// for each polyline buffer
 		buffers.forEach(buffer => {

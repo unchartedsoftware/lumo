@@ -3,15 +3,9 @@
 const defaultTo = require('lodash/defaultTo');
 const VertexBuffer = require('../../render/webgl/vertex/VertexBuffer');
 const WebGLOverlay = require('./WebGLOverlay');
+const Encode = require('./Encode');
 
 // Constants
-
-/**
- * Max zoom supported by the overlay.
- * @private
- * @constant
- */
-const MAX_ZOOM = 16;
 
 /**
  * Shader GLSL source.
@@ -23,15 +17,22 @@ const SHADER_GLSL = {
 		`
 		precision highp float;
 		attribute vec2 aPosition;
-		uniform vec2 uViewOffset;
-		uniform float uPointRadius;
-		uniform float uExtent;
+		attribute vec2 aNormal;
+		uniform vec4 uViewOffset;
+		uniform vec2 uPlotExtent;
+		uniform float uLineWidth;
 		uniform float uPixelRatio;
+		uniform float uPointRadius;
 		uniform mat4 uProjectionMatrix;
+		${Encode.decodeGLSL}
 		void main() {
-			vec2 wPosition = (aPosition * uExtent) - uViewOffset;
+			vec4 wPosition64 = vec4(
+				(aPosition * HIGH_64(uPlotExtent)) - HIGH_VEC2_64(uViewOffset),
+				(aPosition * LOW_64(uPlotExtent)) - LOW_VEC2_64(uViewOffset)
+			);
+			vec2 wPosition32 = decodeVec2From64(wPosition64);
+			gl_Position = uProjectionMatrix * vec4(wPosition32, 0.0, 1.0);
 			gl_PointSize = uPointRadius * 2.0 * uPixelRatio;
-			gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
 		}
 		`,
 	frag:
@@ -57,6 +58,8 @@ const SHADER_GLSL = {
 		}
 		`
 };
+
+// Private Methods
 
 const bufferPoints = function(points) {
 	const buffer = new Float32Array(points.length * 2);
@@ -86,7 +89,7 @@ const createVertexBuffer = function(gl, points) {
 };
 
 /**
- * Class representing an overlay.
+ * Class representing a webgl point overlay.
  */
 class WebGLPointOverlay extends WebGLOverlay {
 
@@ -187,10 +190,6 @@ class WebGLPointOverlay extends WebGLOverlay {
 	 * @returns {WebGLPointOverlay} The overlay object, for chaining.
 	 */
 	draw() {
-		if (this.plot.zoom > MAX_ZOOM) {
-			return;
-		}
-
 		const gl = this.gl;
 		const shader = this.shader;
 		const buffers = this.buffers;
@@ -208,8 +207,8 @@ class WebGLPointOverlay extends WebGLOverlay {
 
 		// set global uniforms
 		shader.setUniform('uProjectionMatrix', proj);
-		shader.setUniform('uViewOffset', offset);
-		shader.setUniform('uExtent', extent);
+		shader.setUniform('uViewOffset', Encode.encodeVec2From64(offset));
+		shader.setUniform('uPlotExtent', Encode.encodeFrom64(extent));
 		shader.setUniform('uPointColor', this.pointColor);
 		shader.setUniform('uPointRadius', this.pointRadius);
 		shader.setUniform('uPixelRatio', plot.pixelRatio);
