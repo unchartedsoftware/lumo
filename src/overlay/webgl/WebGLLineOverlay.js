@@ -2,24 +2,36 @@
 
 const defaultTo = require('lodash/defaultTo');
 const VertexBuffer = require('../../render/webgl/vertex/VertexBuffer');
+const Bounds = require('../../core/Bounds');
 const EventType = require('../../event/EventType');
 const WebGLOverlay = require('./WebGLOverlay');
-const Encode = require('./Encode');
 
 // Constants
 
 /**
- * Zoom start event handler symbol.
- * @private
+ * Pan event handler symbol.
  * @constant {Symbol}
  */
-const ZOOM_START = Symbol();
+const PAN = Symbol();
 
 /**
- * Zoom end ev
+ * Zoom event handler symbol.
  * @constant {Symbol}
  */
-const ZOOM_END = Symbol();
+const ZOOM = Symbol();
+
+/**
+ * The size of the cell.
+ * @constant {Number}
+ */
+const CELL_SIZE = Math.pow(2, 16);
+
+/**
+ * The size of the cell regeneration buffer, will regenerate the cell if you are
+ * within this many pixels to it's bounds.
+ * @constant {Number}
+ */
+const CELL_BUFFER = Math.pow(2, 8);
 
 /**
  * Shader GLSL source.
@@ -32,20 +44,14 @@ const SHADER_GLSL = {
 		precision highp float;
 		attribute vec2 aPosition;
 		attribute vec2 aNormal;
-		uniform vec4 uViewOffset;
-		uniform vec2 uPlotExtent;
+		uniform vec2 uViewOffset;
+		uniform float uScale;
 		uniform float uLineWidth;
 		uniform float uPixelRatio;
 		uniform mat4 uProjectionMatrix;
-		${Encode.decodeGLSL}
 		void main() {
-			vec4 wPosition64 = vec4(
-				(aPosition * HIGH_64(uPlotExtent)) - HIGH_VEC2_64(uViewOffset),
-				(aPosition * LOW_64(uPlotExtent)) - LOW_VEC2_64(uViewOffset)
-			);
-			vec2 wPosition32 = decodeVec2From64(wPosition64);
-			vec2 normalOffset = aNormal * uLineWidth * uPixelRatio;
-			gl_Position = uProjectionMatrix * vec4(wPosition32 + normalOffset, 0.0, 1.0);
+			vec2 wPosition = (aPosition * uScale) - uViewOffset + aNormal * uLineWidth * uPixelRatio;
+			gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
 		}
 		`,
 	frag:
@@ -447,9 +453,7 @@ const bufferPolyline = function(points, normals) {
 };
 
 const createVertexBuffer = function(overlay, points) {
-	const plot = overlay.plot;
-	const scale = Math.pow(2, Math.floor(plot.getTargetZoom()));
-	const lineWidth = (overlay.lineWidth * plot.pixelRatio) / (scale * plot.tileSize);
+	const lineWidth = overlay.lineWidth * overlay.plot.pixelRatio;
 	const geometry = getStrokeGeometry(points, lineWidth);
 	const data = bufferPolyline(geometry.positions, geometry.normals);
 	return new VertexBuffer(
@@ -473,6 +477,117 @@ const createVertexBuffer = function(overlay, points) {
 		});
 };
 
+const normalizePoint = function(pos, cell) {
+	// convert point into cell pixel space
+	return [
+		((pos.x * cell.scale) - cell.offsetPx.x),
+		((pos.y * cell.scale) - cell.offsetPx.y)
+	];
+};
+
+const clipPolylines = function(bounds, polylines, cell) {
+	const clipped = [];
+	polylines.forEach(polyline => {
+		let current = [];
+		for (let i=1; i<polyline.length; i++) {
+			const a = polyline[i-1];
+			const b = polyline[i];
+			// clip the line
+			const line = bounds.clipLine(
+				{ x: a[0], y: a[1] },
+				{ x: b[0], y: b[1] }
+			);
+			// no line in bounds
+			if (!line) {
+				continue;
+			}
+			// add src point
+			current.push(normalizePoint(line.a, cell));
+			if (line.b.clipped || i === polyline.length - 1) {
+				// only add destination point if it was clipped, or is last point
+				current.push(normalizePoint(line.b, cell));
+				// then break the polyline
+				clipped.push(current);
+				current = [];
+			}
+		}
+		if (current.length > 0) {
+			// add last polyline
+			clipped.push(current);
+		}
+	});
+	return clipped;
+};
+
+const getCell = function(plot) {
+	const zoom = Math.round(plot.getTargetZoom());
+	const scale = Math.pow(2, zoom) * plot.tileSize;
+	const centerPx = plot.getTargetCenter();
+	const center = {
+		x: centerPx.x / scale,
+		y: centerPx.y / scale
+	};
+	const offsetPx = {
+		x: centerPx.x - (CELL_SIZE / 2),
+		y: centerPx.y - (CELL_SIZE / 2)
+	};
+	return {
+		zoom: zoom,
+		halfSize: (CELL_SIZE / 2) / scale,
+		buffer: CELL_BUFFER / scale,
+		center: center,
+		offsetPx: offsetPx,
+		scale: scale
+	};
+};
+
+const generatePolylines = function(overlay, cell) {
+	// determine our cell bounds
+	const bounds = new Bounds(
+		cell.center.x - cell.halfSize,
+		cell.center.x + cell.halfSize,
+		cell.center.y - cell.halfSize,
+		cell.center.y + cell.halfSize);
+	// clear the buffers
+	overlay.buffers = [];
+	// trim polylines to only those that are intersect the cell
+	const polylines = clipPolylines(bounds, overlay.polylines, cell);
+	// generate the buffers
+	polylines.forEach(points => {
+		overlay.buffers.push(createVertexBuffer(overlay, points));
+	});
+	// store cell generation stats
+	overlay.cell = cell;
+};
+
+const regeneratePolylines = function(overlay, force) {
+	// get cell parameters
+	const cell = getCell(overlay.plot);
+
+	// check if a cell exists
+	if (force || !overlay.cell) {
+		// generate polylines
+		generatePolylines(overlay, cell);
+		return;
+	}
+
+	// check if we are outside of one zoom level from last
+	const zoomDist = Math.abs(overlay.cell.zoom - cell.zoom);
+	if (zoomDist >= 1) {
+		// generate polylines
+		generatePolylines(overlay, cell);
+		return;
+	}
+
+	// check if we are withing buffer distance of the cell bounds
+	if (Math.abs(cell.center.x - overlay.cell.center.x) > (overlay.cell.halfSize - overlay.cell.buffer) ||
+		Math.abs(cell.center.y - overlay.cell.center.y) > (overlay.cell.halfSize - overlay.cell.buffer)) {
+		// generate polylines
+		generatePolylines(overlay, cell);
+		return;
+	}
+};
+
 /**
  * Class representing a webgl polyline overlay.
  */
@@ -485,9 +600,10 @@ class WebGLLineOverlay extends WebGLOverlay {
 		super(options);
 		this.lineColor = defaultTo(options.lineColor, [ 1.0, 0.4, 0.1, 0.8 ]);
 		this.lineWidth = defaultTo(options.lineWidth, 8);
-		this.polyLines = new Map();
+		this.polylines = new Map();
 		this.buffers = null;
 		this.shader = null;
+		this.cell = null;
 	}
 
 	/**
@@ -500,36 +616,21 @@ class WebGLLineOverlay extends WebGLOverlay {
 	onAdd(plot) {
 		super.onAdd(plot);
 		this.shader = this.createShader(SHADER_GLSL);
-		this.buffers = new Map();
-		this.polyLines.forEach((points, id) => {
-			this.buffers.set(id, createVertexBuffer(this, points));
-		});
-		const zoomstart = () => {
-			// NOTE: only re-buffer on ZOOM_START if we are zooming OUT, as
-			// line normals may not scale well at extreme angles.
-			if (this.plot.getTargetZoom() > this.plot.zoom) {
-				return;
-			}
-			this.buffers.clear();
-			this.polyLines.forEach((points, id) => {
-				this.buffers.set(id, createVertexBuffer(this, points));
-			});
+		// generate the polylines
+		regeneratePolylines(this, true);
+		// create regeneration handlers
+		const pan = () => {
+			// attempt to regenerate the polylines
+			regeneratePolylines(this);
 		};
-		const zoomend = () => {
-			// NOTE: only re-buffer on ZOOM_START if we are zooming IN, as
-			// line normals may not scale well at extreme angles.
-			if (this.plot.getTargetZoom() < this.plot.zoom) {
-				return;
-			}
-			this.buffers.clear();
-			this.polyLines.forEach((points, id) => {
-				this.buffers.set(id, createVertexBuffer(this, points));
-			});
+		const zoom = () => {
+			// attempt to regenerate the polylines
+			regeneratePolylines(this);
 		};
-		this.handlers.set(ZOOM_START, zoomstart);
-		this.handlers.set(ZOOM_END, zoomend);
-		this.plot.on(EventType.ZOOM_START, zoomstart);
-		this.plot.on(EventType.ZOOM_END, zoomend);
+		this.handlers.set(PAN, pan);
+		this.handlers.set(ZOOM, zoom);
+		this.plot.on(EventType.PAN, pan);
+		this.plot.on(EventType.ZOOM, zoom);
 		return this;
 	}
 
@@ -542,12 +643,13 @@ class WebGLLineOverlay extends WebGLOverlay {
 	 */
 	onRemove(plot) {
 		super.onAdd(plot);
-		this.plot.removeListener(EventType.ZOOM_START, this.handlers.get(ZOOM_START));
-		this.plot.removeListener(EventType.ZOOM_END, this.handlers.get(ZOOM_END));
-		this.handlers.delete(ZOOM_START);
-		this.handlers.delete(ZOOM_END);
+		this.plot.removeListener(EventType.PAN, this.handlers.get(PAN));
+		this.plot.removeListener(EventType.ZOOM, this.handlers.get(ZOOM));
+		this.handlers.delete(PAN);
+		this.handlers.delete(ZOOM);
 		this.shader = null;
 		this.buffers = null;
+		this.cell = null;
 		return this;
 	}
 
@@ -560,9 +662,10 @@ class WebGLLineOverlay extends WebGLOverlay {
 	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
 	 */
 	addPolyline(id, points) {
-		this.polyLines.set(id, points);
+		this.polylines.set(id, points);
 		if (this.plot) {
-			this.buffers.set(id, createVertexBuffer(this, points));
+			// regenerate the polylines
+			regeneratePolylines(this, true);
 		}
 		return this;
 	}
@@ -575,9 +678,10 @@ class WebGLLineOverlay extends WebGLOverlay {
 	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
 	 */
 	removePolyline(id) {
-		this.polyLines.delete(id);
+		this.polylines.delete(id);
 		if (this.plot) {
-			this.buffers.delete(id);
+			// regenerate the polylines
+			regeneratePolylines(this, true);
 		}
 		return this;
 	}
@@ -588,9 +692,9 @@ class WebGLLineOverlay extends WebGLOverlay {
 	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
 	 */
 	clearPolylines() {
-		this.polyLines = new Map();
+		this.polylines = new Map();
 		if (this.plot) {
-			this.buffers = new Map();
+			this.buffers = null;
 		}
 		return this;
 	}
@@ -603,13 +707,24 @@ class WebGLLineOverlay extends WebGLOverlay {
 	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
 	 */
 	draw() {
+		if (!this.cell) {
+			console.log('no cell');
+			return;
+		}
+
 		const gl = this.gl;
 		const shader = this.shader;
 		const buffers = this.buffers;
 		const plot = this.plot;
+		const cell = this.cell;
 		const proj = this.getOrthoMatrix();
-		const extent = Math.pow(2, plot.zoom) * plot.tileSize;
-		const offset = [ plot.viewport.x, plot.viewport.y ];
+		const scale = Math.pow(2, plot.zoom - cell.zoom);
+
+		// get view offset relative to cell offset
+		const offset = [
+			plot.viewport.x - (cell.offsetPx.x * scale),
+			plot.viewport.y - (cell.offsetPx.y * scale)
+		];
 
 		// set blending func
 		gl.enable(gl.BLEND);
@@ -620,8 +735,8 @@ class WebGLLineOverlay extends WebGLOverlay {
 
 		// set global uniforms
 		shader.setUniform('uProjectionMatrix', proj);
-		shader.setUniform('uViewOffset', Encode.encodeVec2From64(offset));
-		shader.setUniform('uPlotExtent', Encode.encodeFrom64(extent));
+		shader.setUniform('uViewOffset', offset);
+		shader.setUniform('uScale', scale);
 		shader.setUniform('uPixelRatio', plot.pixelRatio);
 		shader.setUniform('uLineWidth', this.lineWidth / 2);
 		shader.setUniform('uLineColor', this.lineColor);
