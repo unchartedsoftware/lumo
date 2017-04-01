@@ -1,5 +1,6 @@
 'use strict';
 
+const defaultTo = require('lodash/defaultTo');
 const Shader = require('../../render/webgl/shader/Shader');
 const EventType = require('../../event/EventType');
 const Overlay = require('../Overlay');
@@ -98,7 +99,8 @@ class WebGLOverlay extends Overlay {
 
 		if (refresh) {
 			// generate new buffers
-			this.buffers = this.createBuffers(cell);
+			const buffers = defaultTo(this.createBuffers(cell), []);
+			this.buffers = Array.isArray(buffers) ? buffers : [ buffers ];
 			// update cell
 			this.cell = cell;
 		}

@@ -149,9 +149,10 @@ class WebGLPointOverlay extends WebGLOverlay {
 		// clip points to only those that are inside the cell
 		const clipped = clipPoints(cell, this.points);
 		// generate the buffer
-		return [
-			createVertexBuffer(this.gl, clipped)
-		];
+		if (clipped.length > 0) {
+			return createVertexBuffer(this.gl, clipped);
+		}
+		return null;
 	}
 
 	/**
