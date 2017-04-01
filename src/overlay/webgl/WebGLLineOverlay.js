@@ -498,7 +498,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 	constructor(options = {}) {
 		super(options);
 		this.lineColor = defaultTo(options.lineColor, [ 1.0, 0.4, 0.1, 0.8 ]);
-		this.lineWidth = defaultTo(options.lineWidth, 8);
+		this.lineWidth = defaultTo(options.lineWidth, 2);
 		this.polylines = new Map();
 		this.shader = null;
 	}
