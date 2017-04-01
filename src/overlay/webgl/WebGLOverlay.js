@@ -4,21 +4,14 @@ const defaultTo = require('lodash/defaultTo');
 const Shader = require('../../render/webgl/shader/Shader');
 const EventType = require('../../event/EventType');
 const Overlay = require('../Overlay');
-const Cell = require('./Cell');
 
 // Constants
 
 /**
- * Pan event handler symbol.
+ * Cell update event handler symbol.
  * @constant {Symbol}
  */
-const PAN = Symbol();
-
-/**
- * Zoom event handler symbol.
- * @constant {Symbol}
- */
-const ZOOM = Symbol();
+const CELL_UPDATE = Symbol();
 
 /**
  * Class representing an overlay.
@@ -46,14 +39,29 @@ class WebGLOverlay extends Overlay {
 		super.onAdd(plot);
 		this.gl = this.plot.gl;
 		// generate the buffers
-		this.refreshBuffers(true);
+		this.refreshBuffers();
 		// create refresh handlers
-		const pan = () => { this.refreshBuffers(); };
-		const zoom = () => { this.refreshBuffers(); };
-		this.handlers.set(PAN, pan);
-		this.handlers.set(ZOOM, zoom);
-		this.plot.on(EventType.PAN, pan);
-		this.plot.on(EventType.ZOOM, zoom);
+		const update = () => {
+			this.refreshBuffers();
+		};
+		this.handlers.set(CELL_UPDATE, update);
+		this.plot.on(EventType.CELL_UPDATE, update);
+		return this;
+	}
+
+	/**
+	 * Executed when the overlay is removed from a plot.
+	 *
+	 * @param {Plot} plot - The plot to remove the overlay from.
+	 *
+	 * @returns {WebGLOverlay} The overlay object, for chaining.
+	 */
+	onRemove(plot) {
+		this.plot.removeListener(EventType.CELL_UPDATE, this.handlers.get(CELL_UPDATE));
+		this.handlers.delete(CELL_UPDATE);
+		this.buffers = null;
+		this.gl = null;
+		super.onRemove(plot);
 		return this;
 	}
 
@@ -64,46 +72,15 @@ class WebGLOverlay extends Overlay {
 	 *
 	 * @returns {WebGLOverlay} The overlay object, for chaining.
 	 */
-	refreshBuffers(force = false) {
+	refreshBuffers() {
 		if (!this.plot) {
 			throw 'Overlay is not attached to a plot';
 		}
-
-		// create new cell
-		const plot = this.plot;
-		const zoom = Math.round(plot.getTargetZoom());
-		const centerPx = plot.getTargetCenter();
-		const tileSize = plot.tileSize;
-
-		// use rounded target zoom
-		const cell = new Cell(zoom, centerPx, tileSize);
-		let refresh = false;
-
-		// check if forced or no cell exists
-		if (force || !this.cell) {
-			refresh = true;
-		} else {
-			// check if we are outside of one zoom level from last
-			const zoomDist = Math.abs(this.cell.zoom - cell.zoom);
-			if (zoomDist >= 1) {
-				refresh = true;
-			} else {
-				// check if we are withing buffer distance of the cell bounds
-				const cellDist = this.cell.halfSize - this.cell.buffer;
-				if (Math.abs(cell.center.x - this.cell.center.x) > cellDist ||
-					Math.abs(cell.center.y - this.cell.center.y) > cellDist) {
-					refresh = true;
-				}
-			}
-		}
-
-		if (refresh) {
-			// generate new buffers
-			const buffers = defaultTo(this.createBuffers(cell), []);
-			this.buffers = Array.isArray(buffers) ? buffers : [ buffers ];
-			// update cell
-			this.cell = cell;
-		}
+		// get cell
+		const cell = this.plot.cell;
+		// generate new buffers
+		const buffers = defaultTo(this.createBuffers(cell), []);
+		this.buffers = Array.isArray(buffers) ? buffers : [ buffers ];
 	}
 
 	/**
@@ -115,24 +92,6 @@ class WebGLOverlay extends Overlay {
 	 */
 	createBuffers() {
 		throw '`createBuffers` must be overridden';
-	}
-
-	/**
-	 * Executed when the overlay is removed from a plot.
-	 *
-	 * @param {Plot} plot - The plot to remove the overlay from.
-	 *
-	 * @returns {WebGLOverlay} The overlay object, for chaining.
-	 */
-	onRemove(plot) {
-		this.plot.removeListener(EventType.PAN, this.handlers.get(PAN));
-		this.plot.removeListener(EventType.ZOOM, this.handlers.get(ZOOM));
-		this.handlers.delete(PAN);
-		this.handlers.delete(ZOOM);
-		this.buffers = null;
-		this.gl = null;
-		super.onRemove(plot);
-		return this;
 	}
 
 	/**

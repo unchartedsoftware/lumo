@@ -166,7 +166,7 @@ class WebGLPointOverlay extends WebGLOverlay {
 	addPoints(id, points) {
 		this.points.set(id, points);
 		if (this.plot) {
-			this.refreshBuffers(true);
+			this.refreshBuffers();
 		}
 		return this;
 	}
@@ -181,7 +181,7 @@ class WebGLPointOverlay extends WebGLOverlay {
 	removePoints(id) {
 		this.points.delete(id);
 		if (this.plot) {
-			this.refreshBuffers(true);
+			this.refreshBuffers();
 		}
 		return this;
 	}
@@ -194,7 +194,7 @@ class WebGLPointOverlay extends WebGLOverlay {
 	clearPoints() {
 		this.points = new Map();
 		if (this.plot) {
-			this.refreshBuffers(true);
+			this.buffers = null;
 		}
 		return this;
 	}
@@ -211,7 +211,7 @@ class WebGLPointOverlay extends WebGLOverlay {
 		const shader = this.shader;
 		const buffers = this.buffers;
 		const plot = this.plot;
-		const cell = this.cell;
+		const cell = plot.cell;
 		const proj = this.getOrthoMatrix();
 		const scale = Math.pow(2, plot.zoom - cell.zoom);
 

@@ -555,7 +555,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 	addPolyline(id, points) {
 		this.polylines.set(id, points);
 		if (this.plot) {
-			this.refreshBuffers(true);
+			this.refreshBuffers();
 		}
 		return this;
 	}
@@ -570,7 +570,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 	removePolyline(id) {
 		this.polylines.delete(id);
 		if (this.plot) {
-			this.refreshBuffers(true);
+			this.refreshBuffers();
 		}
 		return this;
 	}
@@ -600,7 +600,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 		const shader = this.shader;
 		const buffers = this.buffers;
 		const plot = this.plot;
-		const cell = this.cell;
+		const cell = plot.cell;
 		const proj = this.getOrthoMatrix();
 		const scale = Math.pow(2, plot.zoom - cell.zoom);
 

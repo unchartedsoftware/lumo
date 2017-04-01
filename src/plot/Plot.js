@@ -6,10 +6,12 @@ const throttle = require('lodash/throttle');
 const EventEmitter = require('events');
 const Coord = require('../core/Coord');
 const EventType = require('../event/EventType');
+const CellEvent = require('../event/CellEvent');
 const FrameEvent = require('../event/FrameEvent');
 const ResizeEvent = require('../event/ResizeEvent');
 const RenderBuffer = require('../render/webgl/texture/RenderBuffer');
 const Viewport = require('./Viewport');
+const Cell = require('./Cell');
 const ClickHandler = require('./handler/ClickHandler');
 const MouseHandler = require('./handler/MouseHandler');
 const PanHandler = require('./handler/PanHandler');
@@ -123,6 +125,38 @@ const resize = function(plot) {
 	}
 };
 
+const updateCell = function(plot) {
+	const zoom = plot.getTargetZoom();
+	const centerPx = plot.getTargetCenter();
+	const tileSize = plot.tileSize;
+	const cell = new Cell(zoom, centerPx, tileSize);
+
+	let refresh = false;
+	// check if forced or no cell exists
+	if (!plot.cell) {
+		refresh = true;
+	} else {
+		// check if we are outside of one zoom level from last
+		const zoomDist = Math.abs(plot.cell.zoom - cell.zoom);
+		if (zoomDist >= 1) {
+			refresh = true;
+		} else {
+			// check if we are withing buffer distance of the cell bounds
+			const cellDist = plot.cell.halfSize - plot.cell.buffer;
+			if (Math.abs(cell.center.x - plot.cell.center.x) > cellDist ||
+				Math.abs(cell.center.y - plot.cell.center.y) > cellDist) {
+				refresh = true;
+			}
+		}
+	}
+	if (refresh) {
+		// update cell
+		plot.cell = cell;
+		// emit cell refresh event
+		plot.emit(EventType.CELL_UPDATE, new CellEvent(cell));
+	}
+};
+
 const reset = function(plot) {
 	if (!plot.wraparound) {
 		// if there is no wraparound, do not reset
@@ -195,6 +229,9 @@ const frame = function(plot) {
 
 	// reset viewport / plot
 	reset(plot);
+
+	// update cell
+	updateCell(plot);
 
 	// render each layer
 	plot.layers.forEach(layer => {
