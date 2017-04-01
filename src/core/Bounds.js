@@ -280,7 +280,7 @@ class Bounds {
 				point.x <= this.right &&
 				point.y >= this.bottom &&
 				point.y <= this.top) {
-				clipped.push(clipped);
+				clipped.push(point);
 			}
 		}
 		return clipped;

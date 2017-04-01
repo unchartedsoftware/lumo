@@ -3,7 +3,6 @@
 const defaultTo = require('lodash/defaultTo');
 const VertexBuffer = require('../../render/webgl/vertex/VertexBuffer');
 const WebGLOverlay = require('./WebGLOverlay');
-const Encode = require('./Encode');
 
 // Constants
 
@@ -18,20 +17,15 @@ const SHADER_GLSL = {
 		precision highp float;
 		attribute vec2 aPosition;
 		attribute vec2 aNormal;
-		uniform vec4 uViewOffset;
-		uniform vec2 uPlotExtent;
+		uniform vec2 uViewOffset;
+		uniform float uScale;
 		uniform float uLineWidth;
 		uniform float uPixelRatio;
 		uniform float uPointRadius;
 		uniform mat4 uProjectionMatrix;
-		${Encode.decodeGLSL}
 		void main() {
-			vec4 wPosition64 = vec4(
-				(aPosition * HIGH_64(uPlotExtent)) - HIGH_VEC2_64(uViewOffset),
-				(aPosition * LOW_64(uPlotExtent)) - LOW_VEC2_64(uViewOffset)
-			);
-			vec2 wPosition32 = decodeVec2From64(wPosition64);
-			gl_Position = uProjectionMatrix * vec4(wPosition32, 0.0, 1.0);
+			vec2 wPosition = (aPosition * uScale) - uViewOffset;
+			gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
 			gl_PointSize = uPointRadius * 2.0 * uPixelRatio;
 		}
 		`,
@@ -65,8 +59,8 @@ const bufferPoints = function(points) {
 	const buffer = new Float32Array(points.length * 2);
 	for (let i=0; i<points.length; i++) {
 		const point = points[i];
-		buffer[i*2] = point[0];
-		buffer[i*2+1] = point[1];
+		buffer[i*2] = point.x;
+		buffer[i*2+1] = point.y;
 	}
 	return buffer;
 };
@@ -88,6 +82,17 @@ const createVertexBuffer = function(gl, points) {
 		});
 };
 
+const clipPoints = function(cell, points) {
+	let clipped = [];
+	points.forEach(pts => {
+		const derp = cell.bounds.clipPoints(pts);
+		derp.forEach(point => {
+			clipped.push(cell.project(point));
+		});
+	});
+	return clipped;
+};
+
 /**
  * Class representing a webgl point overlay.
  */
@@ -101,7 +106,7 @@ class WebGLPointOverlay extends WebGLOverlay {
 		this.pointColor = defaultTo(options.pointColor, [ 1.0, 0.0, 1.0, 1.0 ]);
 		this.pointRadius = defaultTo(options.pointRadius, 4);
 		this.points = new Map();
-		this.buffers = null;
+		this.shader = null;
 		this.ext = null;
 	}
 
@@ -116,10 +121,6 @@ class WebGLPointOverlay extends WebGLOverlay {
 		super.onAdd(plot);
 		this.ext = this.gl.getExtension('OES_standard_derivatives');
 		this.shader = this.createShader(SHADER_GLSL);
-		this.buffers = new Map();
-		this.points.forEach((points, id) => {
-			this.buffers.set(id, createVertexBuffer(this.gl, points));
-		});
 		return this;
 	}
 
@@ -133,9 +134,24 @@ class WebGLPointOverlay extends WebGLOverlay {
 	onRemove(plot) {
 		super.onAdd(plot);
 		this.shader = null;
-		this.buffers = null;
 		this.ext = null;
 		return this;
+	}
+
+	/**
+	 * Create and return an array of VertexBuffers.
+	 *
+	 * @param {Cell} cell - The rendering cell.
+	 *
+	 * @returns {Array} The array of VertexBuffer objects.
+	 */
+	createBuffers(cell) {
+		// clip points to only those that are inside the cell
+		const clipped = clipPoints(cell, this.points);
+		// generate the buffer
+		return [
+			createVertexBuffer(this.gl, clipped)
+		];
 	}
 
 	/**
@@ -149,7 +165,7 @@ class WebGLPointOverlay extends WebGLOverlay {
 	addPoints(id, points) {
 		this.points.set(id, points);
 		if (this.plot) {
-			this.buffers.set(id, createVertexBuffer(this.gl, points));
+			this.refreshBuffers(true);
 		}
 		return this;
 	}
@@ -164,7 +180,7 @@ class WebGLPointOverlay extends WebGLOverlay {
 	removePoints(id) {
 		this.points.delete(id);
 		if (this.plot) {
-			this.buffers.delete(id);
+			this.refreshBuffers(true);
 		}
 		return this;
 	}
@@ -174,10 +190,10 @@ class WebGLPointOverlay extends WebGLOverlay {
 	 *
 	 * @returns {WebGLPointOverlay} The overlay object, for chaining.
 	 */
-	clearPolylines() {
+	clearPoints() {
 		this.points = new Map();
 		if (this.plot) {
-			this.buffers = new Map();
+			this.refreshBuffers(true);
 		}
 		return this;
 	}
@@ -194,9 +210,15 @@ class WebGLPointOverlay extends WebGLOverlay {
 		const shader = this.shader;
 		const buffers = this.buffers;
 		const plot = this.plot;
+		const cell = this.cell;
 		const proj = this.getOrthoMatrix();
-		const extent = Math.pow(2, plot.zoom) * plot.tileSize;
-		const offset = [ plot.viewport.x, plot.viewport.y ];
+		const scale = Math.pow(2, plot.zoom - cell.zoom);
+
+		// get view offset relative to cell offset
+		const offset = [
+			plot.viewport.x - (cell.offsetPx.x * scale),
+			plot.viewport.y - (cell.offsetPx.y * scale)
+		];
 
 		// set blending func
 		gl.enable(gl.BLEND);
@@ -207,8 +229,8 @@ class WebGLPointOverlay extends WebGLOverlay {
 
 		// set global uniforms
 		shader.setUniform('uProjectionMatrix', proj);
-		shader.setUniform('uViewOffset', Encode.encodeVec2From64(offset));
-		shader.setUniform('uPlotExtent', Encode.encodeFrom64(extent));
+		shader.setUniform('uViewOffset', offset);
+		shader.setUniform('uScale', scale);
 		shader.setUniform('uPointColor', this.pointColor);
 		shader.setUniform('uPointRadius', this.pointRadius);
 		shader.setUniform('uPixelRatio', plot.pixelRatio);

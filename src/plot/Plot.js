@@ -626,7 +626,8 @@ class Plot extends EventEmitter {
 	}
 
 	/**
-	 * Pans to the target plot pixel coordinate.
+	 * Pans to the target plot pixel coordinate. Cancels any current zoom or pan
+	 * animations.
 	 *
 	 * @param {Number} plotPx - The target plot pixel.
 	 * @param {boolean} animate - Whether or not to animate the pan. Defaults to `true`.
@@ -647,7 +648,8 @@ class Plot extends EventEmitter {
 
 	/**
 	 * Zooms in to the target zoom level. This is bounded by the plot objects
-	 * minZoom and maxZoom attributes.
+	 * minZoom and maxZoom attributes. Cancels any current zoom or pan
+	 * animations.
 	 *
 	 * @param {Number} level - The target zoom level.
 	 * @param {boolean} animate - Whether or not to animate the zoom. Defaults to `true`.

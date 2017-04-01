@@ -2,36 +2,9 @@
 
 const defaultTo = require('lodash/defaultTo');
 const VertexBuffer = require('../../render/webgl/vertex/VertexBuffer');
-const Bounds = require('../../core/Bounds');
-const EventType = require('../../event/EventType');
 const WebGLOverlay = require('./WebGLOverlay');
 
 // Constants
-
-/**
- * Pan event handler symbol.
- * @constant {Symbol}
- */
-const PAN = Symbol();
-
-/**
- * Zoom event handler symbol.
- * @constant {Symbol}
- */
-const ZOOM = Symbol();
-
-/**
- * The size of the cell.
- * @constant {Number}
- */
-const CELL_SIZE = Math.pow(2, 16);
-
-/**
- * The size of the cell regeneration buffer, will regenerate the cell if you are
- * within this many pixels to it's bounds.
- * @constant {Number}
- */
-const CELL_BUFFER = Math.pow(2, 8);
 
 /**
  * Shader GLSL source.
@@ -78,50 +51,50 @@ const SHADER_GLSL = {
 const EPSILON = 0.000001;
 
 const scalarMult = function(a, s) {
-	return [
-		a[0] * s,
-		a[1] * s
-	];
+	return {
+		x: a.x * s,
+		y: a.y * s
+	};
 };
 
 const perpendicular = function(a) {
-	return [
-		-a[1],
-		a[0]
-	];
+	return {
+		x: -a.y,
+		y: a.x
+	};
 };
 
 const invert = function(a) {
-	return [
-		-a[0],
-		-a[1]
-	];
+	return {
+		x: -a.x,
+		y: -a.y
+	};
 };
 
 const length = function(a) {
-	return Math.sqrt(a[0] * a[0] + a[1] * a[1]);
+	return Math.sqrt(a.x * a.x + a.y * a.y);
 };
 
 const normalize = function(a) {
-	const mod = Math.sqrt(a[0] * a[0] + a[1] * a[1]);
-	return [
-		a[0] / mod,
-		a[1] / mod
-	];
+	const mod = Math.sqrt(a.x * a.x + a.y * a.y);
+	return {
+		x: a.x / mod,
+		y: a.y / mod
+	};
 };
 
 const add = function(p0, p1) {
-	return [
-		p0[0] + p1[0],
-		p0[1] + p1[1]
-	];
+	return {
+		x: p0.x + p1.x,
+		y: p0.y + p1.y
+	};
 };
 
 const sub = function(p0, p1) {
-	return [
-		p0[0] - p1[0],
-		p0[1] - p1[1]
-	];
+	return {
+		x: p0.x - p1.x,
+		y: p0.y - p1.y
+	};
 };
 
 const middle = function(p0, p1) {
@@ -129,11 +102,11 @@ const middle = function(p0, p1) {
 };
 
 const equal = function(p0, p1) {
-	return p0[0] === p1[0] && p0[1] === p1[1];
+	return p0.x === p1.x && p0.y === p1.y;
 };
 
 const signedArea = function(p0, p1, p2) {
-	return (p1[0] - p0[0]) * (p2[1] - p0[1]) - (p2[0] - p0[0]) * (p1[1] - p0[1]);
+	return (p1.x - p0.x) * (p2.y - p0.y) - (p2.x - p0.x) * (p1.y - p0.y);
 };
 
 const getStrokeGeometry = function(points, strokeWidth) {
@@ -222,8 +195,8 @@ const getStrokeGeometry = function(points, strokeWidth) {
 
 const createRoundCap = function(center, p0, p1, nextPointInLine, positions, normals) {
 
-	let angle0 = Math.atan2((p1[1] - center[1]), (p1[0] - center[0]));
-	let angle1 = Math.atan2((p0[1] - center[1]), (p0[0] - center[0]));
+	let angle0 = Math.atan2((p1.y - center.y), (p1.x - center.x));
+	let angle1 = Math.atan2((p0.y - center.y), (p0.x - center.x));
 
 	const orgAngle0 = angle0;
 
@@ -242,11 +215,11 @@ const createRoundCap = function(center, p0, p1, nextPointInLine, positions, norm
 	if (Math.abs(angleDiff) >= (Math.PI - EPSILON) &&
 		Math.abs(angleDiff) <= (Math.PI + EPSILON)) {
 		const r1 = sub(center, nextPointInLine);
-		if (r1[0] === 0) {
-			if (r1[1] > 0) {
+		if (r1.x === 0) {
+			if (r1.y > 0) {
 				angleDiff = -angleDiff;
 			}
-		} else if (r1[0] >= -EPSILON) {
+		} else if (r1.x >= -EPSILON) {
 			angleDiff = -angleDiff;
 		}
 	}
@@ -255,17 +228,20 @@ const createRoundCap = function(center, p0, p1, nextPointInLine, positions, norm
 	const nsegments = Math.ceil(Math.abs(angleDiff / Math.PI) * segmentsPerSemi);
 
 	const angleInc = angleDiff / nsegments;
-	const n0 = [ 0, 0 ];
+	const n0 = {
+		x: 0,
+		y: 0
+	};
 
 	for (let i=0; i<nsegments; i++) {
-		const n1 = [
-			Math.cos(orgAngle0 + angleInc * i),
-			Math.sin(orgAngle0 + angleInc * i)
-		];
-		const n2 = [
-			Math.cos(orgAngle0 + angleInc * (1 + i)),
-			Math.sin(orgAngle0 + angleInc * (1 + i))
-		];
+		const n1 = {
+			x: Math.cos(orgAngle0 + angleInc * i),
+			y: Math.sin(orgAngle0 + angleInc * i)
+		};
+		const n2 = {
+			x: Math.cos(orgAngle0 + angleInc * (1 + i)),
+			y: Math.sin(orgAngle0 + angleInc * (1 + i))
+		};
 		positions.push(center);
 		positions.push(center);
 		positions.push(center);
@@ -276,19 +252,22 @@ const createRoundCap = function(center, p0, p1, nextPointInLine, positions, norm
 };
 
 function lineIntersection(p0, p1, p2, p3) {
-	const a0 = p1[1] - p0[1];
-	const b0 = p0[0] - p1[0];
-	const a1 = p3[1] - p2[1];
-	const b1 = p2[0] - p3[0];
+	const a0 = p1.y - p0.y;
+	const b0 = p0.x - p1.x;
+	const a1 = p3.y - p2.y;
+	const b1 = p2.x - p3.x;
 	const det = a0 * b1 - a1 * b0;
 	if (det > -EPSILON && det < EPSILON) {
 		return null;
 	}
-	const c0 = a0 * p0[0] + b0 * p0[1];
-	const c1 = a1 * p2[0] + b1 * p2[1];
+	const c0 = a0 * p0.x + b0 * p0.y;
+	const c1 = a1 * p2.x + b1 * p2.y;
 	const x = (b1 * c0 - b0 * c1) / det;
 	const y = (a0 * c1 - a1 * c0) / det;
-	return [ x, y ];
+	return {
+		x: x,
+		y: y
+	};
 }
 
 function createTriangles(p0, p1, p2, positions, normals, lineWidth) {
@@ -402,7 +381,7 @@ function createTriangles(p0, p1, p2, positions, normals, lineWidth) {
 		positions.push(p1);
 
 		normals.push(n0);
-		normals.push([ 0, 0 ]);
+		normals.push({ x: 0, y: 0 });
 		normals.push(ian);
 
 		createRoundCap(
@@ -417,7 +396,7 @@ function createTriangles(p0, p1, p2, positions, normals, lineWidth) {
 		positions.push(p1);
 		positions.push(p1);
 
-		normals.push([ 0, 0 ]);
+		normals.push({ x: 0, y: 0 });
 		normals.push(n2);
 		normals.push(ian);
 
@@ -444,10 +423,10 @@ const bufferPolyline = function(points, normals) {
 	for (let i=0; i<points.length; i++) {
 		const point = points[i];
 		const normal = normals[i];
-		buffer[i*4] = point[0];
-		buffer[i*4+1] = point[1];
-		buffer[i*4+2] = normal[0];
-		buffer[i*4+3] = normal[1];
+		buffer[i*4] = point.x;
+		buffer[i*4+1] = point.y;
+		buffer[i*4+2] = normal.x;
+		buffer[i*4+3] = normal.y;
 	}
 	return buffer;
 };
@@ -477,15 +456,7 @@ const createVertexBuffer = function(overlay, points) {
 		});
 };
 
-const normalizePoint = function(pos, cell) {
-	// convert point into cell pixel space
-	return [
-		((pos.x * cell.scale) - cell.offsetPx.x),
-		((pos.y * cell.scale) - cell.offsetPx.y)
-	];
-};
-
-const clipPolylines = function(bounds, polylines, cell) {
+const clipPolylines = function(cell, polylines) {
 	const clipped = [];
 	polylines.forEach(polyline => {
 		let current = [];
@@ -493,19 +464,16 @@ const clipPolylines = function(bounds, polylines, cell) {
 			const a = polyline[i-1];
 			const b = polyline[i];
 			// clip the line
-			const line = bounds.clipLine(
-				{ x: a[0], y: a[1] },
-				{ x: b[0], y: b[1] }
-			);
+			const line = cell.bounds.clipLine(a, b);
 			// no line in bounds
 			if (!line) {
 				continue;
 			}
 			// add src point
-			current.push(normalizePoint(line.a, cell));
+			current.push(cell.project(line.a));
 			if (line.b.clipped || i === polyline.length - 1) {
 				// only add destination point if it was clipped, or is last point
-				current.push(normalizePoint(line.b, cell));
+				current.push(cell.project(line.b));
 				// then break the polyline
 				clipped.push(current);
 				current = [];
@@ -517,75 +485,6 @@ const clipPolylines = function(bounds, polylines, cell) {
 		}
 	});
 	return clipped;
-};
-
-const getCell = function(plot) {
-	const zoom = Math.round(plot.getTargetZoom());
-	const scale = Math.pow(2, zoom) * plot.tileSize;
-	const centerPx = plot.getTargetCenter();
-	const center = {
-		x: centerPx.x / scale,
-		y: centerPx.y / scale
-	};
-	const offsetPx = {
-		x: centerPx.x - (CELL_SIZE / 2),
-		y: centerPx.y - (CELL_SIZE / 2)
-	};
-	return {
-		zoom: zoom,
-		halfSize: (CELL_SIZE / 2) / scale,
-		buffer: CELL_BUFFER / scale,
-		center: center,
-		offsetPx: offsetPx,
-		scale: scale
-	};
-};
-
-const generatePolylines = function(overlay, cell) {
-	// determine our cell bounds
-	const bounds = new Bounds(
-		cell.center.x - cell.halfSize,
-		cell.center.x + cell.halfSize,
-		cell.center.y - cell.halfSize,
-		cell.center.y + cell.halfSize);
-	// clear the buffers
-	overlay.buffers = [];
-	// trim polylines to only those that are intersect the cell
-	const polylines = clipPolylines(bounds, overlay.polylines, cell);
-	// generate the buffers
-	polylines.forEach(points => {
-		overlay.buffers.push(createVertexBuffer(overlay, points));
-	});
-	// store cell generation stats
-	overlay.cell = cell;
-};
-
-const regeneratePolylines = function(overlay, force) {
-	// get cell parameters
-	const cell = getCell(overlay.plot);
-
-	// check if a cell exists
-	if (force || !overlay.cell) {
-		// generate polylines
-		generatePolylines(overlay, cell);
-		return;
-	}
-
-	// check if we are outside of one zoom level from last
-	const zoomDist = Math.abs(overlay.cell.zoom - cell.zoom);
-	if (zoomDist >= 1) {
-		// generate polylines
-		generatePolylines(overlay, cell);
-		return;
-	}
-
-	// check if we are withing buffer distance of the cell bounds
-	if (Math.abs(cell.center.x - overlay.cell.center.x) > (overlay.cell.halfSize - overlay.cell.buffer) ||
-		Math.abs(cell.center.y - overlay.cell.center.y) > (overlay.cell.halfSize - overlay.cell.buffer)) {
-		// generate polylines
-		generatePolylines(overlay, cell);
-		return;
-	}
 };
 
 /**
@@ -601,9 +500,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 		this.lineColor = defaultTo(options.lineColor, [ 1.0, 0.4, 0.1, 0.8 ]);
 		this.lineWidth = defaultTo(options.lineWidth, 8);
 		this.polylines = new Map();
-		this.buffers = null;
 		this.shader = null;
-		this.cell = null;
 	}
 
 	/**
@@ -616,21 +513,6 @@ class WebGLLineOverlay extends WebGLOverlay {
 	onAdd(plot) {
 		super.onAdd(plot);
 		this.shader = this.createShader(SHADER_GLSL);
-		// generate the polylines
-		regeneratePolylines(this, true);
-		// create regeneration handlers
-		const pan = () => {
-			// attempt to regenerate the polylines
-			regeneratePolylines(this);
-		};
-		const zoom = () => {
-			// attempt to regenerate the polylines
-			regeneratePolylines(this);
-		};
-		this.handlers.set(PAN, pan);
-		this.handlers.set(ZOOM, zoom);
-		this.plot.on(EventType.PAN, pan);
-		this.plot.on(EventType.ZOOM, zoom);
 		return this;
 	}
 
@@ -643,14 +525,23 @@ class WebGLLineOverlay extends WebGLOverlay {
 	 */
 	onRemove(plot) {
 		super.onAdd(plot);
-		this.plot.removeListener(EventType.PAN, this.handlers.get(PAN));
-		this.plot.removeListener(EventType.ZOOM, this.handlers.get(ZOOM));
-		this.handlers.delete(PAN);
-		this.handlers.delete(ZOOM);
 		this.shader = null;
-		this.buffers = null;
-		this.cell = null;
 		return this;
+	}
+
+	/**
+	 * Create and return an array of VertexBuffers.
+	 *
+	 * @param {Cell} cell - The rendering cell.
+	 *
+	 * @returns {Array} The array of VertexBuffer objects.
+	 */
+	createBuffers(cell) {
+		// trim polylines to only those that intersect the cell
+		return clipPolylines(cell, this.polylines).map(points => {
+			// generate the buffer
+			return createVertexBuffer(this, points);
+		});
 	}
 
 	/**
@@ -664,8 +555,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 	addPolyline(id, points) {
 		this.polylines.set(id, points);
 		if (this.plot) {
-			// regenerate the polylines
-			regeneratePolylines(this, true);
+			this.refreshBuffers(true);
 		}
 		return this;
 	}
@@ -680,8 +570,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 	removePolyline(id) {
 		this.polylines.delete(id);
 		if (this.plot) {
-			// regenerate the polylines
-			regeneratePolylines(this, true);
+			this.refreshBuffers(true);
 		}
 		return this;
 	}
@@ -707,11 +596,6 @@ class WebGLLineOverlay extends WebGLOverlay {
 	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
 	 */
 	draw() {
-		if (!this.cell) {
-			console.log('no cell');
-			return;
-		}
-
 		const gl = this.gl;
 		const shader = this.shader;
 		const buffers = this.buffers;
