@@ -1,6 +1,6 @@
 'use strict';
 
-const Bounds = require('../../core/Bounds');
+const Bounds = require('../core/Bounds');
 
 /**
  * The size of the cell.
