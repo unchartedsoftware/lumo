@@ -159,7 +159,7 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 	}
 
 	/**
-	 * Executed when the renderer is attached to a layer.
+	 * Executed when the layer is attached to a plot.
 	 *
 	 * @param {Layer} layer - The layer to attach the renderer to.
 	 *
@@ -187,7 +187,7 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 	}
 
 	/**
-	 * Executed when the renderer is removed from a layer.
+	 * Executed when the layer is removed from a plot.
 	 *
 	 * @param {Layer} layer - The layer to remove the renderer from.
 	 *

@@ -95,9 +95,9 @@ class Viewport {
 		// NOTE: bounds are INCLUSIVE
 		return new Bounds(
 			this.x,
-			this.x + this.width, // - 1,
+			this.x + this.width,
 			this.y,
-			this.y + this.height); // - 1);
+			this.y + this.height);
 	}
 
 	/**
@@ -115,7 +115,7 @@ class Viewport {
 		// get the tile coordinate bounds for tiles from the tileZoom that
 		// are visible from the viewportZoom.
 		//	 Ex. if current viewport zoom is 3 and tile zoom is 5, the
-		//		 tiles will be 25% of there normal size compared to the
+		//		 tiles will be 25% of their normal size compared to the
 		//		 viewport.
 		const scale = Math.pow(2, viewportZoom - tileZoom);
 		const scaledTileSize = tileSize * scale;

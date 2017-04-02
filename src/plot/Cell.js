@@ -29,15 +29,20 @@ class Cell {
 			x: centerPx.x / scale,
 			y: centerPx.y / scale
 		};
+		const halfSize = (CELL_SIZE / 2) / scale;
+		const offset = {
+			x: center.x - halfSize,
+			y: center.y - halfSize
+		};
 		const offsetPx = {
 			x: centerPx.x - (CELL_SIZE / 2),
 			y: centerPx.y - (CELL_SIZE / 2)
 		};
-		const halfSize = (CELL_SIZE / 2) / scale;
 		this.zoom = zoom;
 		this.halfSize = halfSize;
 		this.buffer = CELL_BUFFER / scale;
 		this.center = center;
+		this.offset = offset;
 		this.offsetPx = offsetPx;
 		this.scale = scale;
 		this.bounds = new Bounds(
@@ -51,13 +56,70 @@ class Cell {
 	 * Project a normalized plot coordinate to the pixel space of the cell.
 	 *
 	 * @param {Object} pos - The normalized plot coordinate.
+	 * @param {Number} zoom - The zoom of the plot pixel space to project to. Optional.
 	 *
 	 * @returns {Object} The coordinate in cell pixel space.
 	 */
-	project(pos) {
+	project(pos, zoom = this.zoom) {
+		const scale = Math.pow(2, zoom - this.zoom);
 		return {
-			x: (pos.x * this.scale) - this.offsetPx.x,
-			y: (pos.y * this.scale) - this.offsetPx.y
+			x: (pos.x * this.scale) - (this.offsetPx.x * scale),
+			y: (pos.y * this.scale) - (this.offsetPx.y * scale)
+		};
+	}
+
+	/**
+	 * Unproject a coordinate from the pixel space of the cell to a normalized
+	 * plot coordinate.
+	 *
+	 * @param {Object} px - The plot pixel coordinate.
+	 * @param {Number} zoom - The zoom of the plot pixel space to unproject from. Optional.
+	 *
+	 * @returns {Object} The normalized plot coordinate.
+	 */
+	unproject(px, zoom = this.zoom) {
+		const scale = Math.pow(2, zoom - this.zoom);
+		return {
+			x: px.x + (this.offsetPx.x * scale) / this.scale,
+			y: px.y + (this.offsetPx.y * scale) / this.scale,
+		};
+	}
+
+	/**
+	 * Project a plot pixel coordinate to the pixel space of the cell.
+	 *
+	 * @param {Object} px - The plot pixel coordinate.
+	 * @param {Number} zoom - The zoom of the plot pixel space to project to. Optional.
+	 *
+	 * @returns {Object} The coordinate in cell pixel space.
+	 */
+	projectPx(px, zoom = this.zoom) {
+		// get scale between cell zoom and the provided zoom. This is used to
+		// scale the cells offset pixels to the same pixel coordinate space.
+		//
+		// Ex. cell of offset [20, 40] at zoom = 1 should become [40, 80] at
+		//     zoom 2.
+		const scale = Math.pow(2, zoom - this.zoom);
+		return {
+			x: px.x - (this.offsetPx.x * scale),
+			y: px.y - (this.offsetPx.y * scale)
+		};
+	}
+
+	/**
+	 * Unproject a coordinate from the pixel space of the cell to a plot pixel
+	 * coordinate.
+	 *
+	 * @param {Object} px - The plot pixel coordinate.
+	 * @param {Number} zoom - The zoom of the plot pixel space to unproject from. Optional.
+	 *
+	 * @returns {Object} The plot pixel coordinate.
+	 */
+	unprojectPx(px, zoom = this.zoom) {
+		const scale = Math.pow(2, zoom - this.zoom);
+		return {
+			x: px.x + (this.offsetPx.x * scale),
+			y: px.y + (this.offsetPx.y * scale)
 		};
 	}
 
