@@ -184,6 +184,9 @@ const broadcast = function(plot, type) {
 		plot.layers.forEach(layer => {
 			layer.emit(type, event);
 		});
+		plot.overlays.forEach(overlay => {
+			overlay.emit(type, event);
+		});
 	});
 };
 
@@ -364,7 +367,7 @@ class Plot extends EventEmitter {
 		// frame request
 		this.frameRequest = null;
 
-		// broadcast zoom / pan events to layers
+		// broadcast zoom / pan events to layers and overlays
 		broadcast(this, EventType.ZOOM_START);
 		broadcast(this, EventType.ZOOM);
 		broadcast(this, EventType.ZOOM_END);

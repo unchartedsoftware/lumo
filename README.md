@@ -103,7 +103,7 @@ const plot = new lumo.Plot('#plot', {
 
 ### Layer
 
-A layer represents a single source of data. A layer is only responsible for retrieving and storing tile data in it's retrieved format.
+A layer represents a single source of tile data. A layer is only responsible for retrieving and storing tile data in it's retrieved format.
 
 ```javascript
 const layer = new lumo.Layer();
@@ -208,30 +208,37 @@ class SampleRenderer extends WebGLVertexRenderer {
 }
 ```
 
+### Overlay
+
+An overlay represents a single source of data. The data is not tiled and is added / removed in a global sense. An overlay is responsible for storing and rendering it's data.
+
+```javascript
+const overlay = new lumo.WebGLLineOverlay();
+
+overlay.addPolyline('line-id', [
+	{ x: 0.2, y: 0.2 },
+	{ x: 0.8, y: 0.8 },
+	{ x: 0.2, y: 0.8 },
+	{ x: 0.8, y: 0.2 },
+	{ x: 0.2, y: 0.2 }
+]);
+
+plot.addOverlay(overlay)
+```
+
 ### Coordinates
 
 There are three coordinate systems used by Lumo. Tile coordinates, plot coordinates and viewport coordinates. All coordinates have the origin [0, 0] as the bottom-left.
 
-- **Tile Coordinates** have three components and follow the TMS specification in the format of {z, x, y}. Each zoom level increases the number of tiles in each dimension by a power of two.
+- **Tile Coordinates** have three components and follow the TMS specification in the format of {z, x, y}. Each zoom level increases the number of tiles in each dimension by a power of two. These coordinates are used to request and store tiles.
 
-- **Plot Coordinates** have two components and are the pixel offsets relative to the bottom-left corner of the plot.
+- **Tile Pixel Coordinates** have two components and are the pixel coordinates relative to the bottom-left corner of the respective tile. These coordinates are used to render the tile data.
 
-- **Normalized Plot Coordinates** have two components in the range [0 : 1] and are relative to the bottom-left corner of the plot.
-
-- **Viewport Coordinates** have two components and are the pixel offsets relative to the bottom-left corner of the viewport.
-
-The `lumo.Plot` object has a set of transitive convenience methods for converting between coordinates:
-
-- **mouseToViewPx**: Converts a native DOM MouseEvent to the view pixel coordinates.
-- **mouseToPlotPx**: Converts a native DOM MouseEvent to the plot pixel coordinates.
-- **viewPxToPlotPx**: Converts a view pixel coordinate to plot pixel coordinates.
-- **plotPxToViewPx**: Converts a plot pixel coordinate to view pixel coordinates.
-- **normalizedPlotToPlotPx**: Converts a normalized plot coordinate to plot pixel coordinates.
-- **plotPxToNormalizedPlot**: Converts a plot pixel coordinate to normalized plot coordinates.
+- **Plot Coordinates** have two components, [0, 0] at the bottom-left corner of the plot, and [1, 1] at the top-right.
 
 ### Events
 
-All `lumo.Plot`, `lumo.Layer`, and `lumo.Renderer` classes extend the `EventEmitter` class and are capable of emitting events.
+All `lumo.Plot`, `lumo.Layer`, `lumo.Overlay`, and `lumo.Renderer` classes extend the `EventEmitter` class and are capable of emitting events.
 
 The following events are emitted by Lumo:
 
@@ -261,6 +268,15 @@ The following events are emitted by Lumo:
 - **tilediscard**: Emitted when a tile is received but is no longer in view and is discarded.
 - **tileremove**: Emitted when a tile is evicted from the layer.
 - **load**: Emitted when a all pending tiles have loaded for the layer.
+- **zoomstart**: Emitted when a new zoom event is handled.
+- **zoom**: Emitted during each frame of a zoom animation.
+- **zoomend**: Emitted when a zoom event is complete.
+- **panstart**: Emitted when a new pan event is handled.
+- **pan**: Emitted during each frame of a pan animation.
+- **panend**: Emitted when a pan event is complete.
+
+#### Overlay
+
 - **zoomstart**: Emitted when a new zoom event is handled.
 - **zoom**: Emitted during each frame of a zoom animation.
 - **zoomend**: Emitted when a zoom event is complete.
