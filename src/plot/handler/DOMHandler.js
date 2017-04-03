@@ -131,7 +131,7 @@ class DOMHandler {
 		} else if (event.button === 2) {
 			return 'right';
 		}
-	};
+	}
 }
 
 module.exports = DOMHandler;

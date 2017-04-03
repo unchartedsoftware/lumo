@@ -525,6 +525,15 @@ class Plot extends EventEmitter {
 	}
 
 	/**
+	 * Returns the center of the plot in plot coordinates.
+	 *
+	 * @returns {Object} The target center in plot coordinates.
+	 */
+	getCenter() {
+		return this.viewport.getCenter();
+	}
+
+	/**
 	 * Returns the tile coordinates visible in the target viewport.
 	 *
 	 * @returns {Array} The array of visible tile coords.
@@ -565,7 +574,7 @@ class Plot extends EventEmitter {
 	}
 
 	/**
-	 * Returns the viewports size in pixels.
+	 * Returns the viewport size in pixels.
 	 *
 	 * @returns {Object} The viewport size in pixels.
 	 */
@@ -574,12 +583,30 @@ class Plot extends EventEmitter {
 	}
 
 	/**
-	 * Returns the viewports offset in pixels.
+	 * Returns the target viewport size in pixels.
+	 *
+	 * @returns {Object} The target viewport size in pixels.
+	 */
+	getTargetViewportPixelSize() {
+		return this.getTargetViewport().getPixelSize(this.zoom, this.tileSize);
+	}
+
+	/**
+	 * Returns the viewport offset in pixels.
 	 *
 	 * @returns {Object} The viewport offset in pixels.
 	 */
 	getViewportPixelOffset() {
 		return this.viewport.getPixelOffset(this.zoom, this.tileSize);
+	}
+
+	/**
+	 * Returns the target viewport offset in pixels.
+	 *
+	 * @returns {Object} The target viewport offset in pixels.
+	 */
+	getTargetViewportPixelOffset() {
+		return this.getTargetViewport().getPixelOffset(this.zoom, this.tileSize);
 	}
 
 	/**
@@ -668,25 +695,17 @@ class Plot extends EventEmitter {
 	 * @returns {Plot} The plot object, for chaining.
 	 */
 	fitToBounds(bounds) {
-		const currentZoom = this.getTargetZoom();
-		const extent = Math.pow(2, currentZoom);
-		const vWidth = this.viewport.width;
-		const vHeight = this.viewport.height;
-		const bWidth = bounds.width() * extent;
-		const bHeight = bounds.height() * extent;
-		const scaleX = vWidth / bWidth;
-		const scaleY = vHeight / bHeight;
+		const targetZoom = this.getTargetZoom();
+		const targetViewport = this.getTargetViewport();
+		const scaleX = targetViewport.width / bounds.width();
+		const scaleY = targetViewport.height / bounds.height();
 		const scale = Math.min(scaleX, scaleY);
-		let zoom = Math.log2(scale) + currentZoom;
+		let zoom = Math.log2(scale) + targetZoom;
 		zoom = clamp(zoom, this.minZoom, this.maxZoom);
 		if (!this.continuousZoom) {
 			zoom = Math.floor(zoom);
 		}
-		const bCenter = bounds.getCenter();
-		const center = {
-			x: bCenter.x * Math.pow(2, zoom),
-			y: bCenter.y * Math.pow(2, zoom)
-		};
+		const center = bounds.getCenter();
 		this.zoomTo(zoom, false);
 		this.panTo(center, false);
 		return this;

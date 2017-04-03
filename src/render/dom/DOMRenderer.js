@@ -191,7 +191,7 @@ class DOMRenderer extends Renderer {
 	 */
 	onRemove(layer) {
 		// detach and destroy handlers
-		this.plot.removeListener(EventType.CELL_UPDATE, this.handlers.get(CELL_UPDATE));
+		this.layer.plot.removeListener(EventType.CELL_UPDATE, this.handlers.get(CELL_UPDATE));
 		this.handlers.delete(CELL_UPDATE);
 		// detach and destroy container
 		this.layer.plot.container.removeChild(this.container);
@@ -356,6 +356,53 @@ class DOMRenderer extends Renderer {
 	 * @param {Tile} tile - The Tile object.
 	 */
 	drawTile() {
+	}
+
+	/**
+	 * Takes a DOM event and returns the corresponding plot position.
+	 * Coordinate [0, 0] is bottom-left of the plot.
+	 *
+	 * @param {Event} event - The mouse event.
+	 *
+	 * @returns {Object} The plot position.
+	 */
+	mouseToPlot(event) {
+		if (!this.layer.plot) {
+			throw 'Renderer must be attached to the plot';
+		}
+		const plot = this.layer.plot;
+		const extent = plot.getPixelExtent();
+		const size = plot.getViewportPixelSize();
+		return {
+			x: plot.viewport.x + (event.clientX / extent),
+			y: plot.viewport.y + ((size.height - event.clientY) / extent)
+		};
+	}
+
+	/**
+	 * Takes a DOM event and returns the mouse button string.
+	 *
+	 * @param {Event} event - The mouse event.
+	 *
+	 * @returns {String} The mouse button string.
+	 */
+	getMouseButton(event) {
+		if (event.which) {
+			if (event.which === 1) {
+				return 'left';
+			} else if (event.which === 2) {
+				return 'middle';
+			} else if (event.which === 3) {
+				return 'right';
+			}
+		}
+		if (event.button === 0) {
+			return 'left';
+		} else if (event.button === 1) {
+			return 'middle';
+		} else if (event.button === 2) {
+			return 'right';
+		}
 	}
 }
 

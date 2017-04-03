@@ -194,7 +194,7 @@ class WebGLPointOverlay extends WebGLOverlay {
 	clearPoints() {
 		this.points = new Map();
 		if (this.plot) {
-			this.buffers = null;
+			this.buffers = [];
 		}
 		return this;
 	}

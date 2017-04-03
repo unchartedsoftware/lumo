@@ -20,10 +20,9 @@ const SHADER_GLSL = {
 		uniform vec2 uViewOffset;
 		uniform float uScale;
 		uniform float uLineWidth;
-		uniform float uPixelRatio;
 		uniform mat4 uProjectionMatrix;
 		void main() {
-			vec2 wPosition = (aPosition * uScale) - uViewOffset + aNormal * uLineWidth * uPixelRatio;
+			vec2 wPosition = (aPosition * uScale) - uViewOffset + aNormal * uLineWidth;
 			gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
 		}
 		`,
@@ -432,7 +431,7 @@ const bufferPolyline = function(points, normals) {
 };
 
 const createVertexBuffer = function(overlay, points) {
-	const lineWidth = overlay.lineWidth * overlay.plot.pixelRatio;
+	const lineWidth = overlay.lineWidth;
 	const geometry = getStrokeGeometry(points, lineWidth);
 	const data = bufferPolyline(geometry.positions, geometry.normals);
 	return new VertexBuffer(
@@ -583,7 +582,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 	clearPolylines() {
 		this.polylines = new Map();
 		if (this.plot) {
-			this.buffers = null;
+			this.buffers = [];
 		}
 		return this;
 	}
@@ -618,7 +617,6 @@ class WebGLLineOverlay extends WebGLOverlay {
 		shader.setUniform('uProjectionMatrix', proj);
 		shader.setUniform('uViewOffset', [ offset.x, offset.y ]);
 		shader.setUniform('uScale', scale);
-		shader.setUniform('uPixelRatio', plot.pixelRatio);
 		shader.setUniform('uLineWidth', this.lineWidth / 2);
 		shader.setUniform('uLineColor', this.lineColor);
 		shader.setUniform('uOpacity', this.opacity);
