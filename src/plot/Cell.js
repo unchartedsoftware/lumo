@@ -63,25 +63,8 @@ class Cell {
 	project(pos, zoom = this.zoom) {
 		const scale = Math.pow(2, zoom - this.zoom);
 		return {
-			x: (pos.x * this.scale) - (this.offsetPx.x * scale),
-			y: (pos.y * this.scale) - (this.offsetPx.y * scale)
-		};
-	}
-
-	/**
-	 * Unproject a coordinate from the pixel space of the cell to a normalized
-	 * plot coordinate.
-	 *
-	 * @param {Object} px - The plot pixel coordinate.
-	 * @param {Number} zoom - The zoom of the plot pixel space to unproject from. Optional.
-	 *
-	 * @returns {Object} The normalized plot coordinate.
-	 */
-	unproject(px, zoom = this.zoom) {
-		const scale = Math.pow(2, zoom - this.zoom);
-		return {
-			x: px.x + (this.offsetPx.x * scale) / this.scale,
-			y: px.y + (this.offsetPx.y * scale) / this.scale,
+			x: (pos.x * this.scale * scale) - (this.offsetPx.x * scale),
+			y: (pos.y * this.scale * scale) - (this.offsetPx.y * scale)
 		};
 	}
 
@@ -103,23 +86,6 @@ class Cell {
 		return {
 			x: px.x - (this.offsetPx.x * scale),
 			y: px.y - (this.offsetPx.y * scale)
-		};
-	}
-
-	/**
-	 * Unproject a coordinate from the pixel space of the cell to a plot pixel
-	 * coordinate.
-	 *
-	 * @param {Object} px - The plot pixel coordinate.
-	 * @param {Number} zoom - The zoom of the plot pixel space to unproject from. Optional.
-	 *
-	 * @returns {Object} The plot pixel coordinate.
-	 */
-	unprojectPx(px, zoom = this.zoom) {
-		const scale = Math.pow(2, zoom - this.zoom);
-		return {
-			x: px.x + (this.offsetPx.x * scale),
-			y: px.y + (this.offsetPx.y * scale)
 		};
 	}
 
