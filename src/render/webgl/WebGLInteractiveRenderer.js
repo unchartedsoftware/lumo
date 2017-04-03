@@ -14,21 +14,21 @@ const WebGLVertexRenderer = require('./WebGLVertexRenderer');
 /**
  * Click event handler symbol.
  * @private
- * @constant
+ * @constant {Symbol}
  */
 const CLICK = Symbol();
 
 /**
  * Mousemove event handler symbol.
  * @private
- * @constant
+ * @constant {Symbol}
  */
 const MOUSE_MOVE = Symbol();
 
 /**
- * Zoom end event handler symbol.
+ * Zoom start event handler symbol.
  * @private
- * @constant
+ * @constant {Symbol}
  */
 const ZOOM_START = Symbol();
 
@@ -208,7 +208,7 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 	}
 
 	/**
-	 * Executed when the renderer is attached to a layer.
+	 * Executed when the layer is attached to a plot.
 	 *
 	 * @param {Layer} layer - The layer to attach the renderer to.
 	 *
@@ -244,7 +244,7 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 	}
 
 	/**
-	 * Executed when the renderer is removed from a layer.
+	 * Executed when the layer is removed from a plot.
 	 *
 	 * @param {Layer} layer - The layer to remove the renderer from.
 	 *

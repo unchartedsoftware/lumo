@@ -51,6 +51,11 @@ module.exports = {
 	Layer: require('./layer/Layer'),
 	// plot
 	Plot: require('./plot/Plot'),
+	// overlay
+	Overlay: require('./overlay/Overlay'),
+	WebGLOverlay: require('./overlay/webgl/WebGLOverlay'),
+	WebGLLineOverlay: require('./overlay/webgl/WebGLLineOverlay'),
+	WebGLPointOverlay: require('./overlay/webgl/WebGLPointOverlay'),
 	// render
 	Renderer: require('./render/Renderer'),
 	// dom

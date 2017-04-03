@@ -95,9 +95,9 @@ class Viewport {
 		// NOTE: bounds are INCLUSIVE
 		return new Bounds(
 			this.x,
-			this.x + this.width, // - 1,
+			this.x + this.width,
 			this.y,
-			this.y + this.height); // - 1);
+			this.y + this.height);
 	}
 
 	/**
@@ -115,7 +115,7 @@ class Viewport {
 		// get the tile coordinate bounds for tiles from the tileZoom that
 		// are visible from the viewportZoom.
 		//	 Ex. if current viewport zoom is 3 and tile zoom is 5, the
-		//		 tiles will be 25% of there normal size compared to the
+		//		 tiles will be 25% of their normal size compared to the
 		//		 viewport.
 		const scale = Math.pow(2, viewportZoom - tileZoom);
 		const scaledTileSize = tileSize * scale;
@@ -156,6 +156,41 @@ class Viewport {
 			}
 		}
 		return coords;
+	}
+
+	/**
+	 * Returns the orthographic projection matrix for the viewport.
+	 *
+	 * @return {Float32Array} The orthographic projection matrix.
+	 */
+	getOrthoMatrix() {
+		const left = 0;
+		const right = this.width;
+		const bottom = 0;
+		const top = this.height;
+		const near = -1;
+		const far = 1;
+		const lr = 1 / (left - right);
+		const bt = 1 / (bottom - top);
+		const nf = 1 / (near - far);
+		const out = new Float32Array(16);
+		out[0] = -2 * lr;
+		out[1] = 0;
+		out[2] = 0;
+		out[3] = 0;
+		out[4] = 0;
+		out[5] = -2 * bt;
+		out[6] = 0;
+		out[7] = 0;
+		out[8] = 0;
+		out[9] = 0;
+		out[10] = 2 * nf;
+		out[11] = 0;
+		out[12] = (left + right) * lr;
+		out[13] = (top + bottom) * bt;
+		out[14] = (far + near) * nf;
+		out[15] = 1;
+		return out;
 	}
 
 	/**

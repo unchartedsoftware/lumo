@@ -30,7 +30,7 @@ class WebGLRenderer extends Renderer {
 	}
 
 	/**
-	 * Executed when the renderer is attached to a layer.
+	 * Executed when the layer is attached to a plot.
 	 *
 	 * @param {Layer} layer - The layer to attach the renderer to.
 	 *
@@ -43,7 +43,7 @@ class WebGLRenderer extends Renderer {
 	}
 
 	/**
-	 * Executed when the renderer is removed from a layer.
+	 * Executed when the layer is removed from a plot.
 	 *
 	 * @param {Layer} layer - The layer to remove the renderer from.
 	 *
@@ -75,34 +75,7 @@ class WebGLRenderer extends Renderer {
 	 * @return {Float32Array} The orthographic projection matrix.
 	 */
 	getOrthoMatrix() {
-		const viewport = this.layer.plot.viewport;
-		const left = 0;
-		const right = viewport.width;
-		const bottom = 0;
-		const top = viewport.height;
-		const near = -1;
-		const far = 1;
-		const lr = 1 / (left - right);
-		const bt = 1 / (bottom - top);
-		const nf = 1 / (near - far);
-		const out = new Float32Array(16);
-		out[0] = -2 * lr;
-		out[1] = 0;
-		out[2] = 0;
-		out[3] = 0;
-		out[4] = 0;
-		out[5] = -2 * bt;
-		out[6] = 0;
-		out[7] = 0;
-		out[8] = 0;
-		out[9] = 0;
-		out[10] = 2 * nf;
-		out[11] = 0;
-		out[12] = (left + right) * lr;
-		out[13] = (top + bottom) * bt;
-		out[14] = (far + near) * nf;
-		out[15] = 1;
-		return out;
+		return this.layer.plot.viewport.getOrthoMatrix();
 	}
 
 	/**

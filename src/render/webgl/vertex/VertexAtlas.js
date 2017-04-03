@@ -53,7 +53,7 @@ const parseAttributePointers = function(pointers) {
 		});
 		byteOffset += BYTES_PER_TYPE[pointer.type] * pointer.size;
 	});
-	// add byteStride
+	// add byte stride
 	attributePointers.forEach(pointer => {
 		pointer.byteStride = byteOffset;
 	});
@@ -277,6 +277,17 @@ class VertexAtlas {
 		return this;
 	}
 
+	/**
+	 * Execute the draw command at the correct offset and count within the
+	 * atlas.
+	 *
+	 * @param {String} key - The key of the chunk to draw.
+	 * @param {String} mode - The primitive drawing mode to use.
+	 * @param {Number} offset - The offset into the chunk. Optional.
+	 * @param {Number} count - The count of primitives to render. Optional.
+	 *
+	 * @return {VertexBuffer} The vertex buffer object, for chaining.
+	 */
 	draw(key, mode, offset = 0, count = 0) {
 		if (!this.has(key)) {
 			throw `Tile of coord ${key} does not exist in the atlas`;
@@ -290,6 +301,16 @@ class VertexAtlas {
 		}
 	}
 
+	/**
+	 * Execute the instanced draw command at the correct offset and count within
+	 * the atlas.
+	 *
+	 * @param {String} key - The key of the chunk to draw.
+	 * @param {String} mode - The primitive drawing mode to use.
+	 * @param {Number} count - The count of primitives to render. Optional.
+	 *
+	 * @return {VertexBuffer} The vertex buffer object, for chaining.
+	 */
 	drawInstanced(key, mode, count) {
 		if (!this.has(key)) {
 			throw `Tile of coord ${key} does not exist in the atlas`;

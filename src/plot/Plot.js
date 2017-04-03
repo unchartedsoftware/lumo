@@ -6,10 +6,12 @@ const throttle = require('lodash/throttle');
 const EventEmitter = require('events');
 const Coord = require('../core/Coord');
 const EventType = require('../event/EventType');
+const CellEvent = require('../event/CellEvent');
 const FrameEvent = require('../event/FrameEvent');
 const ResizeEvent = require('../event/ResizeEvent');
 const RenderBuffer = require('../render/webgl/texture/RenderBuffer');
 const Viewport = require('./Viewport');
+const Cell = require('./Cell');
 const ClickHandler = require('./handler/ClickHandler');
 const MouseHandler = require('./handler/MouseHandler');
 const PanHandler = require('./handler/PanHandler');
@@ -48,28 +50,28 @@ const MAX_ZOOM = 24;
 /**
  * Click handler symbol.
  * @private
- * @constant
+ * @constant {Symbol}
  */
 const CLICK = Symbol();
 
 /**
  * Mouse handler symbol.
  * @private
- * @constant
+ * @constant {Symbol}
  */
 const MOUSE = Symbol();
 
 /**
  * Pan handler symbol.
  * @private
- * @constant
+ * @constant {Symbol}
  */
 const PAN = Symbol();
 
 /**
  * Zoom handler symbol.
  * @private
- * @constant
+ * @constant {Symbol}
  */
 const ZOOM = Symbol();
 
@@ -120,6 +122,38 @@ const resize = function(plot) {
 		plot.resizeRequest();
 		// emit resize
 		plot.emit(EventType.RESIZE, new ResizeEvent(plot, prev, current));
+	}
+};
+
+const updateCell = function(plot) {
+	const zoom = plot.getTargetZoom();
+	const centerPx = plot.getTargetCenter();
+	const tileSize = plot.tileSize;
+	const cell = new Cell(zoom, centerPx, tileSize);
+
+	let refresh = false;
+	// check if forced or no cell exists
+	if (!plot.cell) {
+		refresh = true;
+	} else {
+		// check if we are outside of one zoom level from last
+		const zoomDist = Math.abs(plot.cell.zoom - cell.zoom);
+		if (zoomDist >= 1) {
+			refresh = true;
+		} else {
+			// check if we are withing buffer distance of the cell bounds
+			const cellDist = plot.cell.halfSize - plot.cell.buffer;
+			if (Math.abs(cell.center.x - plot.cell.center.x) > cellDist ||
+				Math.abs(cell.center.y - plot.cell.center.y) > cellDist) {
+				refresh = true;
+			}
+		}
+	}
+	if (refresh) {
+		// update cell
+		plot.cell = cell;
+		// emit cell refresh event
+		plot.emit(EventType.CELL_UPDATE, new CellEvent(cell));
 	}
 };
 
@@ -196,9 +230,17 @@ const frame = function(plot) {
 	// reset viewport / plot
 	reset(plot);
 
+	// update cell
+	updateCell(plot);
+
 	// render each layer
 	plot.layers.forEach(layer => {
 		layer.draw(timestamp);
+	});
+
+	// render each overlay
+	plot.overlays.forEach(overlays => {
+		overlays.draw(timestamp);
 	});
 
 	// request next frame
@@ -320,6 +362,9 @@ class Plot extends EventEmitter {
 		// layers
 		this.layers = [];
 
+		// overlays
+		this.overlays = [];
+
 		// frame request
 		this.frameRequest = null;
 
@@ -399,6 +444,45 @@ class Plot extends EventEmitter {
 		}
 		this.layers.splice(index, 1);
 		layer.onRemove(this);
+		return this;
+	}
+
+	/**
+	 * Adds an overlay to the plot.
+	 *
+	 * @param {Overlay} overlay - The overlay to add to the plot.
+	 *
+	 * @returns {Plot} The plot object, for chaining.
+	 */
+	addOverlay(overlay) {
+		if (!overlay) {
+			throw 'No overlay argument provided';
+		}
+		if (this.overlays.indexOf(overlay) !== -1) {
+			throw 'Provided overlay is already attached to the plot';
+		}
+		this.overlays.push(overlay);
+		overlay.onAdd(this);
+		return this;
+	}
+
+	/**
+	 * Removes an overlay from the plot.
+	 *
+	 * @param {Overlay} overlay - The overlay to remove from the plot.
+	 *
+	 * @returns {Plot} The plot object, for chaining.
+	 */
+	removeOverlay(overlay) {
+		if (!overlay) {
+			throw 'No overlay argument provided';
+		}
+		const index = this.overlays.indexOf(overlay);
+		if (index === -1) {
+			throw 'Provided overlay is not attached to the plot';
+		}
+		this.overlays.splice(index, 1);
+		overlay.onRemove(this);
 		return this;
 	}
 
@@ -579,9 +663,10 @@ class Plot extends EventEmitter {
 	}
 
 	/**
-	 * Pans to the target plot pixel coordinate.
+	 * Pans to the target plot pixel coordinate. Cancels any current zoom or pan
+	 * animations.
 	 *
-	 * @param {Number} level - The target plot pixel.
+	 * @param {Number} plotPx - The target plot pixel.
 	 * @param {boolean} animate - Whether or not to animate the pan. Defaults to `true`.
 	 *
 	 * @returns {Plot} The plot object, for chaining.
@@ -600,7 +685,8 @@ class Plot extends EventEmitter {
 
 	/**
 	 * Zooms in to the target zoom level. This is bounded by the plot objects
-	 * minZoom and maxZoom attributes.
+	 * minZoom and maxZoom attributes. Cancels any current zoom or pan
+	 * animations.
 	 *
 	 * @param {Number} level - The target zoom level.
 	 * @param {boolean} animate - Whether or not to animate the zoom. Defaults to `true`.

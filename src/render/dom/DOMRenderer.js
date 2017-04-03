@@ -7,11 +7,10 @@ const Renderer = require('../Renderer');
 // Constants
 
 /**
- * The maximum left / bottom offset of the container element.
- * @private
- * @constant {Number}
+ * Cell update event handler symbol.
+ * @constant {Symbol}
  */
-const MAX_CONTAINER_OFFSET = 256*256*8;
+const CELL_UPDATE = Symbol();
 
 /**
  * Draw debounce timeout in milliseconds.
@@ -81,6 +80,8 @@ const getRenderables = function(plot, pyramid) {
 
 const drawTiles = function(renderer, container, tiles, plot, pyramid, ignoreFade = false) {
 	const tileSize = plot.tileSize;
+	const cell = plot.cell;
+	const px = { x: 0, y: 0 };
 	// create document fragment
 	const fragment = document.createDocumentFragment();
 	// add new tiles to the DOM
@@ -90,12 +91,13 @@ const drawTiles = function(renderer, container, tiles, plot, pyramid, ignoreFade
 			const coord = renderable.coord;
 			// create tile element
 			const elem = renderer.createTile(tileSize);
+			// get tile pixel offset
+			px.x = coord.x * tileSize;
+			px.y = coord.y * tileSize;
+			// scale tile offset relative to cell
+			const cellPx = cell.projectPx(px, coord.z);
 			// position tile
-			renderer.positionTile(
-				elem,
-				coord.x * tileSize + renderer.offset.x,
-				coord.y * tileSize + renderer.offset.y,
-				tileSize);
+			renderer.positionTile(elem, cellPx.x, cellPx.y, tileSize);
 			// make tile invisible
 			if (!ignoreFade) {
 				elem.style.transition = `opacity ${OPACITY_FADE_IN_MS}ms`;
@@ -135,6 +137,20 @@ const eraseTiles = function(renderer, container, tiles, plot) {
 	});
 };
 
+const resetTileOffset = function(renderer, cell) {
+	const tileSize = renderer.layer.plot.tileSize;
+	const px = { x: 0, y: 0 };
+	renderer.tiles.forEach(tile => {
+		// get tile pixel position
+		px.x = tile.coord.x * tileSize;
+		px.y = tile.coord.y * tileSize;
+		// scale tile position relative to cell
+		const cellPx = cell.projectPx(px, tile.coord.z);
+		// re-position tile
+		renderer.positionTile(tile.elem, cellPx.x, cellPx.y, tileSize);
+	});
+};
+
 /**
  * Class representing a DOM renderer.
  */
@@ -147,19 +163,12 @@ class DOMRenderer extends Renderer {
 		super();
 		this.tiles = null;
 		this.container = null;
-		// to deal with css top / left precision issues, we need to position
-		// the layer container relative to the current viewport within some
-		// pixel threshold to prevent rendering issues.
-		this.offset = {
-			x: 0,
-			y: 0
-		};
 		this.drawTimeout = null;
 		this.eraseTimeout = null;
 	}
 
 	/**
-	 * Executed when the renderer is attached to a layer.
+	 * Executed when the layer is attached to a plot.
 	 *
 	 * @param {Layer} layer - The layer to attach the renderer to.
 	 *
@@ -167,23 +176,36 @@ class DOMRenderer extends Renderer {
 	 */
 	onAdd(layer) {
 		super.onAdd(layer);
+		// create tiles
 		this.tiles = new Map();
+		// create and attach handlers
+		const update = event => {
+			resetTileOffset(this, event.cell);
+		};
+		this.handlers.set(CELL_UPDATE, update);
+		this.layer.plot.on(EventType.CELL_UPDATE, update);
+		// create and attach container
 		this.container = this.createContainer();
 		this.layer.plot.container.appendChild(this.container);
 		return this;
 	}
 
 	/**
-	 * Executed when the renderer is removed from a layer.
+	 * Executed when the layer is removed from a plot.
 	 *
 	 * @param {Layer} layer - The layer to remove the renderer from.
 	 *
 	 * @returns {DOMRenderer} The renderer object, for chaining.
 	 */
 	onRemove(layer) {
+		// detach and destroy handlers
+		this.plot.removeListener(EventType.CELL_UPDATE, this.handlers.get(CELL_UPDATE));
+		this.handlers.delete(CELL_UPDATE);
+		// detach and destroy container
 		this.layer.plot.container.removeChild(this.container);
-		this.tiles = null;
 		this.container = null;
+		// remove tiles
+		this.tiles = null;
 		// clear timeouts
 		clearTimeout(this.drawTimeout);
 		clearTimeout(this.eraseTimeout);
@@ -282,40 +304,14 @@ class DOMRenderer extends Renderer {
 			}, DRAW_DEBOUNCE_MS);
 		}
 
-		// get viewport position
-		const px = plot.plotPxToViewPx({ x: 0, y: 0 });
-
 		// determine container offset
-		const delta = {
-			x: px.x - this.offset.x,
-			y: px.y - this.offset.y
-		};
+		const delta = plot.cell.projectPx(plot.viewport, plot.zoom);
 
-		if (Math.abs(delta.x) > MAX_CONTAINER_OFFSET ||
-			Math.abs(delta.y) > MAX_CONTAINER_OFFSET) {
-			// tile to container offset is too large, reset it to current
-			// viewport, re-position all current tiles.
-			this.offset.x = px.x;
-			this.offset.y = px.y;
-			delta.x = 0;
-			delta.y = 0;
-			const tileSize = plot.tileSize;
-			this.tiles.forEach(tile => {
-				// re-position tile
-				this.positionTile(
-					tile.elem,
-					tile.coord.x * tileSize + this.offset.x,
-					tile.coord.y * tileSize + this.offset.y,
-					tileSize);
-			});
-		}
-
-		// scale on difference between current zoom and rounded target zoom
+		// scale on difference between current zoom and tile zoom.
 		const scale = Math.pow(2, plot.zoom - Math.round(plot.getTargetZoom()));
 
 		// update container
-		container.style.transform = `translate3d(${delta.x}px,${-delta.y}px,0) scale(${scale})`;
-		container.style.transformOrigin = `${this.offset.x}px ${-this.offset.y}px`;
+		container.style.transform = `translate3d(${-delta.x}px,${delta.y}px,0) scale(${scale})`;
 		container.style.opacity = layer.opacity;
 
 		return this;

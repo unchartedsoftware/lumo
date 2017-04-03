@@ -93,6 +93,12 @@ module.exports = {
 	RESIZE: 'resize',
 
 	/**
+	 * Emitted when the viewing cell of the plot is updated.
+	 * @constant {String}
+	 */
+	CELL_UPDATE: 'cellupdate',
+
+	/**
 	 * Emitted when an initial request for a tile is made, the tile is not
 	 * yet part of the layer and has not yet been requested.
 	 * @constant {String}
