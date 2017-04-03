@@ -7,6 +7,7 @@ const EventType = require('../../event/EventType');
 const ZoomEvent = require('../../event/ZoomEvent');
 const ZoomAnimation = require('../animation/ZoomAnimation');
 const Viewport = require('../Viewport');
+const DOMHandler = require('./DOMHandler');
 
 // Constants
 
@@ -189,7 +190,7 @@ const getWheelDelta = function(plot, event) {
 /**
  * Class representing a zoom handler.
  */
-class ZoomHandler {
+class ZoomHandler extends DOMHandler {
 
 	/**
 	 * Instantiates a new ZoomHandler object.
@@ -203,13 +204,12 @@ class ZoomHandler {
 	 * @param {Number} options.zoomDebounce - The debounce duration of the zoom in ms.
 	 */
 	constructor(plot, options = {}) {
+		super(plot);
 		this.continuousZoom = defaultTo(options.continuousZoom, CONTINUOUS_ZOOM);
 		this.zoomDuration = defaultTo(options.zoomDuration, ZOOM_ANIMATION_MS);
 		this.maxConcurrentZooms = defaultTo(options.maxConcurrentZooms, MAX_CONCURRENT_ZOOMS);
 		this.deltaPerZoom = defaultTo(options.deltaPerZoom, ZOOM_WHEEL_DELTA);
 		this.zoomDebounce = defaultTo(options.zoomDebounce, ZOOM_DEBOUNCE_MS);
-		this.plot = plot;
-		this.enabled = false;
 	}
 
 	/**
@@ -218,9 +218,7 @@ class ZoomHandler {
 	 * @returns {ZoomHandler} The handler object, for chaining.
 	 */
 	enable() {
-		if (this.enabled) {
-			throw 'Handler is already enabled';
-		}
+		super.enable();
 
 		const plot = this.plot;
 
@@ -230,7 +228,7 @@ class ZoomHandler {
 
 		this.dblclick = (event) => {
 			// get mouse position
-			const targetPos = plot.mouseToPlot(event);
+			const targetPos = this.mouseToPlot(event);
 			// zoom the plot by one level
 			zoom(plot, targetPos, 1, this.zoomDuration);
 		};
@@ -251,7 +249,7 @@ class ZoomHandler {
 			// check zoom type
 			if (this.continuousZoom) {
 				// get target from mouse position
-				const targetPos = plot.mouseToPlot(event);
+				const targetPos = this.mouseToPlot(event);
 				// process continuous zoom immediately
 				zoomFromWheel(this, plot, targetPos, wheelDelta, true);
 				// reset wheel delta
@@ -266,7 +264,7 @@ class ZoomHandler {
 						// NOTE: this is called inside the closure to ensure
 						// that we use the current viewport of the plot to
 						// convert from mouse to plot pixels
-						const targetPos = plot.mouseToPlot(evt);
+						const targetPos = this.mouseToPlot(evt);
 						// process zoom event
 						zoomFromWheel(this, plot, targetPos, wheelDelta, false);
 						// reset wheel delta
@@ -285,7 +283,6 @@ class ZoomHandler {
 
 		this.plot.container.addEventListener('dblclick', this.dblclick);
 		this.plot.container.addEventListener('wheel', this.wheel);
-		this.enabled = true;
 	}
 
 	/**
@@ -294,14 +291,12 @@ class ZoomHandler {
 	 * @returns {ZoomHandler} The handler object, for chaining.
 	 */
 	disable() {
-		if (this.enabled) {
-			throw 'Handler is already disabled';
-		}
+		super.disable();
+
 		this.plot.container.removeEventListener('dblclick', this.dblclick);
 		this.plot.container.removeEventListener('wheel', this.wheel);
 		this.dblclick = null;
 		this.wheel = null;
-		this.enabled = false;
 	}
 
 	/**

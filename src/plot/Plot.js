@@ -483,39 +483,6 @@ class Plot extends EventEmitter {
 	}
 
 	/**
-	 * Takes a mouse event and returns the corresponding plot position.
-	 * Coordinate [0, 0] is bottom-left of the plot.
-	 *
-	 * @param {Event} event - The mouse event.
-	 *
-	 * @returns {Object} The plot position.
-	 */
-	mouseToPlot(event) {
-		const extent = this.getPixelExtent();
-		const size = this.getViewportPixelSize();
-		return {
-			x: this.viewport.x + (event.clientX / extent),
-			y: this.viewport.y + ((size.height - event.clientY) / extent)
-		};
-	}
-
-	pixelToPlot(px) {
-		const extent = this.getPixelExtent();
-		return {
-			x: px.x / extent,
-			y: px.y / extent
-		};
-	}
-
-	mouseToPixel(event) {
-		const size = this.getViewportPixelSize();
-		return {
-			x: event.clientX,
-			y: size.height - event.clientY
-		};
-	}
-
-	/**
 	 * Returns the target zoom of the plot. If the plot is actively zooming, it
 	 * will return the destination zoom. If the plot is not actively zooming, it
 	 * will return the current zoom.

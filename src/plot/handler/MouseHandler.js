@@ -2,39 +2,21 @@
 
 const EventType = require('../../event/EventType');
 const MouseEvent = require('../../event/MouseEvent');
+const DOMHandler = require('./DOMHandler');
 
 // Private Methods
 
-const getMouseButton = function(event) {
-	if (event.which) {
-		if (event.which === 1) {
-			return 'left';
-		} else if (event.which === 2) {
-			return 'middle';
-		} else if (event.which === 3) {
-			return 'right';
-		}
-	}
-	if (event.button === 0) {
-		return 'left';
-	} else if (event.button === 1) {
-		return 'middle';
-	} else if (event.button === 2) {
-		return 'right';
-	}
-};
-
-const createEvent = function(plot, event) {
+const createEvent = function(handler, plot, event) {
 	return new MouseEvent(
 		plot,
-		getMouseButton(event),
-		plot.mouseToPlot(event));
+		handler.getMouseButton(event),
+		handler.mouseToPlot(event));
 };
 
 /**
  * Class representing a mouse handler.
  */
-class MouseHandler {
+class MouseHandler extends DOMHandler {
 
 	/**
 	 * Instantiates a new MouseHandler object.
@@ -42,8 +24,7 @@ class MouseHandler {
 	 * @param {Plot} plot - The plot to attach the handler to.
 	 */
 	constructor(plot) {
-		this.plot = plot;
-		this.enabled = false;
+		super(plot);
 	}
 
 	/**
@@ -52,30 +33,28 @@ class MouseHandler {
 	 * @returns {MouseHandler} The handler object, for chaining.
 	 */
 	enable() {
-		if (this.enabled) {
-			throw 'Handler is already enabled';
-		}
+		super.enable();
 
 		const plot = this.plot;
 
 		this.mousedown = (event) => {
-			this.plot.emit(EventType.MOUSE_DOWN, createEvent(plot, event));
+			this.plot.emit(EventType.MOUSE_DOWN, createEvent(this, plot, event));
 		};
 
 		this.mouseup = (event) => {
-			this.plot.emit(EventType.MOUSE_UP, createEvent(plot, event));
+			this.plot.emit(EventType.MOUSE_UP, createEvent(this, plot, event));
 		};
 
 		this.mousemove = (event) => {
-			this.plot.emit(EventType.MOUSE_MOVE, createEvent(plot, event));
+			this.plot.emit(EventType.MOUSE_MOVE, createEvent(this, plot, event));
 		};
 
 		this.mouseover = (event) => {
-			this.plot.emit(EventType.MOUSE_OVER, createEvent(plot, event));
+			this.plot.emit(EventType.MOUSE_OVER, createEvent(this, plot, event));
 		};
 
 		this.mouseout = (event) => {
-			this.plot.emit(EventType.MOUSE_OUT, createEvent(plot, event));
+			this.plot.emit(EventType.MOUSE_OUT, createEvent(this, plot, event));
 		};
 
 		plot.container.addEventListener('mousedown', this.mousedown);
@@ -83,7 +62,6 @@ class MouseHandler {
 		plot.container.addEventListener('mousemove', this.mousemove);
 		plot.container.addEventListener('mouseover', this.mouseover);
 		plot.container.addEventListener('mouseout', this.mouseout);
-		this.enabled = true;
 	}
 
 	/**
@@ -92,9 +70,8 @@ class MouseHandler {
 	 * @returns {MouseHandler} The handler object, for chaining.
 	 */
 	disable() {
-		if (this.enabled) {
-			throw 'Handler is already disabled';
-		}
+		super.disable();
+
 		this.plot.container.removeEventListener('mousedown', this.mousedown);
 		this.plot.container.removeEventListener('mouseup', this.mouseup);
 		this.plot.container.removeEventListener('mousemove', this.mousemove);
@@ -105,7 +82,6 @@ class MouseHandler {
 		this.mousemove = null;
 		this.mouseover = null;
 		this.mouseout = null;
-		this.enabled = false;
 	}
 }
 

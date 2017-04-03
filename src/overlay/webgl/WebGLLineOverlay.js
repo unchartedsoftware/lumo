@@ -42,11 +42,11 @@ const SHADER_GLSL = {
 
 // NOTE: smooth / round lines implemented using code modified from:
 // http://labs.hyperandroid.com/efficient-webgl-stroking . Instead of baking in
-// the positions of the lines, this implementation instead generates the points
-// along the middle of the line and stores the tangents as normals, allowing
-// the thickness to be arbtrarily scaled outwards independant of scale.
-// In order to prevent degeneration of normals due to self-intersections, the
-// triangles are generated upon zoom.
+// the positions of the lines, this implementation instead generates the
+// positions along the line and stores the tangents, allowing the thickness to
+// be arbitrarily scaled outwards independant of scale. In order to prevent
+// degeneration of normals due to self-intersections, the triangles are
+// generated upon zoom.
 
 const EPSILON = 0.000001;
 

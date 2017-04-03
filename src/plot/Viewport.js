@@ -100,9 +100,9 @@ class Viewport {
 		// determine bounds
 		return new Bounds(
 			Math.floor(this.x / tileSpan),
-			Math.floor((this.x + this.width) / tileSpan),
+			Math.ceil((this.x + this.width) / tileSpan) - 1,
 			Math.floor(this.y / tileSpan),
-			Math.floor((this.y + this.height) / tileSpan));
+			Math.ceil((this.y + this.height) / tileSpan) - 1);
 	}
 
 	/**

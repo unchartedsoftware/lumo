@@ -6,17 +6,19 @@ const Cell = require('../../src/plot/Cell');
 describe('Cell', () => {
 
 	describe('#constructor()', () => {
-		it('should accept `zoom`, `centerPx`, `tileSize` arguments', () => {
+		it('should accept `zoom`, `center`, `extent` arguments', () => {
 			const zoom = Math.random() * 24;
 			const tileSize = 256;
-			const centerPx = {
-				x: Math.random() * Math.pow(2, zoom) * tileSize,
-				y: Math.random() * Math.pow(2, zoom) * tileSize
+			const extent = Math.pow(2, zoom) * tileSize;
+			const center = {
+				x: Math.random(),
+				y: Math.random()
 			};
-			const cell = new Cell(zoom, centerPx, tileSize);
+			const cell = new Cell(zoom, center, extent);
 			assert(cell.zoom === zoom);
-			assert(cell.centerPx.x === centerPx.x);
-			assert(cell.centerPx.y === centerPx.y);
+			assert(cell.extent === extent);
+			assert(cell.center.x === center.x);
+			assert(cell.center.y === center.y);
 		});
 	});
 

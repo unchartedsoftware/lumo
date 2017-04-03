@@ -2,6 +2,7 @@
 
 const EventType = require('../../event/EventType');
 const ClickEvent = require('../../event/ClickEvent');
+const DOMHandler = require('./DOMHandler');
 
 // Const
 
@@ -15,36 +16,17 @@ const MOVE_TOLERANCE = 15;
 
 // Private Methods
 
-const getMouseButton = function(event) {
-	if (event.which) {
-		if (event.which === 1) {
-			return 'left';
-		} else if (event.which === 2) {
-			return 'middle';
-		} else if (event.which === 3) {
-			return 'right';
-		}
-	}
-	if (event.button === 0) {
-		return 'left';
-	} else if (event.button === 1) {
-		return 'middle';
-	} else if (event.button === 2) {
-		return 'right';
-	}
-};
-
-const createEvent = function(plot, event) {
+const createEvent = function(handler, plot, event) {
 	return new ClickEvent(
 		plot,
-		getMouseButton(event),
-		plot.mouseToPlot(event));
+		handler.getMouseButton(event),
+		handler.mouseToPlot(event));
 };
 
 /**
  * Class representing a click handler.
  */
-class ClickHandler {
+class ClickHandler extends DOMHandler {
 
 	/**
 	 * Instantiates a new ClickHandler object.
@@ -52,8 +34,7 @@ class ClickHandler {
 	 * @param {Plot} plot - The plot to attach the handler to.
 	 */
 	constructor(plot) {
-		this.plot = plot;
-		this.enabled = false;
+		super(plot);
 	}
 
 	/**
@@ -62,22 +43,20 @@ class ClickHandler {
 	 * @returns {ClickHandler} The handler object, for chaining.
 	 */
 	enable() {
-		if (this.enabled) {
-			throw 'Handler is already enabled';
-		}
+		super.enable();
 
 		const plot = this.plot;
 
 		let last = null;
 		this.mousedown = (event) => {
-			last = plot.mouseToPlot(event);
+			last = this.mouseToPlot(event);
 		};
 
 		this.mouseup = (event) => {
 			if (!last) {
 				return;
 			}
-			const pos = plot.mouseToPlot(event);
+			const pos = this.mouseToPlot(event);
 			const diff = {
 				x: last.x - pos.x ,
 				y: last.y - pos.y
@@ -85,19 +64,18 @@ class ClickHandler {
 			const distSqrd = diff.x * diff.x + diff.y * diff.y;
 			if (distSqrd < MOVE_TOLERANCE * MOVE_TOLERANCE) {
 				// movement was within tolerance, emit click
-				this.plot.emit(EventType.CLICK, createEvent(plot, event));
+				this.plot.emit(EventType.CLICK, createEvent(this, plot, event));
 			}
 			last = null;
 		};
 
 		this.dblclick = (event) => {
-			this.plot.emit(EventType.DBL_CLICK, createEvent(plot, event));
+			this.plot.emit(EventType.DBL_CLICK, createEvent(this, plot, event));
 		};
 
 		plot.container.addEventListener('mousedown', this.mousedown);
 		plot.container.addEventListener('mouseup', this.mouseup);
 		plot.container.addEventListener('dblclick', this.dblclick);
-		this.enabled = true;
 	}
 
 	/**
@@ -106,16 +84,13 @@ class ClickHandler {
 	 * @returns {ClickHandler} The handler object, for chaining.
 	 */
 	disable() {
-		if (this.enabled) {
-			throw 'Handler is already disabled';
-		}
+		super.disable();
 		this.plot.container.removeEventListener('mousedown', this.mousedown);
 		this.plot.container.removeEventListener('mouseup', this.mouseup);
 		this.plot.container.removeEventListener('dblclick', this.dblclick);
 		this.mousedown = null;
 		this.mouseup = null;
 		this.dblclick = null;
-		this.enabled = false;
 	}
 }
 

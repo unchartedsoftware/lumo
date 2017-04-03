@@ -74,15 +74,15 @@ describe('Bounds', () => {
 		});
 	});
 
-	describe('#center()', () => {
+	describe('#getCenter()', () => {
 		it('should return the center coordinate of the bounds', () => {
 			const bounds = new Bounds(
 				Math.floor(Math.random() * TILE_SIZE),
 				Math.floor(TILE_SIZE + Math.random() * TILE_SIZE),
 				Math.floor(Math.random() * TILE_SIZE),
 				Math.floor(TILE_SIZE + Math.random() * TILE_SIZE));
-			assert(bounds.center().x === bounds.left + (bounds.width() / 2));
-			assert(bounds.center().y === bounds.bottom + (bounds.height() / 2));
+			assert(bounds.getCenter().x === bounds.left + (bounds.width() / 2));
+			assert(bounds.getCenter().y === bounds.bottom + (bounds.height() / 2));
 		});
 	});
 
