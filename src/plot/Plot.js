@@ -228,14 +228,14 @@ const frame = function(plot) {
 	// update cell
 	updateCell(plot);
 
-	// render each layer
-	plot.layers.forEach(layer => {
-		layer.draw(timestamp);
+	// sort renderables by z-index, render bottom first
+	const renderables = plot.layers.concat(plot.overlays).sort((a, b) => {
+		return a.zIndex - b.zIndex;
 	});
 
-	// render each overlay
-	plot.overlays.forEach(overlays => {
-		overlays.draw(timestamp);
+	// render each renderable
+	renderables.forEach(renderable => {
+		renderable.draw(timestamp);
 	});
 
 	// request next frame

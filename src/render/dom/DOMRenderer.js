@@ -305,6 +305,7 @@ class DOMRenderer extends Renderer {
 		// update container
 		container.style.transform = `translate3d(${-delta.x}px,${delta.y}px,0) scale(${scale})`;
 		container.style.opacity = layer.opacity;
+		container.style.zIndex = layer.zIndex;
 
 		return this;
 	}
