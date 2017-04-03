@@ -49,14 +49,14 @@ class ClickHandler extends DOMHandler {
 
 		let last = null;
 		this.mousedown = (event) => {
-			last = this.mouseToPlot(event);
+			last = this.mouseToViewPx(event);
 		};
 
 		this.mouseup = (event) => {
 			if (!last) {
 				return;
 			}
-			const pos = this.mouseToPlot(event);
+			const pos = this.mouseToViewPx(event);
 			const diff = {
 				x: last.x - pos.x ,
 				y: last.y - pos.y

@@ -91,6 +91,23 @@ class DOMHandler {
 	}
 
 	/**
+	 * Takes a plot position and returns the corresponding viewport pixel
+	 * coordinate.
+	 * Coordinate [0, 0] is bottom-left of the plot.
+	 *
+	 * @param {Object} pos - The plot position.
+	 *
+	 * @returns {Object} The viewport pixel coordinate.
+	 */
+	plotToViewPx(pos) {
+		const extent = this.plot.getPixelExtent();
+		return {
+			x: pos.x * extent,
+			y: pos.y * extent
+		};
+	}
+
+	/**
 	 * Takes a DOM event and returns the mouse button string.
 	 *
 	 * @param {Event} event - The mouse event.
