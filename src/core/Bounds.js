@@ -197,7 +197,7 @@ class Bounds {
 	 *
 	 * @returns {Object} The center coordinate of the bounds.
 	 */
-	center() {
+	getCenter() {
 		return {
 			x: this.left + (this.width() / 2),
 			y: this.bottom + (this.height() / 2)

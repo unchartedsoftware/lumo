@@ -81,7 +81,6 @@ const getRenderables = function(plot, pyramid) {
 const drawTiles = function(renderer, container, tiles, plot, pyramid, ignoreFade = false) {
 	const tileSize = plot.tileSize;
 	const cell = plot.cell;
-	const px = { x: 0, y: 0 };
 	// create document fragment
 	const fragment = document.createDocumentFragment();
 	// add new tiles to the DOM
@@ -91,13 +90,10 @@ const drawTiles = function(renderer, container, tiles, plot, pyramid, ignoreFade
 			const coord = renderable.coord;
 			// create tile element
 			const elem = renderer.createTile(tileSize);
-			// get tile pixel offset
-			px.x = coord.x * tileSize;
-			px.y = coord.y * tileSize;
-			// scale tile offset relative to cell
-			const cellPx = cell.projectPx(px, coord.z);
+			// get tile pixel position relative to the cell
+			const px = cell.project(coord.getPosition(), coord.z);
 			// position tile
-			renderer.positionTile(elem, cellPx.x, cellPx.y, tileSize);
+			renderer.positionTile(elem, px.x, px.y, tileSize);
 			// make tile invisible
 			if (!ignoreFade) {
 				elem.style.transition = `opacity ${OPACITY_FADE_IN_MS}ms`;
@@ -139,15 +135,11 @@ const eraseTiles = function(renderer, container, tiles, plot) {
 
 const resetTileOffset = function(renderer, cell) {
 	const tileSize = renderer.layer.plot.tileSize;
-	const px = { x: 0, y: 0 };
 	renderer.tiles.forEach(tile => {
-		// get tile pixel position
-		px.x = tile.coord.x * tileSize;
-		px.y = tile.coord.y * tileSize;
-		// scale tile position relative to cell
-		const cellPx = cell.projectPx(px, tile.coord.z);
+		// get tile pixel position relative to the cell
+		const px = cell.project(tile.coord.getPosition(), tile.coord.z);
 		// re-position tile
-		renderer.positionTile(tile.elem, cellPx.x, cellPx.y, tileSize);
+		renderer.positionTile(tile.elem, px.x, px.y, tileSize);
 	});
 };
 
@@ -199,7 +191,7 @@ class DOMRenderer extends Renderer {
 	 */
 	onRemove(layer) {
 		// detach and destroy handlers
-		this.plot.removeListener(EventType.CELL_UPDATE, this.handlers.get(CELL_UPDATE));
+		this.layer.plot.removeListener(EventType.CELL_UPDATE, this.handlers.get(CELL_UPDATE));
 		this.handlers.delete(CELL_UPDATE);
 		// detach and destroy container
 		this.layer.plot.container.removeChild(this.container);
@@ -305,7 +297,7 @@ class DOMRenderer extends Renderer {
 		}
 
 		// determine container offset
-		const delta = plot.cell.projectPx(plot.viewport, plot.zoom);
+		const delta = plot.cell.project(plot.viewport, plot.zoom);
 
 		// scale on difference between current zoom and tile zoom.
 		const scale = Math.pow(2, plot.zoom - Math.round(plot.getTargetZoom()));
@@ -313,6 +305,7 @@ class DOMRenderer extends Renderer {
 		// update container
 		container.style.transform = `translate3d(${-delta.x}px,${delta.y}px,0) scale(${scale})`;
 		container.style.opacity = layer.opacity;
+		container.style.zIndex = layer.zIndex;
 
 		return this;
 	}
@@ -364,6 +357,53 @@ class DOMRenderer extends Renderer {
 	 * @param {Tile} tile - The Tile object.
 	 */
 	drawTile() {
+	}
+
+	/**
+	 * Takes a DOM event and returns the corresponding plot position.
+	 * Coordinate [0, 0] is bottom-left of the plot.
+	 *
+	 * @param {Event} event - The mouse event.
+	 *
+	 * @returns {Object} The plot position.
+	 */
+	mouseToPlot(event) {
+		if (!this.layer.plot) {
+			throw 'Renderer must be attached to the plot';
+		}
+		const plot = this.layer.plot;
+		const extent = plot.getPixelExtent();
+		const size = plot.getViewportPixelSize();
+		return {
+			x: plot.viewport.x + (event.clientX / extent),
+			y: plot.viewport.y + ((size.height - event.clientY) / extent)
+		};
+	}
+
+	/**
+	 * Takes a DOM event and returns the mouse button string.
+	 *
+	 * @param {Event} event - The mouse event.
+	 *
+	 * @returns {String} The mouse button string.
+	 */
+	getMouseButton(event) {
+		if (event.which) {
+			if (event.which === 1) {
+				return 'left';
+			} else if (event.which === 2) {
+				return 'middle';
+			} else if (event.which === 3) {
+				return 'right';
+			}
+		}
+		if (event.button === 0) {
+			return 'left';
+		} else if (event.button === 1) {
+			return 'middle';
+		} else if (event.button === 2) {
+			return 'right';
+		}
 	}
 }
 

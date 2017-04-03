@@ -9,11 +9,16 @@ const EventEmitter = require('events');
 class Overlay extends EventEmitter {
 
 	/**
-	 * Instantiates a new DOMOverlay object.
+	 * Instantiates a new DOMOverlay object.*
+	 *
+	 * @param {Object} options - The layer options.
+	 * @param {Number} options.opacity - The layer opacity.
+	 * @param {Number} options.zIndex - The layer z-index.
 	 */
 	constructor(options = {}) {
 		super();
 		this.opacity = defaultTo(options.opacity, 1.0);
+		this.zIndex = defaultTo(options.zIndex, 0);
 		this.plot = null;
 		this.handlers = null;
 	}

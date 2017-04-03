@@ -4,7 +4,6 @@ const clamp = require('lodash/clamp');
 const defaultTo = require('lodash/defaultTo');
 const throttle = require('lodash/throttle');
 const EventEmitter = require('events');
-const Coord = require('../core/Coord');
 const EventType = require('../event/EventType');
 const CellEvent = require('../event/CellEvent');
 const FrameEvent = require('../event/FrameEvent');
@@ -79,7 +78,7 @@ const ZOOM = Symbol();
 
 const requestTiles = function() {
 	// get all visible coords in the target viewport
-	const coords = this.getVisibleCoords();
+	const coords = this.getTargetVisibleCoords();
 	// for each layer
 	this.layers.forEach(layer => {
 		// request tiles
@@ -93,10 +92,7 @@ const resize = function(plot) {
 		width: plot.container.offsetWidth,
 		height: plot.container.offsetHeight
 	};
-	const prev = {
-		width: plot.viewport.width,
-		height: plot.viewport.height
-	};
+	const prev = plot.getViewportPixelSize();
 	const center = plot.viewport.getCenter();
 
 	if (prev.width !== current.width ||
@@ -114,8 +110,9 @@ const resize = function(plot) {
 			current.width * plot.pixelRatio,
 			current.height * plot.pixelRatio);
 		// update viewport
-		plot.viewport.width = current.width;
-		plot.viewport.height = current.height;
+		const extent = plot.getPixelExtent();
+		plot.viewport.width = current.width / extent;
+		plot.viewport.height = current.height / extent;
 		// re-center viewport
 		plot.viewport.centerOn(center);
 		// request tiles
@@ -127,9 +124,9 @@ const resize = function(plot) {
 
 const updateCell = function(plot) {
 	const zoom = plot.getTargetZoom();
-	const centerPx = plot.getTargetCenter();
-	const tileSize = plot.tileSize;
-	const cell = new Cell(zoom, centerPx, tileSize);
+	const center = plot.getTargetCenter();
+	const extent = plot.getTargetPixelExtent();
+	const cell = new Cell(zoom, center, extent);
 
 	let refresh = false;
 	// check if forced or no cell exists
@@ -162,25 +159,22 @@ const reset = function(plot) {
 		// if there is no wraparound, do not reset
 		return;
 	}
+
 	// resets the position of the viewport relative to the layer such that
 	// the layer native coordinate range is within the viewports bounds.
-	const scale = Math.pow(2, plot.zoom);
-	const layerWidth = scale * plot.tileSize;
-	const layerSpans = Math.ceil(plot.viewport.width / layerWidth);
-	const layerLeft = 0;
-	const layerRight = layerWidth - 1;
+
 	// layer is past the left bound of the viewport
-	if (plot.viewport.x > layerRight) {
-		plot.viewport.x -= layerWidth * layerSpans;
+	if (plot.viewport.x > 1.0) {
+		plot.viewport.x -= plot.viewport.width;
 		if (plot.isPanning()) {
-			plot.panAnimation.start.x -= layerWidth * layerSpans;
+			plot.panAnimation.start.x -= plot.viewport.width;
 		}
 	}
 	// layer is past the right bound of the viewport
-	if (plot.viewport.x + plot.viewport.width < layerLeft) {
-		plot.viewport.x += layerWidth * layerSpans;
+	if (plot.viewport.x + plot.viewport.width < 0) {
+		plot.viewport.x += plot.viewport.width;
 		if (plot.isPanning()) {
-			plot.panAnimation.start.x += layerWidth * layerSpans;
+			plot.panAnimation.start.x += plot.viewport.width;
 		}
 	}
 };
@@ -211,10 +205,11 @@ const frame = function(plot) {
 	gl.clear(gl.COLOR_BUFFER_BIT);
 
 	// set the viewport
+	const size = plot.getViewportPixelSize();
 	gl.viewport(
 		0, 0,
-		plot.viewport.width * window.devicePixelRatio,
-		plot.viewport.height * window.devicePixelRatio);
+		size.width * window.devicePixelRatio,
+		size.height * window.devicePixelRatio);
 
 	// apply the zoom animation
 	if (plot.isZooming()) {
@@ -233,14 +228,14 @@ const frame = function(plot) {
 	// update cell
 	updateCell(plot);
 
-	// render each layer
-	plot.layers.forEach(layer => {
-		layer.draw(timestamp);
+	// sort renderables by z-index, render bottom first
+	const renderables = plot.layers.concat(plot.overlays).sort((a, b) => {
+		return a.zIndex - b.zIndex;
 	});
 
-	// render each overlay
-	plot.overlays.forEach(overlays => {
-		overlays.draw(timestamp);
+	// render each renderable
+	renderables.forEach(renderable => {
+		renderable.draw(timestamp);
 	});
 
 	// request next frame
@@ -307,11 +302,6 @@ class Plot extends EventEmitter {
 			this.canvas.width,
 			this.canvas.height);
 
-		// set viewport
-		this.viewport = new Viewport({
-			width: this.canvas.offsetWidth,
-			height: this.canvas.offsetHeight
-		});
 
 		// set pixel ratio
 		this.pixelRatio = window.devicePixelRatio;
@@ -327,9 +317,15 @@ class Plot extends EventEmitter {
 		this.zoom = defaultTo(options.zoom, 0);
 		this.zoom = clamp(this.zoom, this.minZoom, this.maxZoom);
 
+		// set viewport
+		const span = Math.pow(2, this.zoom);
+		this.viewport = new Viewport({
+			width: this.canvas.offsetWidth / span,
+			height: this.canvas.offsetHeight / span
+		});
+
 		// center the plot
-		const half = Math.pow(2, this.zoom) * this.tileSize / 2;
-		const center = defaultTo(options.center, { x: half, y: half });
+		const center = defaultTo(options.center, { x: 0.5, y: 0.5 });
 		this.viewport.centerOn(center);
 
 		// wraparound
@@ -487,120 +483,6 @@ class Plot extends EventEmitter {
 	}
 
 	/**
-	 * Takes a mouse event and returns the corresponding viewport pixel
-	 * position. Coordinate [0, 0] is bottom-left of the viewport.
-	 *
-	 * @param {Event} event - The mouse event.
-	 *
-	 * @returns {Object} The viewport pixel position.
-	 */
-	mouseToViewPx(event) {
-		return {
-			x: event.clientX,
-			y: this.viewport.height - event.clientY
-		};
-	}
-
-	/**
-	 * Takes a mouse event and returns the corresponding plot pixel
-	 * position. Coordinate [0, 0] is bottom-left of the plot.
-	 *
-	 * @param {Event} event - The mouse event.
-	 *
-	 * @returns {Object} The plot pixel position.
-	 */
-	mouseToPlotPx(event) {
-		return this.viewPxToPlotPx(this.mouseToViewPx(event));
-	}
-
-	/**
-	 * Takes a viewport pixel position and returns the corresponding plot
-	 * pixel position. Coordinate [0, 0] is bottom-left of the plot.
-	 *
-	 * @param {Object} px - The viewport pixel position.
-	 *
-	 * @returns {Object} The plot pixel position.
-	 */
-	viewPxToPlotPx(px) {
-		return {
-			x: this.viewport.x + px.x,
-			y: this.viewport.y + px.y
-		};
-	}
-
-	/**
-	 * Takes a plot pixel position and returns the corresponding viewport
-	 * pixel position. Coordinate [0, 0] is bottom-left of the viewport.
-	 *
-	 * @param {Object} px - The plot pixel position.
-	 *
-	 * @returns {Object} The viewport pixel position.
-	 */
-	plotPxToViewPx(px) {
-		return {
-			x: px.x - this.viewport.x,
-			y: px.y - this.viewport.y
-		};
-	}
-
-	/**
-	 * Takes a normalized plot position and returns the corresponding plot pixel
-	 * position. Coordinate [0, 0] is bottom-left of the plot.
-	 *
-	 * @param {Object} pos - The normalized plot position.
-	 *
-	 * @returns {Object} The plot pixel position.
-	 */
-	normalizedPlotToPlotPx(pos) {
-		const tileZoom = Math.round(this.zoom);
-		const scale = Math.pow(2, this.zoom - tileZoom);
-		const scaledTileSize = this.tileSize * scale;
-		const extent = Math.pow(2, this.zoom) * scaledTileSize;
-		return {
-			x: pos.x * extent,
-			y: pos.y * extent
-		};
-	}
-
-	/**
-	 * Takes a plot pixel position and returns the corresponding normalized
-	 * plot position. Coordinate [0, 0] is bottom-left of the plot and [1, 1] is
-	 * the top-right.
-	 *
-	 * @param {Object} px - The plot pixel position.
-	 *
-	 * @returns {Object} The normalized plot position.
-	 */
-	plotPxToNormalizedPlot(px) {
-		const tileZoom = Math.round(this.zoom);
-		const scale = Math.pow(2, this.zoom - tileZoom);
-		const scaledTileSize = this.tileSize * scale;
-		const extent = Math.pow(2, this.zoom) * scaledTileSize;
-		return {
-			x: px.x / extent,
-			y: px.y / extent
-		};
-	}
-
-	/**
-	 * Takes a plot pixel position and returns the corresponding tile
-	 * coordinate it is inside.
-	 *
-	 * @param {Object} px - The plot pixel position.
-	 *
-	 * @returns {Coord} The tile coordinate position.
-	 */
-	plotPxToCoord(px) {
-		const tileZoom = Math.round(this.zoom);
-		const scale = Math.pow(2, this.zoom - tileZoom);
-		const scaledTileSize = this.tileSize * scale;
-		return new Coord(
-			tileZoom,
-			Math.floor(px.x / scaledTileSize),
-			Math.floor(px.y / scaledTileSize));
-	}
-
-	/**
 	 * Returns the target zoom of the plot. If the plot is actively zooming, it
 	 * will return the destination zoom. If the plot is not actively zooming, it
 	 * will return the current zoom.
@@ -614,23 +496,6 @@ class Plot extends EventEmitter {
 		}
 		// if not zooming, use the current level
 		return this.zoom;
-	}
-
-	/**
-	 * Returns the target center of the plot in plot pixel coordinates. If the
-	 * plot is actively zooming or panning, it will return the  destination
-	 * center. If the plot is not actively zooming or panning, it will return
-	 * the current center in plot pixel coordinates.
-	 *
-	 * @returns {Object} The target center in plot pixel coordinates.
-	 */
-	getTargetCenter() {
-		if (this.isZooming()) {
-			// if zooming, use the target center
-			return this.zoomAnimation.targetViewport.getCenter();
-		}
-		// if not zooming, use the current center
-		return this.viewport.getCenter();
 	}
 
 	/**
@@ -650,28 +515,146 @@ class Plot extends EventEmitter {
 	}
 
 	/**
-	 * Returns the tile coordinatess currently visible in the viewport.
+	 * Returns the target center of the plot in plot coordinates. If the plot is
+	 * actively zooming or panning, it will return the destination center.
+	 *
+	 * @returns {Object} The target center in plot coordinates.
+	 */
+	getTargetCenter() {
+		return this.getTargetViewport().getCenter();
+	}
+
+	/**
+	 * Returns the center of the plot in plot coordinates.
+	 *
+	 * @returns {Object} The target center in plot coordinates.
+	 */
+	getCenter() {
+		return this.viewport.getCenter();
+	}
+
+	/**
+	 * Returns the tile coordinates visible in the target viewport.
+	 *
+	 * @returns {Array} The array of visible tile coords.
+	 */
+	getTargetVisibleCoords() {
+		const tileZoom = Math.round(this.getTargetZoom()); // use target zoom
+		const viewport = this.getTargetViewport(); // use target viewport
+		return viewport.getVisibleCoords(tileZoom, this.wraparound);
+	}
+
+	/**
+	 * Returns the tile coordinates currently visible in the current viewport.
 	 *
 	 * @returns {Array} The array of visible tile coords.
 	 */
 	getVisibleCoords() {
-		return this.getTargetViewport().getVisibleCoords(
-			this.tileSize,
-			this.getTargetZoom(),
-			Math.round(this.getTargetZoom()),
-			this.wraparound);
+		const tileZoom = Math.round(this.zoom); // use current zoom
+		const viewport = this.viewport; // use current viewport
+		return viewport.getVisibleCoords(tileZoom, this.wraparound);
 	}
 
 	/**
-	 * Pans to the target plot pixel coordinate. Cancels any current zoom or pan
+	 * Returns the plot size in pixels.
+	 *
+	 * @returns {Object} The plot size in pixels.
+	 */
+	getPixelExtent() {
+		return Math.pow(2, this.zoom) * this.tileSize;
+	}
+
+	/**
+	 * Returns the target plot size in pixels.
+	 *
+	 * @returns {Object} The target plot size in pixels.
+	 */
+	getTargetPixelExtent() {
+		return Math.pow(2, this.getTargetZoom()) * this.tileSize;
+	}
+
+	/**
+	 * Returns the viewport size in pixels.
+	 *
+	 * @returns {Object} The viewport size in pixels.
+	 */
+	getViewportPixelSize() {
+		return this.viewport.getPixelSize(this.zoom, this.tileSize);
+	}
+
+	/**
+	 * Returns the target viewport size in pixels.
+	 *
+	 * @returns {Object} The target viewport size in pixels.
+	 */
+	getTargetViewportPixelSize() {
+		return this.getTargetViewport().getPixelSize(this.zoom, this.tileSize);
+	}
+
+	/**
+	 * Returns the viewport offset in pixels.
+	 *
+	 * @returns {Object} The viewport offset in pixels.
+	 */
+	getViewportPixelOffset() {
+		return this.viewport.getPixelOffset(this.zoom, this.tileSize);
+	}
+
+	/**
+	 * Returns the target viewport offset in pixels.
+	 *
+	 * @returns {Object} The target viewport offset in pixels.
+	 */
+	getTargetViewportPixelOffset() {
+		return this.getTargetViewport().getPixelOffset(this.zoom, this.tileSize);
+	}
+
+	/**
+	 * Returns the orthographic projection matrix for the viewport.
+	 *
+	 * @return {Float32Array} The orthographic projection matrix.
+	 */
+	getOrthoMatrix() {
+		const size = this.getViewportPixelSize();
+		const left = 0;
+		const right = size.width;
+		const bottom = 0;
+		const top = size.height;
+		const near = -1;
+		const far = 1;
+		const lr = 1 / (left - right);
+		const bt = 1 / (bottom - top);
+		const nf = 1 / (near - far);
+		const out = new Float32Array(16);
+		out[0] = -2 * lr;
+		out[1] = 0;
+		out[2] = 0;
+		out[3] = 0;
+		out[4] = 0;
+		out[5] = -2 * bt;
+		out[6] = 0;
+		out[7] = 0;
+		out[8] = 0;
+		out[9] = 0;
+		out[10] = 2 * nf;
+		out[11] = 0;
+		out[12] = (left + right) * lr;
+		out[13] = (top + bottom) * bt;
+		out[14] = (far + near) * nf;
+		out[15] = 1;
+		return out;
+	}
+
+	/**
+	 * Pans to the target plot coordinate. Cancels any current zoom or pan
 	 * animations.
 	 *
-	 * @param {Number} plotPx - The target plot pixel.
+	 * @param {Number} pos - The target plot position.
 	 * @param {boolean} animate - Whether or not to animate the pan. Defaults to `true`.
 	 *
 	 * @returns {Plot} The plot object, for chaining.
 	 */
-	panTo(plotPx, animate = true) {
+	panTo(pos, animate = true) {
 		// cancel existing animations
 		if (this.isPanning()) {
 			this.panAnimation.cancel();
@@ -679,7 +662,7 @@ class Plot extends EventEmitter {
 		if (this.isZooming()) {
 			this.zoomAnimation.cancel();
 		}
-		this.handlers.get(PAN).panTo(plotPx, animate);
+		this.handlers.get(PAN).panTo(pos, animate);
 		return this;
 	}
 
@@ -705,32 +688,24 @@ class Plot extends EventEmitter {
 	}
 
 	/**
-	 * Fit the plot to a provided bounds in normalized plot coordinates.
+	 * Fit the plot to a provided bounds in plot coordinates.
 	 *
-	 * @param {Bounds} bounds - The bounds object, in normalized plot coordinates.
+	 * @param {Bounds} bounds - The bounds object, in plot coordinates.
 	 *
 	 * @returns {Plot} The plot object, for chaining.
 	 */
 	fitToBounds(bounds) {
-		const currentZoom = this.getTargetZoom();
-		const extent = Math.pow(2, currentZoom) * this.tileSize;
-		const vWidth = this.viewport.width;
-		const vHeight = this.viewport.height;
-		const bWidth = bounds.width() * extent;
-		const bHeight = bounds.height() * extent;
-		const scaleX = vWidth / bWidth;
-		const scaleY = vHeight / bHeight;
+		const targetZoom = this.getTargetZoom();
+		const targetViewport = this.getTargetViewport();
+		const scaleX = targetViewport.width / bounds.width();
+		const scaleY = targetViewport.height / bounds.height();
 		const scale = Math.min(scaleX, scaleY);
-		let zoom = Math.log2(scale) + currentZoom;
+		let zoom = Math.log2(scale) + targetZoom;
 		zoom = clamp(zoom, this.minZoom, this.maxZoom);
 		if (!this.continuousZoom) {
 			zoom = Math.floor(zoom);
 		}
-		const bCenter = bounds.center();
-		const center = {
-			x: bCenter.x * Math.pow(2, zoom) * this.tileSize,
-			y: bCenter.y * Math.pow(2, zoom) * this.tileSize
-		};
+		const center = bounds.getCenter();
 		this.zoomTo(zoom, false);
 		this.panTo(center, false);
 		return this;

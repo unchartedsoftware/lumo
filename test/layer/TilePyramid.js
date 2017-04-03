@@ -25,10 +25,10 @@ describe('TilePyramid', () => {
 			zoom: 0,
 			tileSize: 256,
 			viewport: new Viewport({
-				x: -256,
-				y: -256,
-				width: 512,
-				height: 512
+				x: -0.5,
+				y: -0.5,
+				width: 2.0,
+				height: 2.0
 			}),
 			getTargetCenter: function() {
 				return this.viewport.getCenter();

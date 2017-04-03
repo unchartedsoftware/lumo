@@ -113,9 +113,10 @@ const renderPoint = function(point, shader, plot, target, color, radius) {
 	// get tile offset
 	const coord = target.tile.coord;
 	const scale = Math.pow(2, plot.zoom - coord.z);
+	const viewport = plot.getViewportPixelOffset();
 	const tileOffset = [
-		(coord.x * scale * plot.tileSize) + (scale * target.x) - plot.viewport.x,
-		(coord.y * scale * plot.tileSize) + (scale * target.y) - plot.viewport.y
+		(coord.x * scale * plot.tileSize) + (scale * target.x) - viewport.x,
+		(coord.y * scale * plot.tileSize) + (scale * target.y) - viewport.y
 	];
 	// set uniforms
 	shader.setUniform('uTileOffset', tileOffset);

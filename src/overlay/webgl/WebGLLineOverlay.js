@@ -20,10 +20,9 @@ const SHADER_GLSL = {
 		uniform vec2 uViewOffset;
 		uniform float uScale;
 		uniform float uLineWidth;
-		uniform float uPixelRatio;
 		uniform mat4 uProjectionMatrix;
 		void main() {
-			vec2 wPosition = (aPosition * uScale) - uViewOffset + aNormal * uLineWidth * uPixelRatio;
+			vec2 wPosition = (aPosition * uScale) - uViewOffset + aNormal * uLineWidth;
 			gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
 		}
 		`,
@@ -42,11 +41,11 @@ const SHADER_GLSL = {
 
 // NOTE: smooth / round lines implemented using code modified from:
 // http://labs.hyperandroid.com/efficient-webgl-stroking . Instead of baking in
-// the positions of the lines, this implementation instead generates the points
-// along the middle of the line and stores the tangents as normals, allowing
-// the thickness to be arbtrarily scaled outwards independant of scale.
-// In order to prevent degeneration of normals due to self-intersections, the
-// triangles are generated upon zoom.
+// the positions of the lines, this implementation instead generates the
+// positions along the line and stores the tangents, allowing the thickness to
+// be arbitrarily scaled outwards independant of scale. In order to prevent
+// degeneration of normals due to self-intersections, the triangles are
+// generated upon zoom.
 
 const EPSILON = 0.000001;
 
@@ -432,7 +431,7 @@ const bufferPolyline = function(points, normals) {
 };
 
 const createVertexBuffer = function(overlay, points) {
-	const lineWidth = overlay.lineWidth * overlay.plot.pixelRatio;
+	const lineWidth = overlay.lineWidth;
 	const geometry = getStrokeGeometry(points, lineWidth);
 	const data = bufferPolyline(geometry.positions, geometry.normals);
 	return new VertexBuffer(
@@ -583,7 +582,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 	clearPolylines() {
 		this.polylines = new Map();
 		if (this.plot) {
-			this.buffers = null;
+			this.buffers = [];
 		}
 		return this;
 	}
@@ -604,11 +603,8 @@ class WebGLLineOverlay extends WebGLOverlay {
 		const proj = this.getOrthoMatrix();
 		const scale = Math.pow(2, plot.zoom - cell.zoom);
 
-		// get view offset relative to cell offset
-		const offset = [
-			plot.viewport.x - (cell.offsetPx.x * scale),
-			plot.viewport.y - (cell.offsetPx.y * scale)
-		];
+		// get view offset in cell space
+		const offset = cell.project(plot.viewport, plot.zoom);
 
 		// set blending func
 		gl.enable(gl.BLEND);
@@ -619,9 +615,8 @@ class WebGLLineOverlay extends WebGLOverlay {
 
 		// set global uniforms
 		shader.setUniform('uProjectionMatrix', proj);
-		shader.setUniform('uViewOffset', offset);
+		shader.setUniform('uViewOffset', [ offset.x, offset.y ]);
 		shader.setUniform('uScale', scale);
-		shader.setUniform('uPixelRatio', plot.pixelRatio);
 		shader.setUniform('uLineWidth', this.lineWidth / 2);
 		shader.setUniform('uLineColor', this.lineColor);
 		shader.setUniform('uOpacity', this.opacity);

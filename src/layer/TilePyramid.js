@@ -33,15 +33,16 @@ const LOADED_THROTTLE_MS = 200;
 // Private Methods
 
 const getLODOffset = function(descendant, ancestor) {
+	// get difference between descendant zooma ancestor zoom
 	const scale = Math.pow(2, descendant.z - ancestor.z);
 	const step = 1 / scale;
-	const root = {
+	const scaled = {
 		x: ancestor.x * scale,
 		y: ancestor.y * scale
 	};
 	return {
-		x: (descendant.x - root.x) * step,
-		y: (descendant.y - root.y) * step,
+		x: (descendant.x - scaled.x) * step,
+		y: (descendant.y - scaled.y) * step,
 		extent: step
 	};
 };
@@ -100,20 +101,16 @@ const checkIfLoaded = function(pyramid) {
 };
 
 const sortAroundCenter = function(plot, coords) {
-	// get the center plot pixel
+	// get the plot center position
 	const center = plot.getTargetCenter();
-	const zoom = plot.getTargetZoom();
-	// get the scaled tile size
-	const tileSize = plot.tileSize * Math.pow(2, (zoom - Math.round(zoom)));
-	// convert center to tile coords
-	center.x /= tileSize;
-	center.y /= tileSize;
 	// sort the requests by distance from center tile
 	coords.sort((a, b) => {
-		const dax = center.x - (a.x + 0.5);
-		const day = center.y - (a.y + 0.5);
-		const dbx = center.x - (b.x + 0.5);
-		const dby = center.y - (b.y + 0.5);
+		const aCenter = a.getCenter();
+		const bCenter = b.getCenter();
+		const dax = center.x - aCenter.x;
+		const day = center.y - aCenter.y;
+		const dbx = center.x - bCenter.x;
+		const dby = center.y - bCenter.y;
 		const da = dax * dax + day * day;
 		const db = dbx * dbx + dby * dby;
 		a.d = da;
@@ -155,8 +152,7 @@ const shouldDiscard = function(pyramid, tile) {
 	}
 	// check if tile is in view, if not, discard
 	const viewport = plot.getTargetViewport();
-	const zoom = plot.getTargetZoom();
-	return !viewport.isInView(plot.tileSize, tile.coord, zoom, plot.wraparound);
+	return !viewport.isInView(tile.coord, plot.wraparound);
 };
 
 /**

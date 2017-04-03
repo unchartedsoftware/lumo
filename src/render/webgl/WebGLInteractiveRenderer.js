@@ -34,20 +34,21 @@ const ZOOM_START = Symbol();
 
 // Private Methods
 
-const getCollision = function(renderer, plotPx) {
+const getCollision = function(renderer, pos) {
 	const plot = renderer.layer.plot;
 	// don't return collision if zooming
 	if (plot.isZooming()) {
 		return null;
 	}
 	// points are hashed in un-scaled coordinates, unscale the point
-	const targetZoom = Math.round(plot.zoom);
-	const scale = Math.pow(2, targetZoom - plot.zoom);
+	const tileZoom = Math.round(plot.zoom);
+	const scale = Math.pow(2, tileZoom - plot.zoom);
+	const extent = plot.getPixelExtent();
 	// unscaled points
-	const sx = plotPx.x * scale;
-	const sy = plotPx.y * scale;
+	const sx = pos.x * extent * scale;
+	const sy = pos.y * extent * scale;
 	// get the tree for the zoom
-	const tree = renderer.trees.get(targetZoom);
+	const tree = renderer.trees.get(tileZoom);
 	if (!tree) {
 		// no data for tile
 		return null;
@@ -57,7 +58,7 @@ const getCollision = function(renderer, plotPx) {
 
 const onClick = function(renderer, event) {
 	const multiSelect = Keyboard.poll('ctrl') || Keyboard.poll('meta');
-	const collision = getCollision(renderer, event.plotPx);
+	const collision = getCollision(renderer, event.pos);
 	if (collision) {
 		// add to collection if multi-selection is enabled
 		if (multiSelect) {
@@ -77,8 +78,7 @@ const onClick = function(renderer, event) {
 		// emit click event
 		renderer.emit(EventType.CLICK, new ClickEvent(
 			renderer.layer,
-			event.viewPx,
-			event.plotPx,
+			event.pos,
 			event.button,
 			renderer.selected.length > 1 ? renderer.selected : collision));
 	} else {
@@ -118,7 +118,7 @@ const resetCursor = function(renderer) {
 };
 
 const onMouseMove = function(renderer, event) {
-	const collision = getCollision(renderer, event.plotPx);
+	const collision = getCollision(renderer, event.pos);
 	if (collision) {
 		// mimic mouseover / mouseout events
 		if (renderer.highlighted) {
@@ -127,15 +127,13 @@ const onMouseMove = function(renderer, event) {
 				// emit mouseout for prev
 				renderer.emit(EventType.MOUSE_OUT, new MouseEvent(
 					renderer.layer,
-					event.viewPx,
-					event.plotPx,
+					event.pos,
 					event.button,
 					renderer.highlighted));
 				// emit mouseover for new
 				renderer.emit(EventType.MOUSE_OVER, new MouseEvent(
 					renderer.layer,
-					event.viewPx,
-					event.plotPx,
+					event.pos,
 					event.button,
 					collision));
 			}
@@ -143,8 +141,7 @@ const onMouseMove = function(renderer, event) {
 			// no previous collision, execute mouseover
 			renderer.emit(EventType.MOUSE_OVER, new MouseEvent(
 				renderer.layer,
-				event.viewPx,
-				event.plotPx,
+				event.pos,
 				event.button,
 				collision));
 		}
@@ -161,8 +158,7 @@ const onMouseMove = function(renderer, event) {
 		// emit mouse out
 		renderer.emit(EventType.MOUSE_OUT, new MouseEvent(
 			renderer.layer,
-			event.viewPx,
-			event.plotPx,
+			event.pos,
 			event.button,
 			renderer.highlighted));
 	}

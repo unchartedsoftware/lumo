@@ -15,12 +15,14 @@ class Layer extends EventEmitter {
 	 * @param {Object} options - The layer options.
 	 * @param {Renderer} options.renderer - The layer renderer.
 	 * @param {Number} options.opacity - The layer opacity.
+	 * @param {Number} options.zIndex - The layer z-index.
 	 * @param {boolean} options.hidden - Whether or not the layer is visible.
 	 * @param {boolean} options.muted - Whether or not the layer is muted.
 	 */
 	constructor(options = {}) {
 		super();
 		this.opacity = defaultTo(options.opacity, 1.0);
+		this.zIndex = defaultTo(options.zIndex, 0);
 		this.hidden = defaultTo(options.hidden, false);
 		this.muted = defaultTo(options.muted, false);
 		this.renderer = defaultTo(options.renderer, null);
@@ -158,7 +160,7 @@ class Layer extends EventEmitter {
 			this.muted = false;
 			if (this.plot) {
 				// get visible coords
-				const coords = this.plot.getVisibleCoords();
+				const coords = this.plot.getTargetVisibleCoords();
 				// request tiles
 				this.requestTiles(coords);
 			}
@@ -241,7 +243,7 @@ class Layer extends EventEmitter {
 				this.renderer.clear();
 			}
 			// get visible coords
-			const coords = this.plot.getVisibleCoords();
+			const coords = this.plot.getTargetVisibleCoords();
 			// request tiles
 			this.requestTiles(coords);
 		}

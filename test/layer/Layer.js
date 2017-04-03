@@ -14,7 +14,7 @@ describe('Layer', () => {
 
 	beforeEach(() => {
 		plot = {
-			getVisibleCoords: () => {
+			getTargetVisibleCoords: () => {
 				return [];
 			}
 		};

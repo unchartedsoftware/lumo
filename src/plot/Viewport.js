@@ -5,8 +5,8 @@ const Coord = require('../core/Coord');
 
 // Private Methods
 
-const getVisibleTileBounds = function(viewport, tileSize, viewportZoom, tileZoom = viewportZoom, wraparound) {
-	const bounds = viewport.getTileBounds(tileSize, viewportZoom, tileZoom);
+const getVisibleTileBounds = function(viewport, tileZoom, wraparound) {
+	const bounds = viewport.getTileBounds(tileZoom);
 	// min / max tile coords
 	const dim = Math.pow(2, tileZoom);
 	const min = 0;
@@ -82,68 +82,40 @@ class Viewport {
 	constructor(params = {}) {
 		this.x = params.x ? params.x : 0;
 		this.y = params.y ? params.y : 0;
-		this.width = params.width ? Math.round(params.width) : 0;
-		this.height = params.height ? Math.round(params.height) : 0;
-	}
-
-	/**
-	 * Returns the pixel bounds of the viewport. Bounds edges are inclusive.
-	 *
-	 * @returns {Bounds} The pixel bounds of the viewport.
-	 */
-	getPixelBounds() {
-		// NOTE: bounds are INCLUSIVE
-		return new Bounds(
-			this.x,
-			this.x + this.width,
-			this.y,
-			this.y + this.height);
+		this.width = params.width ? params.width : 0;
+		this.height = params.height ? params.height : 0;
 	}
 
 	/**
 	 * Returns the tile bounds of the viewport. Bounds edges are inclusive.
 	 * NOTE: this includes wraparound coordinates
 	 *
-	 * @param {Number} tileSize - The dimension of the tiles, in pixels.
-	 * @param {Number} viewportZoom - The zoom of the viewport.
-	 * @param {Number} tileZoom - The zoom of the tiles within the viewport. Optional.
+	 * @param {Number} tileZoom - The zoom of the tiles within the viewport.
 	 *
 	 * @returns {Bounds} The tile bounds of the viewport.
 	 */
-	getTileBounds(tileSize, viewportZoom, tileZoom = viewportZoom) {
-		// NOTE: bounds are INCLUSIVE
-		// get the tile coordinate bounds for tiles from the tileZoom that
-		// are visible from the viewportZoom.
-		//	 Ex. if current viewport zoom is 3 and tile zoom is 5, the
-		//		 tiles will be 25% of their normal size compared to the
-		//		 viewport.
-		const scale = Math.pow(2, viewportZoom - tileZoom);
-		const scaledTileSize = tileSize * scale;
+	getTileBounds(tileZoom) {
+		// calc how many fit are in the plot
+		const tileSpan = 1 / Math.pow(2, tileZoom);
+		// determine bounds
 		return new Bounds(
-			Math.floor(this.x / scaledTileSize),
-			Math.ceil(((this.x + this.width) / scaledTileSize) - 1),
-			Math.floor(this.y / scaledTileSize),
-			Math.ceil(((this.y + this.height) / scaledTileSize) - 1));
+			Math.floor(this.x / tileSpan),
+			Math.ceil((this.x + this.width) / tileSpan) - 1,
+			Math.floor(this.y / tileSpan),
+			Math.ceil((this.y + this.height) / tileSpan) - 1);
 	}
 
 	/**
 	 * Returns the coordinates that are visible in the viewport.
 	 *
-	 * @param {Number} tileSize - The dimension of the tiles, in pixels.
-	 * @param {Number} viewportZoom - The zoom of the viewport.
 	 * @param {Number} tileZoom - The zoom of the tiles within the viewport. Optional.
 	 * @param {boolean} wraparound - The if the horizontal axis should wraparound. Optional.
 	 *
 	 * @returns {Array} The array of visible tile coords.
 	 */
-	getVisibleCoords(tileSize, viewportZoom, tileZoom = viewportZoom, wraparound = false) {
+	getVisibleCoords(tileZoom, wraparound = false) {
 		// get the bounds for what tiles are in view
-		const bounds = getVisibleTileBounds(
-			this,
-			tileSize,
-			viewportZoom,
-			tileZoom,
-			wraparound);
+		const bounds = getVisibleTileBounds(this, tileZoom, wraparound);
 		// check if no coords are in view
 		if (!bounds) {
 			return [];
@@ -159,58 +131,16 @@ class Viewport {
 	}
 
 	/**
-	 * Returns the orthographic projection matrix for the viewport.
-	 *
-	 * @return {Float32Array} The orthographic projection matrix.
-	 */
-	getOrthoMatrix() {
-		const left = 0;
-		const right = this.width;
-		const bottom = 0;
-		const top = this.height;
-		const near = -1;
-		const far = 1;
-		const lr = 1 / (left - right);
-		const bt = 1 / (bottom - top);
-		const nf = 1 / (near - far);
-		const out = new Float32Array(16);
-		out[0] = -2 * lr;
-		out[1] = 0;
-		out[2] = 0;
-		out[3] = 0;
-		out[4] = 0;
-		out[5] = -2 * bt;
-		out[6] = 0;
-		out[7] = 0;
-		out[8] = 0;
-		out[9] = 0;
-		out[10] = 2 * nf;
-		out[11] = 0;
-		out[12] = (left + right) * lr;
-		out[13] = (top + bottom) * bt;
-		out[14] = (far + near) * nf;
-		out[15] = 1;
-		return out;
-	}
-
-	/**
 	 * Returns whether or not the provided coord is within the viewport.
 	 *
-	 * @param {Number} tileSize - The dimension of the tiles, in pixels.
 	 * @param {Coord} coord - The coord.
-	 * @param {Number} viewportZoom - The zoom of the viewport.
 	 * @param {boolean} wraparound - The if the horizontal axis should wraparound. Optional.
 	 *
 	 * @return {boolean} Whether or not the coord is in view.
 	 */
-	isInView(tileSize, coord, viewportZoom, wraparound = false) {
+	isInView(coord, wraparound = false) {
 		// get the bounds for what tiles are in view
-		const bounds = getVisibleTileBounds(
-			this,
-			tileSize,
-			viewportZoom,
-			coord.z, // tile zoom
-			wraparound);
+		const bounds = getVisibleTileBounds(this, coord.z, wraparound);
 		// check if no coords are in view
 		if (!bounds) {
 			return false;
@@ -221,77 +151,36 @@ class Viewport {
 	}
 
 	/**
-	 * Returns a viewport that has been zoomed around it's center.
+	 * Returns a viewport that has been zoomed around a provided position.
 	 *
-	 * @param {Number} tileSize - The dimension of the tiles, in pixels.
 	 * @param {Number} zoom - The current zoom of the viewport.
 	 * @param {Number} targetZoom - The target zoom of the viewport.
+	 * @param {Object} targetPos - The target position to zoom around.
 	 *
-	 * @returns {Array} The array of visible tile coords.
+	 * @returns {Viewport} The new viewport object.
 	 */
-	zoomFromPlotCenter(tileSize, zoom, targetZoom) {
-		// get the current dimension
-		const current = Math.pow(2, zoom);
-		// get the next dimension
-		const next = Math.pow(2, targetZoom);
-		// determine the change in pixels to center the existing plot
-		const change = tileSize * (next - current) / 2;
-		// return new viewport
-		const viewport = new Viewport({
-			width: this.width,
-			height: this.height,
-			x: this.x + change,
-			y: this.y + change
-		});
-		return viewport;
-	}
-
-	/**
-	 * Returns a viewport that has been zoomed around a provided plot pixel.
-	 *
-	 * @param {Number} tileSize - The dimension of the tiles, in pixels.
-	 * @param {Number} zoom - The current zoom of the viewport.
-	 * @param {Number} targetZoom - The target zoom of the viewport.
-	 * @param {Object} targetPx - The target pixel to zoom around.
-	 *
-	 * @returns {Array} The array of visible tile coords.
-	 */
-	zoomFromPlotPx(tileSize, zoom, targetZoom, targetPx) {
-		// get the current dimension
-		const current = Math.pow(2, zoom);
-		// get the next dimension
-		const next = Math.pow(2, targetZoom);
-		// determine the change in pixels to center the existing plot
-		const change = tileSize * (next - current) / 2;
-		// get the half size of the plot at the current zoom
-		const half = tileSize * current / 2;
-		// get the distance from the plot center at the current zoom
-		const diff = {
-			x: targetPx.x - half,
-			y: targetPx.y - half
-		};
-		// get the scaling between the two zoom levels
+	zoomToPos(zoom, targetZoom, targetPos) {
 		const scale = Math.pow(2, targetZoom - zoom);
-		// scale the diff, and subtract it's current value
-		const scaledDiff = {
-			x: diff.x * scale - diff.x,
-			y: diff.y * scale - diff.y
+		const scaledWidth = this.width / scale;
+		const scaledHeight = this.height / scale;
+		const diff = {
+			x: (targetPos.x - this.x) / scale,
+			y: (targetPos.y - this.y) / scale
 		};
 		// return new viewport
-		const viewport = new Viewport({
-			width: this.width,
-			height: this.height,
-			x: this.x + change + scaledDiff.x,
-			y: this.y + change + scaledDiff.y
+		return new Viewport({
+			width: scaledWidth,
+			height: scaledHeight,
+			x: targetPos.x - diff.x,
+			y: targetPos.y - diff.y,
 		});
-		return viewport;
 	}
 
 	/**
-	 * Returns the lower-left corner position of the viewport in plot pixel
-	 * coordinates.
+	 * Returns the lower-left corner position of the viewport in plot
+	 *coordinates.
 	 *
-	 * @returns {Object} The plot pixel position.
+	 * @returns {Object} The plot position.
 	 */
 	getPosition() {
 		return {
@@ -301,9 +190,9 @@ class Viewport {
 	}
 
 	/**
-	 * Returns the center of the viewport in plot pixel coordinates.
+	 * Returns the center of the viewport in plot coordinates.
 	 *
-	 * @returns {Object} The plot pixel center.
+	 * @returns {Object} The plot center.
 	 */
 	getCenter() {
 		return {
@@ -313,15 +202,47 @@ class Viewport {
 	}
 
 	/**
-	 * Centers the viewport on a given plot pixel coordinate.
+	 * Returns the viewports size in pixels.
 	 *
-	 * @param {Object} px - The plot pixel to center the viewport on.
+	 * @param {Number} zoom - The zoom of the plot.
+	 * @param {Number} tileSize - The size of a tile in pixels.
+	 *
+	 * @returns {Object} The view size in pixels.
+	 */
+	getPixelSize(zoom, tileSize) {
+		const extent = Math.pow(2, zoom) * tileSize;
+		return {
+			width: this.width * extent,
+			height: this.height * extent
+		};
+	}
+
+	/**
+	 * Returns the viewports offset in pixels.
+	 *
+	 * @param {Number} zoom - The zoom of the plot.
+	 * @param {Number} tileSize - The size of a tile in pixels.
+	 *
+	 * @returns {Object} The view offset in pixels.
+	 */
+	getPixelOffset(zoom, tileSize) {
+		const extent = Math.pow(2, zoom) * tileSize;
+		return {
+			x: this.x * extent,
+			y: this.y * extent
+		};
+	}
+
+	/**
+	 * Centers the viewport on a given plot coordinate.
+	 *
+	 * @param {Object} pos - The position to center the viewport on.
 	 *
 	 * @returns {Viewport} The viewport object, for chaining.
 	 */
-	centerOn(px) {
-		this.x = px.x - this.width / 2;
-		this.y = px.y - this.height / 2;
+	centerOn(pos) {
+		this.x = pos.x - this.width / 2;
+		this.y = pos.y - this.height / 2;
 	}
 }
 

@@ -4,6 +4,7 @@ const defaultTo = require('lodash/defaultTo');
 const PanAnimation = require('../animation/PanAnimation');
 const EventType = require('../../event/EventType');
 const PanEvent = require('../../event/PanEvent');
+const DOMHandler = require('./DOMHandler');
 
 // Constants
 
@@ -54,6 +55,7 @@ const pan = function(plot, delta) {
 		x: prev.x += delta.x,
 		y: prev.y += delta.y
 	};
+
 	// update current viewport
 	plot.viewport.x = current.x;
 	plot.viewport.y = current.y;
@@ -70,7 +72,7 @@ const isRightButton = function(event) {
 /**
  * Class representing a pan handler.
  */
-class PanHandler {
+class PanHandler extends DOMHandler {
 
 	/**
 	 * Instantiates a new PanHandler object.
@@ -82,11 +84,10 @@ class PanHandler {
 	 * @param {Number} options.inertiaDeceleration - The inertia deceleration factor.
 	 */
 	constructor(plot, options = {}) {
+		super(plot);
 		this.inertia = defaultTo(options.inertia, PAN_INTERTIA);
 		this.inertiaEasing = defaultTo(options.inertiaEasing, PAN_INTERTIA_EASING);
 		this.inertiaDeceleration = defaultTo(options.inertiaDeceleration, PAN_INTERTIA_DECELERATION);
-		this.plot = plot;
-		this.enabled = false;
 	}
 
 	/**
@@ -95,9 +96,7 @@ class PanHandler {
 	 * @returns {PanHandler} The handler object, for chaining.
 	 */
 	enable() {
-		if (this.enabled) {
-			throw 'Handler is already enabled';
-		}
+		super.enable();
 
 		const plot = this.plot;
 
@@ -115,7 +114,7 @@ class PanHandler {
 			// flag as down
 			down = true;
 			// set position and timestamp
-			lastPos = plot.mouseToViewPx(event);
+			lastPos = this.mouseToViewPx(event);
 			lastTime = Date.now();
 			if (this.inertia) {
 				// clear existing pan animation
@@ -129,7 +128,7 @@ class PanHandler {
 		this.mousemove = (event) => {
 			if (down) {
 				// get latest position and timestamp
-				let pos = plot.mouseToViewPx(event);
+				let pos = this.mouseToViewPx(event);
 				let time = Date.now();
 
 				if (positions.length === 0) {
@@ -156,7 +155,7 @@ class PanHandler {
 					y: lastPos.y - pos.y
 				};
 				// pan the plot
-				pan(plot, delta);
+				pan(plot, this.viewPxToPlot(delta));
 				// update last position and time
 				lastTime = time;
 				lastPos = pos;
@@ -240,7 +239,7 @@ class PanHandler {
 			plot.panAnimation = new PanAnimation({
 				plot: plot,
 				start: start,
-				delta: delta,
+				delta: this.viewPxToPlot(delta),
 				easing: easing,
 				duration: duration * 1000 // s to ms
 			});
@@ -249,7 +248,6 @@ class PanHandler {
 		this.plot.container.addEventListener('mousedown', this.mousedown);
 		document.addEventListener('mousemove', this.mousemove);
 		document.addEventListener('mouseup', this.mouseup);
-		this.enabled = true;
 	}
 
 	/**
@@ -258,30 +256,28 @@ class PanHandler {
 	 * @returns {PanHandler} The handler object, for chaining.
 	 */
 	disable() {
-		if (!this.enabled) {
-			throw 'Handler is already disabled';
-		}
+		super.disable();
+
 		this.plot.container.removeEventListener('mousedown', this.mousedown);
 		document.removeEventListener('mousemove', this.mousemove);
 		document.removeEventListener('mouseup', this.mouseup);
 		this.mousedown = null;
 		this.mousemove = null;
 		this.mouseup = null;
-		this.enabled = false;
 	}
 
 	/**
-	 * Pans to the target plot pixel coordinate.
+	 * Pans to the target plot coordinate.
 	 *
-	 * @param {Number} level - The target plot pixel.
+	 * @param {Number} pos - The target plot position.
 	 * @param {boolean} animate - Whether or not to animate the pan. Defaults to `true`.
 	 */
-	panTo(plotPx, animate = true) {
+	panTo(pos, animate = true) {
 		const plot = this.plot;
-		const centerPx = plot.viewport.getCenter();
+		const center = plot.viewport.getCenter();
 		const delta = {
-			x: plotPx.x - centerPx.x,
-			y: plotPx.y - centerPx.y
+			x: pos.x - center.x,
+			y: pos.y - center.y
 		};
 		if (!animate) {
 			// do not animate
