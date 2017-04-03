@@ -137,6 +137,32 @@ class Coord {
 			mod(this.x, dim),
 			mod(this.y, dim));
 	}
+
+	/**
+	 * Returns the plot coordinate for the bottom-left corner of the coord.
+	 *
+	 * @returns {Object} The plot position of the coord.
+	 */
+	getPosition() {
+		const dim = Math.pow(2, this.z);
+		return {
+			x: this.x / dim,
+			y: this.y / dim
+		};
+	}
+
+	/**
+	 * Returns the plot coordinate for the center of the coord.
+	 *
+	 * @returns {Object} The plot position of the center.
+	 */
+	getCenter() {
+		const dim = Math.pow(2, this.z);
+		return {
+			x: (this.x + 0.5) / dim,
+			y: (this.y + 0.5) / dim
+		};
+	}
 }
 
 module.exports = Coord;

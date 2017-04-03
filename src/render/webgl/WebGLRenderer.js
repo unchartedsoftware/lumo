@@ -75,7 +75,7 @@ class WebGLRenderer extends Renderer {
 	 * @return {Float32Array} The orthographic projection matrix.
 	 */
 	getOrthoMatrix() {
-		return this.layer.plot.viewport.getOrthoMatrix();
+		return this.layer.plot.getOrthoMatrix();
 	}
 
 	/**
@@ -86,12 +86,9 @@ class WebGLRenderer extends Renderer {
 	getRenderables() {
 		const plot = this.layer.plot;
 		const pyramid = this.layer.pyramid;
+		const viewport = plot.getViewportPixelOffset();
 		// get all currently visible tile coords
-		const coords = plot.viewport.getVisibleCoords(
-			plot.tileSize,
-			plot.zoom,
-			Math.round(plot.zoom), // get tiles closest to current zoom
-			plot.wraparound);
+		const coords = plot.getVisibleCoords();
 		// get available renderables
 		const renderables = [];
 		coords.forEach(coord => {
@@ -101,8 +98,8 @@ class WebGLRenderer extends Renderer {
 			if (tile) {
 				const scale = Math.pow(2, plot.zoom - coord.z);
 				const tileOffset = [
-					(coord.x * scale * plot.tileSize) - plot.viewport.x,
-					(coord.y * scale * plot.tileSize) - plot.viewport.y
+					(coord.x * scale * plot.tileSize) - viewport.x,
+					(coord.y * scale * plot.tileSize) - viewport.y
 				];
 				const renderable = {
 					tile: tile,
@@ -128,12 +125,9 @@ class WebGLRenderer extends Renderer {
 	getRenderablesLOD() {
 		const plot = this.layer.plot;
 		const pyramid = this.layer.pyramid;
+		const viewport = plot.getViewportPixelOffset();
 		// get all currently visible tile coords
-		const coords = plot.viewport.getVisibleCoords(
-			plot.tileSize,
-			plot.zoom,
-			Math.round(plot.zoom), // get tiles closest to current zoom
-			plot.wraparound);
+		const coords = plot.getVisibleCoords();
 		// get available LOD renderables
 		const renderables = [];
 		coords.forEach(coord => {
@@ -142,8 +136,8 @@ class WebGLRenderer extends Renderer {
 			if (lod) {
 				const scale = Math.pow(2, plot.zoom - coord.z);
 				const tileOffset = [
-					(coord.x * scale * plot.tileSize) - plot.viewport.x,
-					(coord.y * scale * plot.tileSize) - plot.viewport.y
+					(coord.x * scale * plot.tileSize) - viewport.x,
+					(coord.y * scale * plot.tileSize) - viewport.y
 				];
 				const renderable = {
 					tile: lod.tile,

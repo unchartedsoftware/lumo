@@ -604,11 +604,8 @@ class WebGLLineOverlay extends WebGLOverlay {
 		const proj = this.getOrthoMatrix();
 		const scale = Math.pow(2, plot.zoom - cell.zoom);
 
-		// get view offset relative to cell offset
-		const offset = [
-			plot.viewport.x - (cell.offsetPx.x * scale),
-			plot.viewport.y - (cell.offsetPx.y * scale)
-		];
+		// get view offset in cell space
+		const offset = cell.project(plot.viewport, plot.zoom);
 
 		// set blending func
 		gl.enable(gl.BLEND);
@@ -619,7 +616,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 
 		// set global uniforms
 		shader.setUniform('uProjectionMatrix', proj);
-		shader.setUniform('uViewOffset', offset);
+		shader.setUniform('uViewOffset', [ offset.x, offset.y ]);
 		shader.setUniform('uScale', scale);
 		shader.setUniform('uPixelRatio', plot.pixelRatio);
 		shader.setUniform('uLineWidth', this.lineWidth / 2);

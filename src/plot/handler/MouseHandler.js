@@ -28,8 +28,7 @@ const createEvent = function(plot, event) {
 	return new MouseEvent(
 		plot,
 		getMouseButton(event),
-		plot.mouseToViewPx(event),
-		plot.mouseToPlotPx(event));
+		plot.mouseToPlot(event));
 };
 
 /**

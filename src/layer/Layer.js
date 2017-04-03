@@ -158,7 +158,7 @@ class Layer extends EventEmitter {
 			this.muted = false;
 			if (this.plot) {
 				// get visible coords
-				const coords = this.plot.getVisibleCoords();
+				const coords = this.plot.getTargetVisibleCoords();
 				// request tiles
 				this.requestTiles(coords);
 			}
@@ -241,7 +241,7 @@ class Layer extends EventEmitter {
 				this.renderer.clear();
 			}
 			// get visible coords
-			const coords = this.plot.getVisibleCoords();
+			const coords = this.plot.getTargetVisibleCoords();
 			// request tiles
 			this.requestTiles(coords);
 		}

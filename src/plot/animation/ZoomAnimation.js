@@ -17,7 +17,7 @@ class ZoomAnimation {
 	 * @param {Number} params.targetZoom - The target zoom of the animation.
 	 * @param {Number} params.prevViewport - The starting viewport of the animation.
 	 * @param {Number} params.targetViewport - The target viewport of the animation.
-	 * @param {Number} params.targetPx - The target pixel of the animation, in plot coordinates.
+	 * @param {Number} params.targetPos - The target position of the animation, in plot coordinates.
 	 * @param {Number} params.duration - The duration of the animation.
 	 */
 	constructor(params = {}) {
@@ -28,7 +28,7 @@ class ZoomAnimation {
 		this.targetZoom = params.targetZoom;
 		this.prevViewport = params.prevViewport;
 		this.targetViewport = params.targetViewport;
-		this.targetPx = params.targetPx;
+		this.targetPos = params.targetPos;
 	}
 
 	/**
@@ -47,11 +47,10 @@ class ZoomAnimation {
 		// set new zoom
 		plot.zoom = zoom;
 		// calc new viewport position from prev
-		plot.viewport = this.prevViewport.zoomFromPlotPx(
-			plot.tileSize,
+		plot.viewport = this.prevViewport.zoomToPos(
 			this.prevZoom,
 			plot.zoom,
-			this.targetPx);
+			this.targetPos);
 		// create zoom event
 		const event = new ZoomEvent(plot, this.prevZoom, plot.zoom, this.targetZoom);
 		// check if animation is finished
@@ -73,11 +72,10 @@ class ZoomAnimation {
 			// round to the closest zoom
 			plot.zoom = Math.round(plot.zoom);
 			// calc viewport position from prev
-			plot.viewport = this.prevViewport.zoomFromPlotPx(
-				plot.tileSize,
+			plot.viewport = this.prevViewport.zoomToPos(
 				this.prevZoom,
 				plot.zoom,
-				this.targetPx);
+				this.targetPos);
 		}
 		// emit zoom end
 		const event = new ZoomEvent(plot, this.prevZoom, plot.zoom, this.targetZoom);

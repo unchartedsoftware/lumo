@@ -54,6 +54,7 @@ const pan = function(plot, delta) {
 		x: prev.x += delta.x,
 		y: prev.y += delta.y
 	};
+
 	// update current viewport
 	plot.viewport.x = current.x;
 	plot.viewport.y = current.y;
@@ -115,7 +116,7 @@ class PanHandler {
 			// flag as down
 			down = true;
 			// set position and timestamp
-			lastPos = plot.mouseToViewPx(event);
+			lastPos = plot.mouseToPixel(event);
 			lastTime = Date.now();
 			if (this.inertia) {
 				// clear existing pan animation
@@ -129,7 +130,7 @@ class PanHandler {
 		this.mousemove = (event) => {
 			if (down) {
 				// get latest position and timestamp
-				let pos = plot.mouseToViewPx(event);
+				let pos = plot.mouseToPixel(event);
 				let time = Date.now();
 
 				if (positions.length === 0) {
@@ -156,7 +157,7 @@ class PanHandler {
 					y: lastPos.y - pos.y
 				};
 				// pan the plot
-				pan(plot, delta);
+				pan(plot, plot.pixelToPlot(delta));
 				// update last position and time
 				lastTime = time;
 				lastPos = pos;
@@ -240,7 +241,7 @@ class PanHandler {
 			plot.panAnimation = new PanAnimation({
 				plot: plot,
 				start: start,
-				delta: delta,
+				delta: plot.pixelToPlot(delta),
 				easing: easing,
 				duration: duration * 1000 // s to ms
 			});
@@ -271,17 +272,17 @@ class PanHandler {
 	}
 
 	/**
-	 * Pans to the target plot pixel coordinate.
+	 * Pans to the target plot coordinate.
 	 *
-	 * @param {Number} level - The target plot pixel.
+	 * @param {Number} pos - The target plot position.
 	 * @param {boolean} animate - Whether or not to animate the pan. Defaults to `true`.
 	 */
-	panTo(plotPx, animate = true) {
+	panTo(pos, animate = true) {
 		const plot = this.plot;
-		const centerPx = plot.viewport.getCenter();
+		const center = plot.viewport.getCenter();
 		const delta = {
-			x: plotPx.x - centerPx.x,
-			y: plotPx.y - centerPx.y
+			x: pos.x - center.x,
+			y: pos.y - center.y
 		};
 		if (!animate) {
 			// do not animate

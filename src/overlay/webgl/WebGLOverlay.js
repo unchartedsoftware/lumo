@@ -114,7 +114,7 @@ class WebGLOverlay extends Overlay {
 	 * @return {Float32Array} The orthographic projection matrix.
 	 */
 	getOrthoMatrix() {
-		return this.plot.viewport.getOrthoMatrix();
+		return this.plot.getOrthoMatrix();
 	}
 
 }

@@ -38,8 +38,7 @@ const createEvent = function(plot, event) {
 	return new ClickEvent(
 		plot,
 		getMouseButton(event),
-		plot.mouseToViewPx(event),
-		plot.mouseToPlotPx(event));
+		plot.mouseToPlot(event));
 };
 
 /**
@@ -71,14 +70,14 @@ class ClickHandler {
 
 		let last = null;
 		this.mousedown = (event) => {
-			last = plot.mouseToViewPx(event);
+			last = plot.mouseToPlot(event);
 		};
 
 		this.mouseup = (event) => {
 			if (!last) {
 				return;
 			}
-			const pos = plot.mouseToViewPx(event);
+			const pos = plot.mouseToPlot(event);
 			const diff = {
 				x: last.x - pos.x ,
 				y: last.y - pos.y
