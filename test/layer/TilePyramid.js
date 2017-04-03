@@ -27,8 +27,8 @@ describe('TilePyramid', () => {
 			viewport: new Viewport({
 				x: -0.5,
 				y: -0.5,
-				width: 1.0,
-				height: 1.0
+				width: 2.0,
+				height: 2.0
 			}),
 			getTargetCenter: function() {
 				return this.viewport.getCenter();
