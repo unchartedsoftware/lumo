@@ -11,13 +11,14 @@ class Overlay extends EventEmitter {
 	/**
 	 * Instantiates a new DOMOverlay object.*
 	 *
-	 * @param {Object} options - The layer options.
-	 * @param {Number} options.opacity - The layer opacity.
-	 * @param {Number} options.zIndex - The layer z-index.
+	 * @param {Object} options - The overlay options.
+	 * @param {Number} options.opacity - The overlay opacity.
+	 * @param {Number} options.zIndex - The overlay z-index.
 	 */
 	constructor(options = {}) {
 		super();
 		this.opacity = defaultTo(options.opacity, 1.0);
+		this.hidden = defaultTo(options.hidden, false);
 		this.zIndex = defaultTo(options.zIndex, 0);
 		this.plot = null;
 		this.handlers = null;
@@ -55,6 +56,35 @@ class Overlay extends EventEmitter {
 		this.plot = null;
 		this.handlers = null;
 		return this;
+	}
+
+	/**
+	 * Make the overlay visible.
+	 *
+	 * @returns {Overlay} The overlay object, for chaining.
+	 */
+	show() {
+		this.hidden = false;
+		return this;
+	}
+
+	/**
+	 * Make the overlay invisible.
+	 *
+	 * @returns {Overlay} The overlay object, for chaining.
+	 */
+	hide() {
+		this.hidden = true;
+		return this;
+	}
+
+	/**
+	 * Returns true if the overlay is hidden.
+	 *
+	 * @returns {boolean} Whether or not the overlay is hidden.
+	 */
+	isHidden() {
+		return this.hidden;
 	}
 
 	/**

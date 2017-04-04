@@ -595,6 +595,10 @@ class WebGLLineOverlay extends WebGLOverlay {
 	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
 	 */
 	draw() {
+		if (this.hidden) {
+			return;
+		}
+
 		const gl = this.gl;
 		const shader = this.shader;
 		const buffers = this.buffers;
