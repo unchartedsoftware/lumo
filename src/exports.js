@@ -59,7 +59,7 @@ module.exports = {
 	// render
 	Renderer: require('./render/Renderer'),
 	// dom
-	DOMRenderer: require('./render/dom/HTMLRenderer'),
+	DOMRenderer: require('./render/dom/DOMRenderer'),
 	HTMLRenderer: require('./render/dom/HTMLRenderer'),
 	SVGRenderer: require('./render/dom/SVGRenderer'),
 	// webgl

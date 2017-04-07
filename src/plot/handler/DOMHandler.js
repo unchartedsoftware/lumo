@@ -131,6 +131,7 @@ class DOMHandler {
 		} else if (event.button === 2) {
 			return 'right';
 		}
+		return null;
 	}
 }
 

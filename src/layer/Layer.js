@@ -1,13 +1,13 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const EventEmitter = require('events');
+const Renderable = require('../plot/Renderable');
 const TilePyramid = require('./TilePyramid');
 
 /**
  * Class representing an individual layer.
  */
-class Layer extends EventEmitter {
+class Layer extends Renderable {
 
 	/**
 	 * Instantiates a new Layer object.
@@ -20,14 +20,10 @@ class Layer extends EventEmitter {
 	 * @param {boolean} options.muted - Whether or not the layer is muted.
 	 */
 	constructor(options = {}) {
-		super();
-		this.opacity = defaultTo(options.opacity, 1.0);
-		this.zIndex = defaultTo(options.zIndex, 0);
-		this.hidden = defaultTo(options.hidden, false);
+		super(options);
 		this.muted = defaultTo(options.muted, false);
 		this.renderer = defaultTo(options.renderer, null);
 		this.pyramid = new TilePyramid(this, options);
-		this.plot = null;
 	}
 
 	/**
@@ -38,11 +34,7 @@ class Layer extends EventEmitter {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	onAdd(plot) {
-		if (!plot) {
-			throw 'No plot argument provided';
-		}
-		// set plot
-		this.plot = plot;
+		super.onAdd(plot);
 		// execute renderer hook
 		if (this.renderer) {
 			this.renderer.onAdd(this);
@@ -60,15 +52,11 @@ class Layer extends EventEmitter {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	onRemove(plot) {
-		if (!plot) {
-			throw 'No plot argument provided';
-		}
+		super.onRemove(plot);
 		// execute renderer hook
 		if (this.renderer) {
 			this.renderer.onRemove(this);
 		}
-		// remove plot
-		this.plot = null;
 		// clear the underlying pyramid
 		this.pyramid.clear();
 		return this;
@@ -109,35 +97,6 @@ class Layer extends EventEmitter {
 		}
 		this.renderer = null;
 		return this;
-	}
-
-	/**
-	 * Make the layer visible.
-	 *
-	 * @returns {Layer} The layer object, for chaining.
-	 */
-	show() {
-		this.hidden = false;
-		return this;
-	}
-
-	/**
-	 * Make the layer invisible.
-	 *
-	 * @returns {Layer} The layer object, for chaining.
-	 */
-	hide() {
-		this.hidden = true;
-		return this;
-	}
-
-	/**
-	 * Returns true if the layer is hidden.
-	 *
-	 * @returns {boolean} Whether or not the layer is hidden.
-	 */
-	isHidden() {
-		return this.hidden;
 	}
 
 	/**
@@ -205,7 +164,7 @@ class Layer extends EventEmitter {
 	 * @returns {boolean} Whether or not the layer is disabled.
 	 */
 	isDisabled() {
-		return this.muted && this.hidden;
+		return this.isMuted() && this.isHidden();
 	}
 
 	/**
@@ -273,6 +232,21 @@ class Layer extends EventEmitter {
 		}
 		this.pyramid.requestTiles(coords);
 		return this;
+	}
+
+	/**
+	 * Pick a position of the renderable for a collision with any rendered
+	 * objects.
+	 *
+	 * @param {Object} pos - The plot position to pick at.
+	 *
+	 * @returns {Object} The collision, or null.
+	 */
+	pick(pos) {
+		if (this.plot && this.renderer) {
+			return this.renderer.pick(pos);
+		}
+		return null;
 	}
 }
 

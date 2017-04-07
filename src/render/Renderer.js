@@ -49,6 +49,19 @@ class Renderer extends EventEmitter {
 	}
 
 	/**
+	 * Executed when an event occurs on the plot. Return any interpretted events
+	 * relating to the renderer.
+	 *
+	 * @param {Event} type - Th event type to process.
+	 * @param {Event} event - The plot-level event to process.
+	 *
+	 * @returns {Event} The renderer-level event.
+	 */
+	pick() {
+		return null;
+	}
+
+	/**
 	 * Clears any persisted state in the renderer.
 	 *
 	 * @returns {Renderer} The renderer object, for chaining.

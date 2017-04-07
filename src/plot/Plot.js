@@ -5,6 +5,8 @@ const defaultTo = require('lodash/defaultTo');
 const throttle = require('lodash/throttle');
 const EventEmitter = require('events');
 const EventType = require('../event/EventType');
+const EventBroadcaster = require('../event/EventBroadcaster');
+const EventDelegator = require('../event/EventDelegator');
 const CellEvent = require('../event/CellEvent');
 const FrameEvent = require('../event/FrameEvent');
 const ResizeEvent = require('../event/ResizeEvent');
@@ -74,15 +76,38 @@ const PAN = Symbol();
  */
 const ZOOM = Symbol();
 
+/**
+ * Event handlers symbol.
+ * @private
+ * @constant {Symbol}
+ */
+const HANDLERS = Symbol();
+
+/**
+ * Event delegators symbol.
+ * @private
+ * @constant {Symbol}
+ */
+const DELEGATOR = Symbol();
+
+/**
+ * Event broadcasters symbol.
+ * @private
+ * @constant {Symbol}
+ */
+const BROADCASTER = Symbol();
+
 // Private Methods
 
 const requestTiles = function() {
 	// get all visible coords in the target viewport
 	const coords = this.getTargetVisibleCoords();
 	// for each layer
-	this.layers.forEach(layer => {
-		// request tiles
-		layer.requestTiles(coords);
+	this.renderables.forEach(renderable => {
+		if (renderable.requestTiles) {
+			// request tiles
+			renderable.requestTiles(coords);
+		}
 	});
 	return this;
 };
@@ -179,17 +204,6 @@ const reset = function(plot) {
 	}
 };
 
-const broadcast = function(plot, type) {
-	plot.on(type, event => {
-		plot.layers.forEach(layer => {
-			layer.emit(type, event);
-		});
-		plot.overlays.forEach(overlay => {
-			overlay.emit(type, event);
-		});
-	});
-};
-
 const frame = function(plot) {
 
 	// get frame timestamp
@@ -231,10 +245,8 @@ const frame = function(plot) {
 	// update cell
 	updateCell(plot);
 
-	// sort renderables by z-index, render bottom first
-	const renderables = plot.layers.concat(plot.overlays).sort((a, b) => {
-		return a.zIndex - b.zIndex;
-	});
+	// sort renderables by z-index
+	const renderables = plot.getSortedRenderables();
 
 	// render each renderable
 	renderables.forEach(renderable => {
@@ -305,7 +317,6 @@ class Plot extends EventEmitter {
 			this.canvas.width,
 			this.canvas.height);
 
-
 		// set pixel ratio
 		this.pixelRatio = window.devicePixelRatio;
 
@@ -334,16 +345,6 @@ class Plot extends EventEmitter {
 		// wraparound
 		this.wraparound = defaultTo(options.wraparound, false);
 
-		// create and enable handlers
-		this.handlers = new Map();
-		this.handlers.set(CLICK, new ClickHandler(this, options));
-		this.handlers.set(MOUSE, new MouseHandler(this, options));
-		this.handlers.set(PAN, new PanHandler(this, options));
-		this.handlers.set(ZOOM, new ZoomHandler(this, options));
-		this.handlers.forEach(handler => {
-			handler.enable();
-		});
-
 		// throttled request methods
 		const panThrottle = defaultTo(options.panThrottle, PAN_THROTTLE_MS);
 		const resizeThrottle = defaultTo(options.resizeThrottle, RESIZE_THROTTLE_MS);
@@ -358,22 +359,40 @@ class Plot extends EventEmitter {
 			leading: false // invoke only on trailing edge
 		});
 
-		// layers
-		this.layers = [];
-
-		// overlays
-		this.overlays = [];
+		// renderables
+		this.renderables = [];
 
 		// frame request
 		this.frameRequest = null;
 
-		// broadcast zoom / pan events to layers and overlays
-		broadcast(this, EventType.ZOOM_START);
-		broadcast(this, EventType.ZOOM);
-		broadcast(this, EventType.ZOOM_END);
-		broadcast(this, EventType.PAN_START);
-		broadcast(this, EventType.PAN);
-		broadcast(this, EventType.PAN_END);
+		// create and enable handlers
+		this[HANDLERS] = new Map();
+		this[HANDLERS].set(CLICK, new ClickHandler(this, options));
+		this[HANDLERS].set(MOUSE, new MouseHandler(this, options));
+		this[HANDLERS].set(PAN, new PanHandler(this, options));
+		this[HANDLERS].set(ZOOM, new ZoomHandler(this, options));
+		this[HANDLERS].forEach(handler => {
+			handler.enable();
+		});
+
+		// delegator
+		this[DELEGATOR] = new EventDelegator(this);
+		// delegate mouse / click events to renderables
+		this[DELEGATOR].delegate(EventType.CLICK);
+		this[DELEGATOR].delegate(EventType.DBL_CLICK);
+		this[DELEGATOR].delegate(EventType.MOUSE_MOVE);
+		this[DELEGATOR].delegate(EventType.MOUSE_UP);
+		this[DELEGATOR].delegate(EventType.MOUSE_DOWN);
+
+		// broadcaster
+		this[BROADCASTER] = new EventBroadcaster(this);
+		// broadcast zoom / pan events to renderables
+		this[BROADCASTER].broadcast(EventType.ZOOM_START);
+		this[BROADCASTER].broadcast(EventType.ZOOM);
+		this[BROADCASTER].broadcast(EventType.ZOOM_END);
+		this[BROADCASTER].broadcast(EventType.PAN_START);
+		this[BROADCASTER].broadcast(EventType.PAN);
+		this[BROADCASTER].broadcast(EventType.PAN_END);
 
 		// being frame loop
 		frame(this);
@@ -390,12 +409,12 @@ class Plot extends EventEmitter {
 		cancelAnimationFrame(this.frameRequest);
 		this.frameRequest = null;
 		// disable handlers
-		this.handlers.forEach(handler => {
+		this[HANDLERS].forEach(handler => {
 			handler.disable();
 		});
-		// remove layers
-		this.layers.forEach(layer => {
-			this.removeLayer(layer);
+		// remove renderables
+		this.renderables.forEach(renderable => {
+			this.remove(renderable);
 		});
 		// destroy context
 		this.gl = null;
@@ -408,82 +427,54 @@ class Plot extends EventEmitter {
 	}
 
 	/**
-	 * Adds a layer to the plot.
+	 * Adds a renderable to the plot.
 	 *
-	 * @param {Layer} layer - The layer to add to the plot.
+	 * @param {Renderable} renderable - The renderable to add to the plot.
 	 *
 	 * @returns {Plot} The plot object, for chaining.
 	 */
-	addLayer(layer) {
-		if (!layer) {
-			throw 'No layer argument provided';
+	add(renderable) {
+		if (!renderable) {
+			throw 'No argument provided';
 		}
-		if (this.layers.indexOf(layer) !== -1) {
-			throw 'Provided layer is already attached to the plot';
+		if (this.renderables.indexOf(renderable) !== -1) {
+			throw 'Provided renderable is already attached to the plot';
 		}
-		this.layers.push(layer);
-		layer.onAdd(this);
+		this.renderables.push(renderable);
+		renderable.onAdd(this);
 		return this;
 	}
 
 	/**
-	 * Removes a layer from the plot.
+	 * Removes a renderable from the plot.
 	 *
-	 * @param {Layer} layer - The layer to remove from the plot.
+	 * @param {Layer} renderable - The renderable to remove from the plot.
 	 *
 	 * @returns {Plot} The plot object, for chaining.
 	 */
-	removeLayer(layer) {
-		if (!layer) {
-			throw 'No layer argument provided';
+	remove(renderable) {
+		if (!renderable) {
+			throw 'No argument provided';
 		}
-		const index = this.layers.indexOf(layer);
+		const index = this.renderables.indexOf(renderable);
 		if (index === -1) {
-			throw 'Provided layer is not attached to the plot';
+			throw 'Provided renderable is not attached to the plot';
 		}
-		this.layers.splice(index, 1);
-		layer.onRemove(this);
+		this.renderables.splice(index, 1);
+		renderable.onRemove(this);
 		return this;
 	}
 
 	/**
-	 * Adds an overlay to the plot.
-	 *
-	 * @param {Overlay} overlay - The overlay to add to the plot.
-	 *
-	 * @returns {Plot} The plot object, for chaining.
+	 * Returns all the renderable objects attached to the plot, in descending
+	 * order of z-index.
 	 */
-	addOverlay(overlay) {
-		if (!overlay) {
-			throw 'No overlay argument provided';
-		}
-		if (this.overlays.indexOf(overlay) !== -1) {
-			throw 'Provided overlay is already attached to the plot';
-		}
-		this.overlays.push(overlay);
-		overlay.onAdd(this);
-		return this;
-	}
-
-	/**
-	 * Removes an overlay from the plot.
-	 *
-	 * @param {Overlay} overlay - The overlay to remove from the plot.
-	 *
-	 * @returns {Plot} The plot object, for chaining.
-	 */
-	removeOverlay(overlay) {
-		if (!overlay) {
-			throw 'No overlay argument provided';
-		}
-		const index = this.overlays.indexOf(overlay);
-		if (index === -1) {
-			throw 'Provided overlay is not attached to the plot';
-		}
-		this.overlays.splice(index, 1);
-		overlay.onRemove(this);
-		return this;
-	}
+	getSortedRenderables() {
+		// sort by z-index
+		return this.renderables.sort((a, b) => {
+			return a.zIndex - b.zIndex;
+		});
+	};
 
 	/**
 	 * Returns the target zoom of the plot. If the plot is actively zooming, it
@@ -665,7 +656,7 @@ class Plot extends EventEmitter {
 		if (this.isZooming()) {
 			this.zoomAnimation.cancel();
 		}
-		this.handlers.get(PAN).panTo(pos, animate);
+		this[HANDLERS].get(PAN).panTo(pos, animate);
 		return this;
 	}
 
@@ -686,7 +677,7 @@ class Plot extends EventEmitter {
 		if (this.isZooming()) {
 			this.zoomAnimation.cancel();
 		}
-		this.handlers.get(ZOOM).zoomTo(level, animate);
+		this[HANDLERS].get(ZOOM).zoomTo(level, animate);
 		return this;
 	}
 

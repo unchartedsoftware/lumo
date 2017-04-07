@@ -1,29 +1,12 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const Keyboard = require('../../core/Keyboard');
 const EventType = require('../../event/EventType');
-const ClickEvent = require('../../event/ClickEvent');
-const MouseEvent = require('../../event/MouseEvent');
 const RTree = require('./rtree/RTree');
 const CollisionType = require('./rtree/CollisionType');
 const WebGLVertexRenderer = require('./WebGLVertexRenderer');
 
 // Constants
-
-/**
- * Click event handler symbol.
- * @private
- * @constant {Symbol}
- */
-const CLICK = Symbol();
-
-/**
- * Mousemove event handler symbol.
- * @private
- * @constant {Symbol}
- */
-const MOUSE_MOVE = Symbol();
 
 /**
  * Zoom start event handler symbol.
@@ -42,128 +25,18 @@ const getCollision = function(renderer, pos) {
 	}
 	// points are hashed in un-scaled coordinates, unscale the point
 	const tileZoom = Math.round(plot.zoom);
-	const scale = Math.pow(2, tileZoom - plot.zoom);
-	const extent = plot.getPixelExtent();
-	// unscaled points
-	const sx = pos.x * extent * scale;
-	const sy = pos.y * extent * scale;
 	// get the tree for the zoom
 	const tree = renderer.trees.get(tileZoom);
 	if (!tree) {
 		// no data for tile
 		return null;
 	}
+	const scale = Math.pow(2, tileZoom - plot.zoom);
+	const extent = plot.getPixelExtent();
+	// unscaled points
+	const sx = pos.x * extent * scale;
+	const sy = pos.y * extent * scale;
 	return tree.searchPoint(sx, sy);
-};
-
-const onClick = function(renderer, event) {
-	const multiSelect = Keyboard.poll('ctrl') || Keyboard.poll('meta');
-	const collision = getCollision(renderer, event.pos);
-	if (collision) {
-		// add to collection if multi-selection is enabled
-		if (multiSelect) {
-			// add to collection if multi-selection is enabled
-			const index = renderer.selected.indexOf(collision);
-			if (index === -1) {
-				// select point
-				renderer.selected.push(collision);
-			} else {
-				// remove point if already selected
-				renderer.selected.splice(index, 1);
-			}
-		} else {
-			// clear selection, adding only the latest entry
-			renderer.selected = [ collision ];
-		}
-		// emit click event
-		renderer.emit(EventType.CLICK, new ClickEvent(
-			renderer.layer,
-			event.pos,
-			event.button,
-			renderer.selected.length > 1 ? renderer.selected : collision));
-	} else {
-		if (multiSelect) {
-			// if multi-select is held, don't clear selection, it implies user
-			// may have misclicked
-			return;
-		}
-		// flag as unselected
-		renderer.selected = [];
-	}
-};
-
-const active = new Map();
-const setCursor = function(renderer) {
-	const plot = renderer.layer.plot;
-	if (!active.has(plot)) {
-		active.set(plot, new Map());
-	}
-	const isActive = active.get(plot);
-	if (!isActive.has(renderer)) {
-		isActive.set(renderer, true);
-		plot.getContainer().style.cursor = 'pointer';
-	};
-};
-
-const resetCursor = function(renderer) {
-	const plot = renderer.layer.plot;
-	if (!active.has(plot)) {
-		return;
-	}
-	const isActive = active.get(plot);
-	isActive.delete(renderer);
-	if (isActive.size === 0) {
-		plot.getContainer().style.cursor = 'inherit';
-	}
-};
-
-const onMouseMove = function(renderer, event) {
-	const collision = getCollision(renderer, event.pos);
-	if (collision) {
-		// mimic mouseover / mouseout events
-		if (renderer.highlighted) {
-			if (renderer.highlighted !== collision) {
-				// new collision
-				// emit mouseout for prev
-				renderer.emit(EventType.MOUSE_OUT, new MouseEvent(
-					renderer.layer,
-					event.pos,
-					event.button,
-					renderer.highlighted));
-				// emit mouseover for new
-				renderer.emit(EventType.MOUSE_OVER, new MouseEvent(
-					renderer.layer,
-					event.pos,
-					event.button,
-					collision));
-			}
-		} else {
-			// no previous collision, execute mouseover
-			renderer.emit(EventType.MOUSE_OVER, new MouseEvent(
-				renderer.layer,
-				event.pos,
-				event.button,
-				collision));
-		}
-		// set cursor
-		setCursor(renderer);
-		// flag as highlighted
-		renderer.highlighted = collision;
-		return;
-	}
-	// mouse out
-	if (renderer.highlighted) {
-		// reset cursor
-		resetCursor(renderer);
-		// emit mouse out
-		renderer.emit(EventType.MOUSE_OUT, new MouseEvent(
-			renderer.layer,
-			event.pos,
-			event.button,
-			renderer.highlighted));
-	}
-	// clear highlighted flag
-	renderer.highlighted = null;
 };
 
 /**
@@ -182,25 +55,8 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 		super(options);
 		this.trees = null;
 		this.points = null;
-		this.highlighted = null;
-		this.selected = [];
 		this.collisionType = defaultTo(options.collisionType, CollisionType.CIRCLE);
 		this.nodeCapacity = defaultTo(options.nodeCapacity, 32);
-	}
-
-	/**
-	 * Clears any selection / highlighted elements.
-	 *
-	 * @returns {WebGLVertexRenderer} The renderer object, for chaining.
-	 */
-	clear() {
-		super.clear();
-		// clear selected / highlighted
-		this.highlighted = null;
-		this.selected = [];
-		// reset the cursor
-		resetCursor(this);
-		return this;
 	}
 
 	/**
@@ -215,26 +71,12 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 		// create rtree and point maps
 		this.trees = new Map();
 		this.points = new Map();
-		// create handlers
-		this.handlers.set(CLICK, event => {
-			if (this.layer.isHidden()) {
-				return;
-			}
-			onClick(this, event);
-		});
-		this.handlers.set(MOUSE_MOVE, event => {
-			if (this.layer.isHidden()) {
-				return;
-			}
-			onMouseMove(this, event);
-		});
+		// create handler
 		this.handlers.set(ZOOM_START, () => {
-			this.selected = [];
-			this.highlighted = null;
+			// clear on zoom since we won't be able to match the same data
+			this.layer.clear();
 		});
-		// attach handlers
-		layer.plot.on(EventType.CLICK, this.handlers.get(CLICK));
-		layer.plot.on(EventType.MOUSE_MOVE, this.handlers.get(MOUSE_MOVE));
+		// attach handler
 		layer.plot.on(EventType.ZOOM_START, this.handlers.get(ZOOM_START));
 		return this;
 	}
@@ -247,23 +89,28 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 	 * @returns {Renderer} The renderer object, for chaining.
 	 */
 	onRemove(layer) {
-		// detach handlers
-		this.layer.plot.removeListener(EventType.CLICK, this.handlers.get(CLICK));
-		this.layer.plot.removeListener(EventType.MOUSE_MOVE, this.handlers.get(MOUSE_MOVE));
+		// detach handler
 		this.layer.plot.removeListener(EventType.ZOOM_START, this.handlers.get(ZOOM_START));
-		// destroy handlers
-		this.handlers.delete(CLICK);
-		this.handlers.delete(MOUSE_MOVE);
+		// destroy handler
 		this.handlers.delete(ZOOM_START);
 		// destroy rtree and point maps
 		this.trees = null;
 		this.points = null;
-		this.selected = [];
-		this.highlighted = null;
-		// clear selected / highlighted
-		this.clear();
+		// clear layer
+		this.layer.clear();
 		super.onRemove(layer);
 		return this;
+	}
+
+	/**
+	 * Pick a position of the renderer for a collision with any rendered objects.
+	 *
+	 * @param {Object} pos - The plot position to pick at.
+	 *
+	 * @returns {Object} The collision, if any.
+	 */
+	pick(pos) {
+		return getCollision(this, pos);
 	}
 
 	/**

@@ -4,7 +4,7 @@ const EventType = require('../../event/EventType');
 const ClickEvent = require('../../event/ClickEvent');
 const DOMHandler = require('./DOMHandler');
 
-// Const
+// Constants
 
 /**
  * Distance in pixels the mouse can be moved before the click event is

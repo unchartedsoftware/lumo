@@ -275,7 +275,8 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 	 */
 	draw() {
 		const gl = this.gl;
-		const plot = this.layer.plot;
+		const layer = this.layer;
+		const plot = layer.plot;
 		const projection = this.getOrthoMatrix();
 		const shader = this.shader;
 
@@ -303,7 +304,7 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 			this.color);
 
 		// render selected
-		this.selected.forEach(selected => {
+		layer.selected.forEach(selected => {
 			renderPoint(
 				this.point,
 				shader,
@@ -314,13 +315,13 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 		});
 
 		// render highlighted
-		if (this.highlighted &&
-			this.selected.indexOf(this.highlighted) === -1) {
+		if (layer.highlighted &&
+			layer.selected.indexOf(layer.highlighted) === -1) {
 			renderPoint(
 				this.point,
 				shader,
 				plot,
-				this.highlighted,
+				layer.highlighted,
 				this.color,
 				HIGHLIGHTED_RADIUS_OFFSET);
 		}
