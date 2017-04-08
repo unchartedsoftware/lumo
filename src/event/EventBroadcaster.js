@@ -23,7 +23,9 @@ class EventBroadcaster {
 		this.plot.on(type, event => {
 			const children = this.plot.getSortedRenderables();
 			for (let i=children.length-1; i>=0; i--) {
-				children[i].emit(type, event);
+				if (!children[i].isHidden()) {
+					children[i].emit(type, event);
+				}
 			}
 		});
 	}
