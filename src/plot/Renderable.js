@@ -79,6 +79,7 @@ class Renderable extends EventEmitter {
 	 */
 	hide() {
 		this.hidden = true;
+		this.clear();
 		return this;
 	}
 

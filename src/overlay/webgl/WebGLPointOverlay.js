@@ -132,9 +132,9 @@ class WebGLPointOverlay extends WebGLOverlay {
 	 * @returns {WebGLPointOverlay} The overlay object, for chaining.
 	 */
 	onRemove(plot) {
-		super.onAdd(plot);
 		this.shader = null;
 		this.ext = null;
+		super.onRemove(plot);
 		return this;
 	}
 
@@ -207,10 +207,6 @@ class WebGLPointOverlay extends WebGLOverlay {
 	 * @returns {WebGLPointOverlay} The overlay object, for chaining.
 	 */
 	draw() {
-		if (this.hidden) {
-			return;
-		}
-
 		const gl = this.gl;
 		const shader = this.shader;
 		const buffers = this.buffers;

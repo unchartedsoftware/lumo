@@ -523,7 +523,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
 	 */
 	onRemove(plot) {
-		super.onAdd(plot);
+		super.onRemove(plot);
 		this.shader = null;
 		return this;
 	}
@@ -595,10 +595,6 @@ class WebGLLineOverlay extends WebGLOverlay {
 	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
 	 */
 	draw() {
-		if (this.hidden) {
-			return;
-		}
-
 		const gl = this.gl;
 		const shader = this.shader;
 		const buffers = this.buffers;

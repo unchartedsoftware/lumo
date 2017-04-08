@@ -250,7 +250,9 @@ const frame = function(plot) {
 
 	// render each renderable
 	renderables.forEach(renderable => {
-		renderable.draw(timestamp);
+		if (!renderable.isHidden()) {
+			renderable.draw(timestamp);
+		}
 	});
 
 	// request next frame

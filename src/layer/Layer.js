@@ -4,6 +4,15 @@ const defaultTo = require('lodash/defaultTo');
 const Renderable = require('../plot/Renderable');
 const TilePyramid = require('./TilePyramid');
 
+// Private Methods
+
+const requestVisibleTiles = function(layer) {
+	// get visible coords
+	const coords = layer.plot.getTargetVisibleCoords();
+	// request tiles
+	layer.requestTiles(coords);
+};
+
 /**
  * Class representing an individual layer.
  */
@@ -39,8 +48,8 @@ class Layer extends Renderable {
 		if (this.renderer) {
 			this.renderer.onAdd(this);
 		}
-		// request initial tiles.
-		this.refresh();
+		// request visible tiles
+		requestVisibleTiles(this);
 		return this;
 	}
 
@@ -52,13 +61,13 @@ class Layer extends Renderable {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	onRemove(plot) {
-		super.onRemove(plot);
+		// clear the underlying pyramid
+		this.pyramid.clear();
 		// execute renderer hook
 		if (this.renderer) {
 			this.renderer.onRemove(this);
 		}
-		// clear the underlying pyramid
-		this.pyramid.clear();
+		super.onRemove(plot);
 		return this;
 	}
 
@@ -100,6 +109,16 @@ class Layer extends Renderable {
 	}
 
 	/**
+	 * Make the layer invisible.
+	 *
+	 * @returns {Layer} The layer object, for chaining.
+	 */
+	hide() {
+		super.hide();
+		return this;
+	}
+
+	/**
 	 * Mutes the layer, it will no longer send any tile requests.
 	 *
 	 * @returns {Layer} The layer object, for chaining.
@@ -118,10 +137,8 @@ class Layer extends Renderable {
 		if (this.muted) {
 			this.muted = false;
 			if (this.plot) {
-				// get visible coords
-				const coords = this.plot.getTargetVisibleCoords();
-				// request tiles
-				this.requestTiles(coords);
+				// request visible tiles
+				requestVisibleTiles(this);
 			}
 		}
 		return this;
@@ -175,15 +192,22 @@ class Layer extends Renderable {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	draw(timestamp) {
-		if (this.hidden) {
-			// clear renderer state
-			if (this.renderer) {
-				this.renderer.clear();
-			}
-			return this;
-		}
 		if (this.renderer) {
 			this.renderer.draw(timestamp);
+		}
+		return this;
+	}
+
+	/**
+	 * Clears any persisted state in the layer.
+	 *
+	 * @returns {Layer} The layer object, for chaining.
+	 */
+	clear() {
+		super.clear();
+		// clear renderer state
+		if (this.renderer) {
+			this.renderer.clear();
 		}
 		return this;
 	}
@@ -196,15 +220,11 @@ class Layer extends Renderable {
 	refresh() {
 		// clear the underlying pyramid
 		this.pyramid.clear();
+		// clear layer state
+		this.clear();
 		if (this.plot) {
-			// clear renderer state
-			if (this.renderer) {
-				this.renderer.clear();
-			}
-			// get visible coords
-			const coords = this.plot.getTargetVisibleCoords();
-			// request tiles
-			this.requestTiles(coords);
+			// request visible tiles
+			requestVisibleTiles(this);
 		}
 		return this;
 	}
@@ -243,7 +263,7 @@ class Layer extends Renderable {
 	 * @returns {Object} The collision, or null.
 	 */
 	pick(pos) {
-		if (this.plot && this.renderer) {
+		if (this.renderer) {
 			return this.renderer.pick(pos);
 		}
 		return null;

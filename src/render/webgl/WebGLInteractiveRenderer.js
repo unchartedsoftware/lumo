@@ -96,8 +96,6 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 		// destroy rtree and point maps
 		this.trees = null;
 		this.points = null;
-		// clear layer
-		this.layer.clear();
 		super.onRemove(layer);
 		return this;
 	}

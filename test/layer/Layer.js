@@ -16,6 +16,12 @@ describe('Layer', () => {
 		plot = {
 			getTargetVisibleCoords: () => {
 				return [];
+			},
+			getTargetCenter: function() {
+				return {
+					x: 0.5,
+					y: 0.5
+				};
 			}
 		};
 		renderer = new Renderer();
@@ -121,20 +127,12 @@ describe('Layer', () => {
 			layer.hide();
 			layer.draw();
 		});
-		it('should call `draw` on the attached renderer if the layer is not hidden', () => {
+		it('should call `draw` on the attached renderer', () => {
 			const layer = new Layer();
 			layer.setRenderer(renderer);
 			const draw = sinon.stub(renderer, 'draw').callsFake(noop);
 			layer.draw();
 			assert(draw.calledOnce);
-		});
-		it('should call `clear` on the attached renderer if the layer is hidden', () => {
-			const layer = new Layer();
-			layer.hide();
-			layer.setRenderer(renderer);
-			const clear = sinon.stub(renderer, 'clear').callsFake(noop);
-			layer.draw();
-			assert(clear.calledOnce);
 		});
 	});
 
@@ -171,12 +169,6 @@ describe('Layer', () => {
 			sinon.stub(layer, 'refresh').callsFake(noop);
 			layer.onAdd(plot);
 			assert(layer.plot === plot);
-		});
-		it('should call `refresh` to refresh the layer', () => {
-			const layer = new Layer();
-			const refresh = sinon.stub(layer, 'refresh').callsFake(noop);
-			layer.onAdd(plot);
-			assert(refresh.calledOnce);
 		});
 		it('should call `onAdd` of the attached renderer', () => {
 			const layer = new Layer({

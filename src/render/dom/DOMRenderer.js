@@ -198,11 +198,6 @@ class DOMRenderer extends Renderer {
 		this.container = null;
 		// remove tiles
 		this.tiles = null;
-		// clear timeouts
-		clearTimeout(this.drawTimeout);
-		clearTimeout(this.eraseTimeout);
-		this.drawTimeout = null;
-		this.eraseTimeout = null;
 		super.onRemove(layer);
 		return this;
 	}
@@ -318,13 +313,21 @@ class DOMRenderer extends Renderer {
 	clear() {
 		super.clear();
 		// remove all tiles and clear the container
-		this.container.innerHTML = '';
-		this.tiles.clear();
+		if (this.container) {
+			this.container.innerHTML = '';
+		}
+		if (this.tiles) {
+			this.tiles.clear();
+		}
 		// clear timeouts
-		clearTimeout(this.drawTimeout);
-		clearTimeout(this.eraseTimeout);
-		this.drawTimeout = null;
-		this.eraseTimeout = null;
+		if (this.drawTimeout) {
+			clearTimeout(this.drawTimeout);
+			this.drawTimeout = null;
+		}
+		if (this.eraseTimeout) {
+			clearTimeout(this.eraseTimeout);
+			this.eraseTimeout = null;
+		}
 		return this;
 	}
 
@@ -404,6 +407,7 @@ class DOMRenderer extends Renderer {
 		} else if (event.button === 2) {
 			return 'right';
 		}
+		return null;
 	}
 }
 
