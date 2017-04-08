@@ -73,7 +73,7 @@ class RTree {
 			const dx = cx - x;
 			const dy = cy - y;
 			// assume the boxes are squares
-			const radius = cx;
+			const radius = (collision.maxX - collision.minX) / 2;
 			if ((dx * dx + dy * dy) <= (radius * radius)) {
 				return collision;
 			}
@@ -121,7 +121,7 @@ class RTree {
 			const dx = Math.abs(circleX - minX);
 			const dy = Math.abs(circleY - minY);
 			// assume the boxes are squares
-			const radius = collision.minX + collision.maxX;
+			const radius = (collision.maxX - collision.minX) / 2;
 			if ((dx > (halfWidth + radius)) ||
 				(dy > (halfHeight + radius))) {
 				return false;
