@@ -2,11 +2,12 @@
 
 const EventType = require('../../event/EventType');
 const ZoomEvent = require('../../event/ZoomEvent');
+const Animation = require('./Animation');
 
 /**
  * Class representing a zoom animation.
  */
-class ZoomAnimation {
+class ZoomAnimation extends Animation {
 
 	/**
 	 * Instantiates a new ZoomAnimation object.
@@ -21,8 +22,7 @@ class ZoomAnimation {
 	 * @param {Number} params.duration - The duration of the animation.
 	 */
 	constructor(params = {}) {
-		this.timestamp = Date.now();
-		this.plot = params.plot;
+		super(params.plot);
 		this.duration = params.duration;
 		this.prevZoom = params.prevZoom;
 		this.targetZoom = params.targetZoom;

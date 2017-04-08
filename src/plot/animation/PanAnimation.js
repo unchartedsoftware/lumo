@@ -2,11 +2,12 @@
 
 const EventType = require('../../event/EventType');
 const PanEvent = require('../../event/PanEvent');
+const Animation = require('./Animation');
 
 /**
  * Class representing a pan animation.
  */
-class PanAnimation {
+class PanAnimation extends Animation {
 
 	/**
 	 * Instantiates a new PanAnimation object.
@@ -19,8 +20,7 @@ class PanAnimation {
 	 * @param {Number} params.duration - The duration of the animation.
 	 */
 	constructor(params = {}) {
-		this.timestamp = Date.now();
-		this.plot = params.plot;
+		super(params.plot);
 		this.start = params.start;
 		this.delta = params.delta;
 		this.end = {
@@ -85,8 +85,7 @@ class PanAnimation {
 		plot.viewport.x = this.end.x;
 		plot.viewport.y = this.end.y;
 		// emit pan end
-		const event = new PanEvent(plot, current, this.end);
-		plot.emit(EventType.PAN_END, event);
+		plot.emit(EventType.PAN_END, new PanEvent(plot, current, this.end));
 		// remove self from plot
 		plot.panAnimation = null;
 	}
