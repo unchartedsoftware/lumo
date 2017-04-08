@@ -22,9 +22,9 @@ class EventBroadcaster {
 	broadcast(type) {
 		this.plot.on(type, event => {
 			const children = this.plot.getSortedRenderables();
-			children.forEach(child => {
-				child.emit(type, event);
-			});
+			for (let i=children.length-1; i>=0; i--) {
+				children[i].emit(type, event);
+			}
 		});
 	}
 }

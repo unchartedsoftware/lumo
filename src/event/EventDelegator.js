@@ -54,49 +54,51 @@ const unhighlight = function(child) {
 const delegateMouseMove = function(delegator, child, event, collision) {
 	// create events to delegate
 	const delegations = [];
+	const prev = delegator.prevMouseover;
 
 	if (!collision) {
 		//  no collision
 
 		// check for prev
-		if (delegator.prev) {
+		if (prev) {
 
 			// clear cursor style
 			resetCursor(delegator.plot);
 
 			// un-highlight
-			unhighlight(delegator.prev.target);
+			unhighlight(prev.target);
 
 			// `mouseout` on previous target
 			delegations.push({
 				type: EventType.MOUSE_OUT,
 				event: new MouseEvent(
-					delegator.prev.target,
-					delegator.prev.pos,
+					prev.target,
+					prev.pos,
 					null,
-					delegator.prev.data)
+					prev.data)
 			});
 			// unflag as prev `mouseover` target
-			delegator.prev = null;
+			delegator.prevMouseover = null;
 		}
 
 	} else {
 		// collision
 
 		// check for prev
-		if (delegator.prev && delegator.prev.data !== collision) {
+		if (prev && prev.data !== collision) {
 			// un-highlight
-			unhighlight(delegator.prev.target);
+			unhighlight(prev.target);
 			// `mouseout` on previous target
 			delegations.push({
 				type: EventType.MOUSE_OUT,
 				event: new MouseEvent(
-					delegator.prev.target,
-					delegator.prev.pos,
+					prev.target,
+					prev.pos,
 					null,
-					delegator.prev.data)
+					prev.data)
 			});
 		}
+
 		// `mousemove` on current target
 		delegations.push({
 			type: EventType.MOUSE_MOVE,
@@ -113,23 +115,26 @@ const delegateMouseMove = function(delegator, child, event, collision) {
 		// highlight
 		highlight(child, collision);
 
-		// `mouseover` on current
-		delegations.push({
-			type: EventType.MOUSE_OVER,
-			event: new MouseEvent(
-				child,
-				event.pos,
-				null,
-				collision)
-		});
+		if (!prev || prev.data !== collision) {
+			// `mouseover` on current
+			delegations.push({
+				type: EventType.MOUSE_OVER,
+				event: new MouseEvent(
+					child,
+					event.pos,
+					null,
+					collision)
+			});
+		}
+
 		// flag as prev `mouseover` target
-		delegator.prev = delegations[delegations.length-1];
+		delegator.prevMouseover = delegations[delegations.length-1].event;
 	}
 
 	return delegations;
 };
 
-const delegateMouseUp = function(delegator, child, collision) {
+const delegateMouseUp = function(delegator, child, event, collision) {
 	if (collision) {
 		return [{
 			type: EventType.MOUSE_UP,
@@ -143,7 +148,7 @@ const delegateMouseUp = function(delegator, child, collision) {
 	return [];
 };
 
-const delegateMouseDown = function(delegator, child, collision) {
+const delegateMouseDown = function(delegator, child, event, collision) {
 	if (collision) {
 		return [{
 			type: EventType.MOUSE_DOWN,
@@ -162,17 +167,25 @@ const delegateClick = function(delegator, child, event, collision) {
 		// select
 		select(child, collision);
 		// `click` event
-		return [{
+		const delegation = {
 			type: EventType.CLICK,
 			event: new ClickEvent(
 				child,
 				event.pos,
 				event.button,
 				collision)
-		}];
+		};
+		// flag as prev `click` target
+		delegator.prevClick = delegation.event;
+		// return delegation
+		return [ delegation ];
 	} else {
-		// unselect
-		unselect(child);
+		if (delegator.prevClick) {
+			// unselect
+			unselect(delegator.prevClick.target);
+			// unflag as prev `click` target
+			delegator.prevClick = null;
+		}
 	}
 	return [];
 };
@@ -211,7 +224,8 @@ class EventDelegator {
 	 */
 	constructor(plot) {
 		this.plot = plot;
-		this.prev = null;
+		this.prevClick = null;
+		this.prevMouseover = null;
 	}
 
 	/**
@@ -232,7 +246,7 @@ class EventDelegator {
 			// pick children, by priority
 			let collision = null;
 			let child = null;
-			for (let i=0; i<children.length; i++) {
+			for (let i=children.length-1; i>=0; i--) {
 				if (!children[i].isHidden()) {
 					collision = children[i].pick(event.pos);
 					if (collision) {
@@ -245,7 +259,8 @@ class EventDelegator {
 			const delegations = func(this, child, event, collision);
 			// delegate the accumulated events
 			for (let i=0; i<delegations.length; i++) {
-				delegations.target.emit(delegations.type, event.event);
+				const delegation = delegations[i];
+				delegation.event.target.emit(delegation.type, delegation.event);
 			}
 		});
 	}
