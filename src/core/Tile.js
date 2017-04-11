@@ -1,5 +1,7 @@
 'use strict';
 
+// Constants
+
 /**
  * Maximum safe integer.
  * @private

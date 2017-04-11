@@ -10,15 +10,14 @@ class ResizeEvent extends Event {
 	/**
 	 * Instantiates a new ResizeEvent object.
 	 *
-	 * @param {Number} plot - The resized plot object.
-	 * @param {Number} prevSize - The previous size of the plot.
-	 * @param {Number} targetSize - The new size of the plot.
+	 * @param {Object} target - The object that fired the event.
+	 * @param {Number} oldSize - The old size of the viewport.
+	 * @param {Number} newSize - The new size of the viewport.
 	 */
-	constructor(plot, prevSize, targetSize) {
-		super();
-		this.plot = plot;
-		this.prevSize = prevSize;
-		this.targetSize = targetSize;
+	constructor(target, oldSize, newSize) {
+		super(target);
+		this.oldSize = oldSize;
+		this.newSize = newSize;
 	}
 }
 

@@ -8,9 +8,11 @@ class Event {
 	/**
 	 * Instantiates a new Event object.
 	 *
-	 * @param {Number} timestamp - The timestamp when the event was created.
+	 * @param {Object} target - The object that fired the event.
+	 * @param {Number} timestamp - The timestamp when the event was created. Optional.
 	 */
-	constructor(timestamp = Date.now()) {
+	constructor(target, timestamp = Date.now()) {
+		this.target = target;
 		this.timestamp = timestamp;
 	}
 }

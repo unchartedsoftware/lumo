@@ -1,7 +1,6 @@
 'use strict';
 
 const EventType = require('./EventType');
-const ClickEvent = require('./ClickEvent');
 const MouseEvent = require('./MouseEvent');
 const Keyboard = require('../core/Keyboard');
 
@@ -11,44 +10,6 @@ const setCursor = function(plot) {
 
 const resetCursor = function(plot) {
 	plot.getContainer().style.cursor = 'inherit';
-};
-
-const select = function(child, collision) {
-	const multiSelect = Keyboard.poll('ctrl') || Keyboard.poll('meta');
-	// add to collection if multi-selection is enabled
-	if (multiSelect) {
-		// add to collection if multi-selection is enabled
-		const index = child.selected.indexOf(collision);
-		if (index === -1) {
-			// select point
-			child.selected.push(collision);
-		} else {
-			// remove point if already selected
-			child.selected.splice(index, 1);
-		}
-	} else {
-		// clear selection, adding only the latest entry
-		child.selected = [ collision ];
-	}
-};
-
-const unselect = function(child) {
-	const multiSelect = Keyboard.poll('ctrl') || Keyboard.poll('meta');
-	if (multiSelect) {
-		// if multi-select is held, don't clear selection, it implies user
-		// may have misclicked
-		return;
-	}
-	// flag as unselected
-	child.selected = [];
-};
-
-const highlight = function(child, collision) {
-	child.highlighted = collision;
-};
-
-const unhighlight = function(child) {
-	child.highlighted = null;
 };
 
 const delegateMouseMove = function(delegator, child, event, collision) {
@@ -65,8 +26,8 @@ const delegateMouseMove = function(delegator, child, event, collision) {
 			// clear cursor style
 			resetCursor(delegator.plot);
 
-			// un-highlight
-			unhighlight(prev.target);
+			// un-highlight previous target
+			prev.target.unhighlight();
 
 			// `mouseout` on previous target
 			delegations.push({
@@ -86,8 +47,8 @@ const delegateMouseMove = function(delegator, child, event, collision) {
 
 		// check for prev
 		if (prev && prev.data !== collision) {
-			// un-highlight
-			unhighlight(prev.target);
+			// un-highlight previous target
+			prev.target.unhighlight();
 			// `mouseout` on previous target
 			delegations.push({
 				type: EventType.MOUSE_OUT,
@@ -113,7 +74,7 @@ const delegateMouseMove = function(delegator, child, event, collision) {
 		setCursor(delegator.plot);
 
 		// highlight
-		highlight(child, collision);
+		child.highlight(collision);
 
 		if (!prev || prev.data !== collision) {
 			// `mouseover` on current
@@ -163,13 +124,15 @@ const delegateMouseDown = function(delegator, child, event, collision) {
 };
 
 const delegateClick = function(delegator, child, event, collision) {
+	// check if multi-select is enabled
+	const multiSelect = Keyboard.poll('ctrl') || Keyboard.poll('meta');
 	if (collision) {
 		// select
-		select(child, collision);
+		child.select(collision, multiSelect);
 		// `click` event
 		const delegation = {
 			type: EventType.CLICK,
-			event: new ClickEvent(
+			event: new MouseEvent(
 				child,
 				event.pos,
 				event.button,
@@ -181,8 +144,13 @@ const delegateClick = function(delegator, child, event, collision) {
 		return [ delegation ];
 	} else {
 		if (delegator.prevClick) {
+			if (multiSelect) {
+				// if multi-select is held, don't clear selection, assume the
+				// user may have misclicked
+				return;
+			}
 			// unselect
-			unselect(delegator.prevClick.target);
+			delegator.prevClick.target.unselect();
 			// unflag as prev `click` target
 			delegator.prevClick = null;
 		}
@@ -194,7 +162,7 @@ const delegateDblClick = function(delegator, child, event, collision) {
 	if (collision) {
 		return [{
 			type: EventType.DBL_CLICK,
-			event: new ClickEvent(
+			event: new MouseEvent(
 				child,
 				event.pos,
 				event.button,

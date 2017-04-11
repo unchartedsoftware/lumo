@@ -10,12 +10,11 @@ class TileEvent extends Event {
 	/**
 	 * Instantiates a new TileEvent object.
 	 *
-	 * @param {Number} layer - The layer object.
+	 * @param {Object} target - The object that fired the event.
 	 * @param {Number} tile - The tile object.
 	 */
-	constructor(layer, tile) {
-		super();
-		this.layer = layer;
+	constructor(target, tile) {
+		super(target);
 		this.tile = tile;
 	}
 }
