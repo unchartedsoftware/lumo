@@ -173,7 +173,7 @@ class DOMRenderer extends Renderer {
 		this.tiles = new Map();
 		// create and attach handler
 		this[CELL_UPDATE] = event => {
-			resetTileOffset(this, event.cell);
+			resetTileOffset(this, event.target);
 		};
 		this.layer.plot.on(EventType.CELL_UPDATE, this[CELL_UPDATE]);
 		// create and attach container

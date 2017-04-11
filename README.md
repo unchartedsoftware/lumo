@@ -62,7 +62,7 @@ base.requestTile = (coord, done) => {
 	lumo.loadImage(url, done);
 };
 
-plot.addLayer(base);
+plot.add(base);
 
 // WebGL Point Layer
 
@@ -83,7 +83,7 @@ points.requestTile = (coord, done) => {
 	done(null, buffer);
 };
 
-plot.addLayer(points);
+plot.add(points);
 ```
 
 ## Usage
@@ -112,7 +112,7 @@ layer.requestTile = (coord, done) => {
 	done(null, {});
 };
 
-plot.addLayer(layer)
+plot.add(layer)
 ```
 
 ### Renderer
@@ -244,42 +244,64 @@ The following events are emitted by Lumo:
 
 #### Plot
 
-- **click**: Emitted when the plot is clicked.
-- **dblclick**: Emitted when the plot is double clicked.
-- **mousemove**: Emitted when the mouse is moved over the plot.
-- **mousedown**: Emitted when the mouse button is pressed over the plot.
-- **mouseup**: Emitted when the mouse button is released over the plot.
-- **mouseover**: Emitted when the mouse is moved over the plot.
-- **mouseout**: Emitted when the mouse is moved outside of the plot.
-- **zoomstart**: Emitted when a new zoom event is handled.
-- **zoom**: Emitted during each frame of a zoom animation.
-- **zoomend**: Emitted when a zoom event is complete.
-- **panstart**: Emitted when a new pan event is handled.
-- **pan**: Emitted during each frame of a pan animation.
-- **panend**: Emitted when a pan event is complete.
-- **frame**: Emitted at the beginning of every render frame.
-- **resize**: Emitted whenever the plot dimensions change.
+- **Mouse**
+	- **click**: Emitted when the plot is clicked.
+	- **dblclick**: Emitted when the plot is double clicked.
+	- **mousemove**: Emitted when the mouse is moved over the plot.
+	- **mousedown**: Emitted when the mouse button is pressed over the plot.
+	- **mouseup**: Emitted when the mouse button is released over the plot.
+	- **mouseover**: Emitted when the mouse is moved over the plot.
+	- **mouseout**: Emitted when the mouse is moved outside of the plot.
+- **Pan / Zoom**
+	- **zoomstart**: Emitted when a new zoom event is handled.
+	- **zoom**: Emitted during each frame of a zoom animation.
+	- **zoomend**: Emitted when a zoom event is complete.
+	- **panstart**: Emitted when a new pan event is handled.
+	- **pan**: Emitted during each frame of a pan animation.
+	- **panend**: Emitted when a pan event is complete.
+- **Resize**
+	- **resize**: Emitted whenever the plot dimensions change.
+- **Frame**
+	- **frame**: Emitted at the beginning of every render frame.
 
 #### Layer
 
-- **tilerequest**: Emitted when a tile is requested for a layer.
-- **tileadd**: Emitted when a tile is received and added to the layer.
-- **tilefailure**: Emitted when a tile request fails and the tile cannot be added to the layer.
-- **tilediscard**: Emitted when a tile is received but is no longer in view and is discarded.
-- **tileremove**: Emitted when a tile is evicted from the layer.
-- **load**: Emitted when a all pending tiles have loaded for the layer.
-- **zoomstart**: Emitted when a new zoom event is handled.
-- **zoom**: Emitted during each frame of a zoom animation.
-- **zoomend**: Emitted when a zoom event is complete.
-- **panstart**: Emitted when a new pan event is handled.
-- **pan**: Emitted during each frame of a pan animation.
-- **panend**: Emitted when a pan event is complete.
+- **Mouse**
+	- **click**: Emitted when an element of the layer is clicked.
+	- **dblclick**: Emitted when an element of the layer is double clicked.
+	- **mousemove**: Emitted when the mouse is moved over an element of the layer.
+	- **mousedown**: Emitted when the mouse button is pressed over an element of the layer.
+	- **mouseup**: Emitted when the mouse button is released over an element of the layer.
+	- **mouseover**: Emitted when the mouse is moved over an element of the layer.
+	- **mouseout**: Emitted when the mouse is moved outside of an element of the layer.
+- **Tile**
+	- **tilerequest**: Emitted when a tile is requested for the layer.
+	- **tileadd**: Emitted when a tile is received and added to the layer.
+	- **tilefailure**: Emitted when a tile request fails and the tile is rejected.
+	- **tilediscard**: Emitted when a tile is received but is deemed stale and discarded.
+	- **tileremove**: Emitted when a tile is evicted from the layer.
+	- **load**: Emitted when a all pending tiles have loaded for the layer.
+- **Pan / Zoom**
+	- **zoomstart**: Emitted when a new zoom event is handled.
+	- **zoom**: Emitted during each frame of a zoom animation.
+	- **zoomend**: Emitted when a zoom event is complete.
+	- **panstart**: Emitted when a new pan event is handled.
+	- **pan**: Emitted during each frame of a pan animation.
+	- **panend**: Emitted when a pan event is complete.
 
 #### Overlay
-
-- **zoomstart**: Emitted when a new zoom event is handled.
-- **zoom**: Emitted during each frame of a zoom animation.
-- **zoomend**: Emitted when a zoom event is complete.
-- **panstart**: Emitted when a new pan event is handled.
-- **pan**: Emitted during each frame of a pan animation.
-- **panend**: Emitted when a pan event is complete.
+- **Mouse**
+	- **click**: Emitted when an element of the overlay is clicked.
+	- **dblclick**: Emitted when an element of the overlay is double clicked.
+	- **mousemove**: Emitted when the mouse is moved over an element of the overlay.
+	- **mousedown**: Emitted when the mouse button is pressed over an element of the overlay.
+	- **mouseup**: Emitted when the mouse button is released over an element of the overlay.
+	- **mouseover**: Emitted when the mouse is moved over an element of the overlay.
+	- **mouseout**: Emitted when the mouse is moved outside of an element of the overlay.
+- **Pan / Zoom**
+	- **zoomstart**: Emitted when a new zoom event is handled.
+	- **zoom**: Emitted during each frame of a zoom animation.
+	- **zoomend**: Emitted when a zoom event is complete.
+	- **panstart**: Emitted when a new pan event is handled.
+	- **pan**: Emitted during each frame of a pan animation.
+	- **panend**: Emitted when a pan event is complete.
