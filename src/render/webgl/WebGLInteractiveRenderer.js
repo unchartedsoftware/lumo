@@ -57,6 +57,7 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 		this.points = null;
 		this.collisionType = defaultTo(options.collisionType, CollisionType.CIRCLE);
 		this.nodeCapacity = defaultTo(options.nodeCapacity, 32);
+		this[ZOOM_START] = null;
 	}
 
 	/**
@@ -72,12 +73,12 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 		this.trees = new Map();
 		this.points = new Map();
 		// create handler
-		this.handlers.set(ZOOM_START, () => {
+		this[ZOOM_START] = () => {
 			// clear on zoom since we won't be able to match the same data
 			this.layer.clear();
-		});
+		};
 		// attach handler
-		layer.plot.on(EventType.ZOOM_START, this.handlers.get(ZOOM_START));
+		layer.plot.on(EventType.ZOOM_START, this[ZOOM_START]);
 		return this;
 	}
 
@@ -90,9 +91,9 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 	 */
 	onRemove(layer) {
 		// detach handler
-		this.layer.plot.removeListener(EventType.ZOOM_START, this.handlers.get(ZOOM_START));
+		this.layer.plot.removeListener(EventType.ZOOM_START, this[ZOOM_START]);
 		// destroy handler
-		this.handlers.delete(ZOOM_START);
+		this[ZOOM_START] = null;
 		// destroy rtree and point maps
 		this.trees = null;
 		this.points = null;

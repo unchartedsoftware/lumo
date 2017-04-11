@@ -1,5 +1,6 @@
 'use strict';
 
+const clamp = require('lodash/clamp');
 const defaultTo = require('lodash/defaultTo');
 const EventEmitter = require('events');
 
@@ -23,7 +24,6 @@ class Renderable extends EventEmitter {
 		this.highlighted = null;
 		this.selected = [];
 		this.plot = null;
-		this.handlers = null;
 	}
 
 	/**
@@ -39,7 +39,6 @@ class Renderable extends EventEmitter {
 		}
 		// set plot
 		this.plot = plot;
-		this.handlers = new Map();
 		return this;
 	}
 
@@ -56,10 +55,50 @@ class Renderable extends EventEmitter {
 		}
 		// remove plot
 		this.plot = null;
-		this.handlers = null;
 		// clear state
 		this.clear();
 		return this;
+	}
+	/**
+	 * Set the opacity of the renderable.
+	 *
+	 * @param {Number} opacity - The opacity to set.
+	 *
+	 * @returns {Renderable} The renderable object, for chaining.
+	 */
+	setOpacity(opacity) {
+		this.opacity = clamp(opacity, 0, 1);
+		return this;
+	}
+
+	/**
+	 * Get the opacity of the renderable.
+	 *
+	 * @returns {Number} The opacity of the renderable object,.
+	 */
+	getOpacity() {
+		return this.opacity;
+	}
+
+	/**
+	 * Set the z-index of the renderable.
+	 *
+	 * @param {Number} zIndex - The z-index to set.
+	 *
+	 * @returns {Renderable} The renderable object, for chaining.
+	 */
+	setZIndex(zIndex) {
+		this.zIndex = zIndex;
+		return this;
+	}
+
+	/**
+	 * Get the z-index of the renderable.
+	 *
+	 * @returns {Number} The zIndex of the renderable object,.
+	 */
+	getZIndex() {
+		return this.zIndex;
 	}
 
 	/**
@@ -113,6 +152,104 @@ class Renderable extends EventEmitter {
 	 */
 	pick() {
 		return null;
+	}
+
+	/**
+	 * Highlights the provided data.
+	 *
+	 * @param {Object} data - The data to highlight.
+	 *
+	 * @returns {Renderable} The renderable object, for chaining.
+	 */
+	highlight(data) {
+		this.highlighted = data;
+		return this;
+	}
+
+	/**
+	 * Clears any current highlight.
+	 *
+	 * @returns {Renderable} The renderable object, for chaining.
+	 */
+	unhighlight() {
+		this.highlighted = null;
+		return this;
+	}
+
+	/**
+	 * Returns any highlighted data.
+	 *
+	 * @returns {Object} The highlighted data.
+	 */
+	getHighlight() {
+		return this.highlighted;
+	}
+
+	/**
+	 * Returns true if the provided argument is highlighted.
+	 *
+	 * @returns {Object} The data to test.
+	 *
+	 * @returns {boolean} Whether or not there is highlighted data.
+	 */
+	isHighlighted(data) {
+		return this.highlighted === data;
+	}
+
+	/**
+	 * Selects the provided data.
+	 *
+	 * @param {Object} data - The data to select.
+	 * @param {Object} multiSelect - Whether mutli-select is enabled.
+	 *
+	 * @returns {Renderable} The renderable object, for chaining.
+	 */
+	select(data, multiSelect) {
+		if (multiSelect) {
+			// add to collection if multi-selection is enabled
+			const index = this.selected.indexOf(data);
+			if (index === -1) {
+				// select point
+				this.selected.push(data);
+			} else {
+				// remove point if already selected
+				this.selected.splice(index, 1);
+			}
+		} else {
+			// clear selection, adding only the latest entry
+			this.selected = [ data ];
+		}
+		return this;
+	}
+
+	/**
+	 * Clears any current selection.
+	 *
+	 * @returns {Renderable} The renderable object, for chaining.
+	 */
+	unselect() {
+		this.selected = null;
+		return this;
+	}
+
+	/**
+	 * Returns any selected data.
+	 *
+	 * @returns {Object} The selected data.
+	 */
+	getSelected() {
+		return this.selected;
+	}
+
+	/**
+	 * Returns true if the provided argument is selected.
+	 *
+	 * @returns {Object} The data to test.
+	 *
+	 * @returns {boolean} Whether or not there is highlighted data.
+	 */
+	isSelected(data) {
+		return this.selected.indexOf(data) === -1;
 	}
 
 	/**

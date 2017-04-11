@@ -167,7 +167,6 @@ class Viewport {
 			x: (targetPos.x - this.x) / scale,
 			y: (targetPos.y - this.y) / scale
 		};
-		// return new viewport
 		return new Viewport({
 			width: scaledWidth,
 			height: scaledHeight,
@@ -178,7 +177,7 @@ class Viewport {
 
 	/**
 	 * Returns the lower-left corner position of the viewport in plot
-	 *coordinates.
+	 * coordinates.
 	 *
 	 * @returns {Object} The plot position.
 	 */

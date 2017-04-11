@@ -4,7 +4,7 @@ const clamp = require('lodash/clamp');
 const defaultTo = require('lodash/defaultTo');
 const Browser = require('../../core/Browser');
 const EventType = require('../../event/EventType');
-const ZoomEvent = require('../../event/ZoomEvent');
+const Event = require('../../event/Event');
 const ZoomAnimation = require('../animation/ZoomAnimation');
 const Viewport = require('../Viewport');
 const DOMHandler = require('./DOMHandler');
@@ -137,14 +137,14 @@ const zoom = function(plot, targetPos, zoomDelta, duration) {
 			});
 		}
 		// emit zoom start
-		plot.emit(EventType.ZOOM_START, new ZoomEvent(plot, plot.zoom, plot.zoom, targetZoom));
+		plot.emit(EventType.ZOOM_START, new Event(plot));
 		// if there isn't a duration
 		if (duration === 0) {
 			// immediately update plot
 			plot.zoom = targetZoom;
 			plot.viewport = targetViewport;
 			// emit zoom end
-			plot.emit(EventType.ZOOM_END,  new ZoomEvent(plot, targetZoom, targetZoom, targetZoom));
+			plot.emit(EventType.ZOOM_END,  new Event(plot));
 		}
 		// request tiles
 		plot.zoomRequest();
@@ -281,8 +281,9 @@ class ZoomHandler extends DOMHandler {
 			event.stopPropagation();
 		};
 
-		this.plot.container.addEventListener('dblclick', this.dblclick);
-		this.plot.container.addEventListener('wheel', this.wheel);
+		const container = plot.getContainer();
+		container.addEventListener('dblclick', this.dblclick);
+		container.addEventListener('wheel', this.wheel);
 	}
 
 	/**
@@ -293,8 +294,9 @@ class ZoomHandler extends DOMHandler {
 	disable() {
 		super.disable();
 
-		this.plot.container.removeEventListener('dblclick', this.dblclick);
-		this.plot.container.removeEventListener('wheel', this.wheel);
+		const container = this.plot.getContainer();
+		container.removeEventListener('dblclick', this.dblclick);
+		container.removeEventListener('wheel', this.wheel);
 		this.dblclick = null;
 		this.wheel = null;
 	}
@@ -308,7 +310,7 @@ class ZoomHandler extends DOMHandler {
 	 */
 	zoomTo(level, animate = true) {
 		const plot = this.plot;
-		const targetPos = this.plot.viewport.getCenter();
+		const targetPos = this.plot.getViewportCenter();
 		const zoomDelta = level - plot.zoom;
 		if (!animate) {
 			// do not animate

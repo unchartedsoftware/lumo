@@ -7,8 +7,7 @@ const EventEmitter = require('events');
 const EventType = require('../event/EventType');
 const EventBroadcaster = require('../event/EventBroadcaster');
 const EventDelegator = require('../event/EventDelegator');
-const CellEvent = require('../event/CellEvent');
-const FrameEvent = require('../event/FrameEvent');
+const Event = require('../event/Event');
 const ResizeEvent = require('../event/ResizeEvent');
 const RenderBuffer = require('../render/webgl/texture/RenderBuffer');
 const Viewport = require('./Viewport');
@@ -40,6 +39,13 @@ const RESIZE_THROTTLE_MS = 200;
  * @constant {Number}
  */
 const ZOOM_THROTTLE_MS = 400;
+
+/**
+ * The maximum zoom delta until a cell update event.
+ * @private
+ * @constant {Number}
+ */
+const CELL_ZOOM_DELTA = 1.0;
 
 /**
  * The maximum zoom level supported.
@@ -149,8 +155,9 @@ const resize = function(plot) {
 
 const updateCell = function(plot) {
 	const zoom = plot.getTargetZoom();
-	const center = plot.getTargetCenter();
+	const center = plot.getTargetViewportCenter();
 	const extent = plot.getTargetPixelExtent();
+	const size = plot.getViewportPixelSize();
 	const cell = new Cell(zoom, center, extent);
 
 	let refresh = false;
@@ -160,13 +167,14 @@ const updateCell = function(plot) {
 	} else {
 		// check if we are outside of one zoom level from last
 		const zoomDist = Math.abs(plot.cell.zoom - cell.zoom);
-		if (zoomDist >= 1) {
+		if (zoomDist >= CELL_ZOOM_DELTA) {
 			refresh = true;
 		} else {
 			// check if we are withing buffer distance of the cell bounds
-			const cellDist = plot.cell.halfSize - plot.cell.buffer;
-			if (Math.abs(cell.center.x - plot.cell.center.x) > cellDist ||
-				Math.abs(cell.center.y - plot.cell.center.y) > cellDist) {
+			const xDist = plot.cell.halfSize - (size.width / plot.cell.extent);
+			const yDist = plot.cell.halfSize - (size.height / plot.cell.extent);
+			if (Math.abs(cell.center.x - plot.cell.center.x) > xDist ||
+				Math.abs(cell.center.y - plot.cell.center.y) > yDist) {
 				refresh = true;
 			}
 		}
@@ -175,7 +183,7 @@ const updateCell = function(plot) {
 		// update cell
 		plot.cell = cell;
 		// emit cell refresh event
-		plot.emit(EventType.CELL_UPDATE, new CellEvent(cell));
+		plot.emit(EventType.CELL_UPDATE, new Event(cell));
 	}
 };
 
@@ -210,7 +218,7 @@ const frame = function(plot) {
 	const timestamp = Date.now();
 
 	// emit start frame
-	plot.emit(EventType.FRAME, new FrameEvent(timestamp));
+	plot.emit(EventType.FRAME, new Event(plot, timestamp));
 
 	// update size
 	resize(plot);
@@ -230,12 +238,16 @@ const frame = function(plot) {
 
 	// apply the zoom animation
 	if (plot.isZooming()) {
-		plot.zoomAnimation.update(timestamp);
+		if (plot.zoomAnimation.update(timestamp)) {
+			plot.zoomAnimation = null;
+		}
 	}
 
 	// apply the pan animation
 	if (plot.isPanning()) {
-		plot.panAnimation.update(timestamp);
+		if (plot.panAnimation.update(timestamp)) {
+			plot.panAnimation = null;
+		}
 		plot.panRequest();
 	}
 
@@ -343,6 +355,10 @@ class Plot extends EventEmitter {
 		// center the plot
 		const center = defaultTo(options.center, { x: 0.5, y: 0.5 });
 		this.viewport.centerOn(center);
+
+		// generate cell
+		this.cell = null;
+		updateCell(this);
 
 		// wraparound
 		this.wraparound = defaultTo(options.wraparound, false);
@@ -479,6 +495,15 @@ class Plot extends EventEmitter {
 	};
 
 	/**
+	 * Returns the current zoom of the plot.
+	 *
+	 * @returns {Number} The current zoom of the plot.
+	 */
+	getZoom() {
+		return this.zoom;
+	}
+
+	/**
 	 * Returns the target zoom of the plot. If the plot is actively zooming, it
 	 * will return the destination zoom. If the plot is not actively zooming, it
 	 * will return the current zoom.
@@ -492,6 +517,15 @@ class Plot extends EventEmitter {
 		}
 		// if not zooming, use the current level
 		return this.zoom;
+	}
+
+	/**
+	 * Returns the current viewport of the plot.
+	 *
+	 * @returns {Number} The current viewport of the plot.
+	 */
+	getViewport() {
+		return this.viewport;
 	}
 
 	/**
@@ -511,12 +545,40 @@ class Plot extends EventEmitter {
 	}
 
 	/**
+	 * Returns the current bottom-left corner of the viewport.
+	 *
+	 * @returns {Object} The current center in plot coordinates.
+	 */
+	getViewportPosition() {
+		return this.viewport.getPosition();
+	}
+
+	/**
+	 * Returns the target bottom-left corner of the viewport. If the plot is actively zooming
+	 * or panning, it will return the destination center.
+	 *
+	 * @returns {Object} The target center in plot coordinates.
+	 */
+	getTargetViewportPosition() {
+		return this.getTargetViewport().getPosition();
+	}
+
+	/**
+	 * Returns the current center of the viewport.
+	 *
+	 * @returns {Object} The current center in plot coordinates.
+	 */
+	getViewportCenter() {
+		return this.viewport.getCenter();
+	}
+
+	/**
 	 * Returns the target center of the plot in plot coordinates. If the plot is
 	 * actively zooming or panning, it will return the destination center.
 	 *
 	 * @returns {Object} The target center in plot coordinates.
 	 */
-	getTargetCenter() {
+	getTargetViewportCenter() {
 		return this.getTargetViewport().getCenter();
 	}
 
@@ -525,7 +587,7 @@ class Plot extends EventEmitter {
 	 *
 	 * @returns {Object} The target center in plot coordinates.
 	 */
-	getCenter() {
+	getViewportCenter() {
 		return this.viewport.getCenter();
 	}
 
@@ -652,12 +714,8 @@ class Plot extends EventEmitter {
 	 */
 	panTo(pos, animate = true) {
 		// cancel existing animations
-		if (this.isPanning()) {
-			this.panAnimation.cancel();
-		}
-		if (this.isZooming()) {
-			this.zoomAnimation.cancel();
-		}
+		this.cancelPan();
+		this.cancelZoom();
 		this[HANDLERS].get(PAN).panTo(pos, animate);
 		return this;
 	}
@@ -673,12 +731,9 @@ class Plot extends EventEmitter {
 	 * @returns {Plot} The plot object, for chaining.
 	 */
 	zoomTo(level, animate = true) {
-		if (this.isPanning()) {
-			this.panAnimation.cancel();
-		}
-		if (this.isZooming()) {
-			this.zoomAnimation.cancel();
-		}
+		// cancel existing animations
+		this.cancelPan();
+		this.cancelZoom();
 		this[HANDLERS].get(ZOOM).zoomTo(level, animate);
 		return this;
 	}
@@ -723,6 +778,34 @@ class Plot extends EventEmitter {
 	 */
 	isZooming() {
 		return !!this.zoomAnimation;
+	}
+
+	/**
+	 * Cancels any current pan animation.
+	 *
+	 * @returns {boolean} - Whether or not the plot was panning.
+	 */
+	cancelPan() {
+		if (this.isPanning()) {
+			this.panAnimation.cancel();
+			this.panAnimation = null;
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Cancels any current zoom animation.
+	 *
+	 * @returns {boolean} - Whether or not the plot was zooming.
+	 */
+	cancelZoom() {
+		if (this.isZooming()) {
+			this.zoomAnimation.cancel();
+			this.zoomAnimation = null;
+			return true;
+		}
+		return false;
 	}
 
 	/**

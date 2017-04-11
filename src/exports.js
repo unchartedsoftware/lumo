@@ -32,16 +32,12 @@ module.exports = {
 	TILE_REMOVE: EventType.TILE_REMOVE,
 	POST_DRAW: EventType.POST_DRAW,
 	// event
-	Event: require('./event/Event'),
 	EventType: require('./event/EventType'),
-	ClickEvent: require('./event/ClickEvent'),
+	Event: require('./event/Event'),
 	DrawEvent: require('./event/DrawEvent'),
-	FrameEvent: require('./event/FrameEvent'),
 	MouseEvent: require('./event/MouseEvent'),
-	PanEvent: require('./event/PanEvent'),
 	ResizeEvent: require('./event/ResizeEvent'),
 	TileEvent: require('./event/TileEvent'),
-	ZoomEvent: require('./event/ZoomEvent'),
 	// collision
 	RTree: require('./render/webgl/rtree/RTree.js'),
 	// collision types

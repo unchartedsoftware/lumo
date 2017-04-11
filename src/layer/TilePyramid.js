@@ -102,7 +102,7 @@ const checkIfLoaded = function(pyramid) {
 
 const sortAroundCenter = function(plot, coords) {
 	// get the plot center position
-	const center = plot.getTargetCenter();
+	const center = plot.getTargetViewportCenter();
 	// sort the requests by distance from center tile
 	coords.sort((a, b) => {
 		const aCenter = a.getCenter();
@@ -174,7 +174,6 @@ class TilePyramid {
 		}
 		this.cacheSize = defaultTo(options.cacheSize, CACHE_SIZE);
 		this.persistentLevels = defaultTo(options.persistentLevels, PERSISTANT_LEVELS);
-		this.totalCapacity = this.cacheSize + sumPowerOfFour(this.persistentLevels);
 		this.layer = layer;
 		this.levels = new Map();
 		this.persistents = new Map();
@@ -190,6 +189,13 @@ class TilePyramid {
 		this.emitLoad = throttle(event => {
 			this.layer.emit(EventType.LOAD, event);
 		}, LOADED_THROTTLE_MS);
+	}
+
+	/**
+	 * Returns the total capacity of the tile pyramid.
+	 */
+	getCapacity() {
+		return this.cacheSize + sumPowerOfFour(this.persistentLevels);
 	}
 
 	/**

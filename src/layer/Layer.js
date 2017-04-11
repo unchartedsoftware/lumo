@@ -48,8 +48,10 @@ class Layer extends Renderable {
 		if (this.renderer) {
 			this.renderer.onAdd(this);
 		}
-		// request visible tiles
-		requestVisibleTiles(this);
+		// request tiles if not muted
+		if (!this.isMuted()) {
+			requestVisibleTiles(this);
+		}
 		return this;
 	}
 
@@ -106,6 +108,24 @@ class Layer extends Renderable {
 		}
 		this.renderer = null;
 		return this;
+	}
+
+	/**
+	 * Returns the renderer of the layer.
+	 *
+	 * @returns {Renderer} The renderer object.
+	 */
+	getRenderer() {
+		return this.renderer;
+	}
+
+	/**
+	 * Returns the tile pyramid of the layer.
+	 *
+	 * @returns {TilePyramid} The tile pyramid object.
+	 */
+	getPyramid() {
+		return this.pyramid;
 	}
 
 	/**
@@ -222,7 +242,8 @@ class Layer extends Renderable {
 		this.pyramid.clear();
 		// clear layer state
 		this.clear();
-		if (this.plot) {
+		// request if attached and not muted
+		if (this.plot && !this.isMuted()) {
 			// request visible tiles
 			requestVisibleTiles(this);
 		}

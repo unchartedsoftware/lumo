@@ -65,10 +65,6 @@ const pan = function(plot, delta) {
 	plot.emit(EventType.PAN, new PanEvent(plot, prev, current));
 };
 
-const isRightButton = function(event) {
-	return (event.which) ? event.which === 3 : event.button === 2;
-};
-
 /**
  * Class representing a pan handler.
  */
@@ -108,7 +104,7 @@ class PanHandler extends DOMHandler {
 
 		this.mousedown = (event) => {
 			// ignore if right-button
-			if (isRightButton(event)) {
+			if (!this.isLeftButton(event)) {
 				return;
 			}
 			// flag as down
@@ -173,7 +169,7 @@ class PanHandler extends DOMHandler {
 			}
 
 			// ignore if right-button
-			if (isRightButton(event)) {
+			if (!this.isLeftButton(event)) {
 				return;
 			}
 
@@ -230,22 +226,18 @@ class PanHandler extends DOMHandler {
 				x: Math.round(velocity.x * (-duration / 2)),
 				y: Math.round(velocity.y * (-duration / 2))
 			};
-			// get current viewport x / y
-			const start = {
-				x: plot.viewport.x,
-				y: plot.viewport.y
-			};
 			// set pan animation
 			plot.panAnimation = new PanAnimation({
 				plot: plot,
-				start: start,
+				start: plot.getViewportPosition(),
 				delta: this.viewPxToPlot(delta),
 				easing: easing,
 				duration: duration * 1000 // s to ms
 			});
 		};
 
-		this.plot.container.addEventListener('mousedown', this.mousedown);
+		const container = plot.getContainer();
+		container.addEventListener('mousedown', this.mousedown);
 		document.addEventListener('mousemove', this.mousemove);
 		document.addEventListener('mouseup', this.mouseup);
 	}
@@ -258,7 +250,8 @@ class PanHandler extends DOMHandler {
 	disable() {
 		super.disable();
 
-		this.plot.container.removeEventListener('mousedown', this.mousedown);
+		const container = this.plot.getContainer();
+		container.removeEventListener('mousedown', this.mousedown);
 		document.removeEventListener('mousemove', this.mousemove);
 		document.removeEventListener('mouseup', this.mouseup);
 		this.mousedown = null;
@@ -274,7 +267,7 @@ class PanHandler extends DOMHandler {
 	 */
 	panTo(pos, animate = true) {
 		const plot = this.plot;
-		const center = plot.viewport.getCenter();
+		const center = plot.getViewportCenter();
 		const delta = {
 			x: pos.x - center.x,
 			y: pos.y - center.y

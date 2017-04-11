@@ -157,6 +157,7 @@ class DOMRenderer extends Renderer {
 		this.container = null;
 		this.drawTimeout = null;
 		this.eraseTimeout = null;
+		this[CELL_UPDATE] = null;
 	}
 
 	/**
@@ -170,12 +171,11 @@ class DOMRenderer extends Renderer {
 		super.onAdd(layer);
 		// create tiles
 		this.tiles = new Map();
-		// create and attach handlers
-		const update = event => {
+		// create and attach handler
+		this[CELL_UPDATE] = event => {
 			resetTileOffset(this, event.cell);
 		};
-		this.handlers.set(CELL_UPDATE, update);
-		this.layer.plot.on(EventType.CELL_UPDATE, update);
+		this.layer.plot.on(EventType.CELL_UPDATE, this[CELL_UPDATE]);
 		// create and attach container
 		this.container = this.createContainer();
 		this.layer.plot.container.appendChild(this.container);
@@ -191,8 +191,8 @@ class DOMRenderer extends Renderer {
 	 */
 	onRemove(layer) {
 		// detach and destroy handlers
-		this.layer.plot.removeListener(EventType.CELL_UPDATE, this.handlers.get(CELL_UPDATE));
-		this.handlers.delete(CELL_UPDATE);
+		this.layer.plot.removeListener(EventType.CELL_UPDATE, this[CELL_UPDATE]);
+		this[CELL_UPDATE] = null;
 		// detach and destroy container
 		this.layer.plot.container.removeChild(this.container);
 		this.container = null;
@@ -381,33 +381,6 @@ class DOMRenderer extends Renderer {
 			x: plot.viewport.x + (event.clientX / extent),
 			y: plot.viewport.y + ((size.height - event.clientY) / extent)
 		};
-	}
-
-	/**
-	 * Takes a DOM event and returns the mouse button string.
-	 *
-	 * @param {Event} event - The mouse event.
-	 *
-	 * @returns {String} The mouse button string.
-	 */
-	getMouseButton(event) {
-		if (event.which) {
-			if (event.which === 1) {
-				return 'left';
-			} else if (event.which === 2) {
-				return 'middle';
-			} else if (event.which === 3) {
-				return 'right';
-			}
-		}
-		if (event.button === 0) {
-			return 'left';
-		} else if (event.button === 1) {
-			return 'middle';
-		} else if (event.button === 2) {
-			return 'right';
-		}
-		return null;
 	}
 }
 

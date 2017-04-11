@@ -17,7 +17,7 @@ describe('Layer', () => {
 			getTargetVisibleCoords: () => {
 				return [];
 			},
-			getTargetCenter: function() {
+			getTargetViewportCenter: function() {
 				return {
 					x: 0.5,
 					y: 0.5
@@ -360,6 +360,21 @@ describe('Layer', () => {
 			const requestTiles = sinon.stub(layer.pyramid, 'requestTiles').callsFake(noop);
 			layer.requestTiles([]);
 			assert(requestTiles.calledOnce);
+		});
+	});
+
+	describe('#pick()', () => {
+		it('should call `pick` on the attached renderer', () => {
+			const layer = new Layer();
+			layer.setRenderer(renderer);
+			const pick = sinon.stub(layer.getRenderer(), 'pick').callsFake(noop);
+			layer.pick();
+			assert(pick.calledOnce);
+		});
+		it('should return null if no renderer is attached', () => {
+			const layer = new Layer();
+			const res = layer.pick();
+			assert(res === null);
 		});
 	});
 

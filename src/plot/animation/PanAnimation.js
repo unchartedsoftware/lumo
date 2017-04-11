@@ -1,7 +1,7 @@
 'use strict';
 
 const EventType = require('../../event/EventType');
-const PanEvent = require('../../event/PanEvent');
+const Event = require('../../event/Event');
 const Animation = require('./Animation');
 
 /**
@@ -14,13 +14,13 @@ class PanAnimation extends Animation {
 	 *
 	 * @param {Object} params - The parameters of the animation.
 	 * @param {Number} params.plot - The plot target of the animation.
+	 * @param {Number} params.duration - The duration of the animation.
 	 * @param {Number} params.start - The start timestamp of the animation.
 	 * @param {Number} params.delta - The positional delta of the animation.
 	 * @param {Number} params.easing - The easing factor of the animation.
-	 * @param {Number} params.duration - The duration of the animation.
 	 */
 	constructor(params = {}) {
-		super(params.plot);
+		super(params);
 		this.start = params.start;
 		this.delta = params.delta;
 		this.end = {
@@ -28,7 +28,6 @@ class PanAnimation extends Animation {
 			y: this.start.y + this.delta.y,
 		};
 		this.easing = params.easing;
-		this.duration = params.duration;
 	}
 
 	/**
@@ -38,29 +37,23 @@ class PanAnimation extends Animation {
 	 * @param {Number} timestamp - The frame timestamp.
 	 */
 	update(timestamp) {
-		const t = Math.min(1.0, (timestamp - this.timestamp) / (this.duration || 1));
+		const t = this.getT(timestamp);
 		// calculate the progress of the animation
 		const progress = 1 - Math.pow(1 - t, 1 / this.easing);
 		// caclulate the current position along the pan
 		const plot = this.plot;
-		const prev = plot.viewport.getPosition();
-		const current = {
-			x: this.start.x + this.delta.x * progress,
-			y: this.start.y + this.delta.y * progress
-		};
 		// set the viewport positions
-		plot.viewport.x = current.x;
-		plot.viewport.y = current.y;
+		plot.viewport.x = this.start.x + this.delta.x * progress;
+		plot.viewport.y = this.start.y + this.delta.y * progress;
 		// create pan event
-		const event = new PanEvent(plot, prev, current);
+		const event = new Event(plot);
 		// check if animation is finished
 		if (t < 1) {
 			plot.emit(EventType.PAN, event);
-		} else {
-			plot.emit(EventType.PAN_END, event);
-			// remove self from plot
-			plot.panAnimation = null;
+			return false;
 		}
+		plot.emit(EventType.PAN_END, event);
+		return true;
 	}
 
 	/**
@@ -68,11 +61,8 @@ class PanAnimation extends Animation {
 	 */
 	cancel() {
 		const plot = this.plot;
-		const current = plot.viewport.getPosition();
 		// emit pan end
-		plot.emit(EventType.PAN_END, new PanEvent(plot, current, this.end));
-		// remove self from plot
-		plot.panAnimation = null;
+		plot.emit(EventType.PAN_END, new Event(plot));
 	}
 
 	/**
@@ -80,14 +70,11 @@ class PanAnimation extends Animation {
 	 */
 	finish() {
 		const plot = this.plot;
-		const current = plot.viewport.getPosition();
 		// set the viewport positions
 		plot.viewport.x = this.end.x;
 		plot.viewport.y = this.end.y;
 		// emit pan end
-		plot.emit(EventType.PAN_END, new PanEvent(plot, current, this.end));
-		// remove self from plot
-		plot.panAnimation = null;
+		plot.emit(EventType.PAN_END, new Event(plot));
 	}
 }
 

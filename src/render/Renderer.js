@@ -13,7 +13,6 @@ class Renderer extends EventEmitter {
 	constructor() {
 		super();
 		this.layer = null;
-		this.handlers = null;
 	}
 
 	/**
@@ -28,7 +27,6 @@ class Renderer extends EventEmitter {
 			throw 'No layer provided as argument';
 		}
 		this.layer = layer;
-		this.handlers = new Map();
 		return this;
 	}
 
@@ -44,7 +42,6 @@ class Renderer extends EventEmitter {
 			throw 'No layer provided as argument';
 		}
 		this.layer = null;
-		this.handlers = null;
 		return this;
 	}
 
