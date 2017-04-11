@@ -1,6 +1,6 @@
 'use strict';
 
-const Shader = require('./shader/Shader');
+const Shader = require('../../webgl/shader/Shader');
 const Renderer = require('../Renderer');
 
 // Private Methods

@@ -2,8 +2,8 @@
 
 const defaultTo = require('lodash/defaultTo');
 const EventType = require('../../event/EventType');
+const TextureArray = require('../../webgl/texture/TextureArray');
 const WebGLRenderer = require('./WebGLRenderer');
-const TextureArray = require('./texture/TextureArray');
 
 // Constants
 

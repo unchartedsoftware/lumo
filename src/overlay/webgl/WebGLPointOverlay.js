@@ -1,7 +1,7 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const VertexBuffer = require('../../render/webgl/vertex/VertexBuffer');
+const VertexBuffer = require('../../webgl/vertex/VertexBuffer');
 const WebGLOverlay = require('./WebGLOverlay');
 
 // Constants

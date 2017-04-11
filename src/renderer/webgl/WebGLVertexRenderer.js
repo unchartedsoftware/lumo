@@ -2,8 +2,8 @@
 
 const defaultTo = require('lodash/defaultTo');
 const EventType = require('../../event/EventType');
+const VertexAtlas = require('../../webgl/vertex/VertexAtlas');
 const WebGLRenderer = require('./WebGLRenderer');
-const VertexAtlas = require('./vertex/VertexAtlas');
 
 // Constants
 

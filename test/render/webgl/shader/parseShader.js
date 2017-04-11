@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('assert');
-const parseShader = require('../../../../src/render/webgl/shader/parseShader');
+const parseShader = require('../../../../src/webgl/shader/parseShader');
 
 describe('parseShader', () => {
 	it('should return declarations in the order they are found in the source arguments', () => {

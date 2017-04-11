@@ -1,6 +1,6 @@
 'use strict';
 
-const VertexBuffer = require('./vertex/VertexBuffer');
+const VertexBuffer = require('../../webgl/vertex/VertexBuffer');
 const WebGLTextureRenderer = require('./WebGLTextureRenderer');
 
 // Constants

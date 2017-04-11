@@ -1,8 +1,8 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const Shader = require('../../render/webgl/shader/Shader');
 const EventType = require('../../event/EventType');
+const Shader = require('../../webgl/shader/Shader');
 const Overlay = require('../Overlay');
 
 // Constants

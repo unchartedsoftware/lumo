@@ -3,7 +3,7 @@
 const assert = require('assert');
 const sinon = require('sinon');
 const Layer = require('../../src/layer/Layer');
-const Renderer = require('../../src/render/Renderer');
+const Renderer = require('../../src/renderer/Renderer');
 
 const noop = function() {};
 

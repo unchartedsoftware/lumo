@@ -2,8 +2,8 @@
 
 const defaultTo = require('lodash/defaultTo');
 const EventType = require('../../event/EventType');
-const RTree = require('./rtree/RTree');
-const CollisionType = require('./rtree/CollisionType');
+const RTree = require('../../collision/RTree');
+const CollisionType = require('../../collision/CollisionType');
 const WebGLVertexRenderer = require('./WebGLVertexRenderer');
 
 // Constants
