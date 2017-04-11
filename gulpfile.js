@@ -77,7 +77,8 @@ gulp.task('clean', () => {
 gulp.task('lint', () => {
 	return gulp.src(paths.source)
 		.pipe(eslint())
-		.pipe(eslint.format());
+		.pipe(eslint.format())
+		.pipe(eslint.failAfterError());
 });
 
 gulp.task('build-min-js', [ 'lint', 'clean' ], () => {
