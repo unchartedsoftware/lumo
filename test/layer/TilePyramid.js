@@ -416,6 +416,82 @@ describe('TilePyramid', () => {
 				done();
 			});
 		});
+		it('should handle calling `clear` inside the `requestTile` method', done => {
+			const coord = new Coord(0, 0, 0);
+
+			// 1) request tileA
+			// 2) clear pyramid flagging tileA as stale
+			// 3) request tileB
+			// 4) resolve tileA, should be discarded
+			// 5) resolve tileB, should be added
+			layer.requestTile = (_, callback) => {
+				// clear the pyramid
+				pyramid.clear();
+				// request should no longer be pending
+				assert(!pyramid.isPending(coord));
+				// finish callback
+				callback(null, {});
+				// should have discarded the response
+				assert(!pyramid.has(coord));
+			};
+			pyramid.requestTiles([ coord ]);
+
+			// 1) request tileA
+			// 2) clear pyramid flagging tileA as stale
+			// 3) request tileB
+			// 4) resolve tileA, should be discarded, tileB should still be pending
+			// 5) resolve tileB, should be added
+			layer.requestTile = (_0, callback0) => {
+				const tile0 = {};
+				const tile1 = {};
+
+				// clear the pyramid
+				pyramid.clear();
+
+				// should have discarded the response
+				assert(!pyramid.isPending(coord));
+
+				let resolve;
+				const promise = new Promise(r => {
+					resolve = r;
+				});
+
+				// swap request func and request again, async
+				layer.requestTile = (_1, callback1) => {
+					promise.then(() => {
+						callback1(null, tile1);
+						// should have the correct response
+						assert(pyramid.get(coord).data === tile1);
+						done();
+					});
+				};
+				pyramid.requestTiles([ coord ]);
+
+				// resolve the first stale tile
+				callback0(null, tile0);
+
+				// should still be pending the first
+				assert(pyramid.isPending(coord));
+
+				// resolve tileB
+				resolve();
+			};
+			pyramid.requestTiles([ coord ]);
+		});
+		it('should handle calling `clear` inside the `requestTile` method', () => {
+			const coord = new Coord(0, 0, 0);
+			// first request
+			layer.requestTile = (_, callback) => {
+				// clear the pyramid
+				pyramid.clear();
+				// finish callback
+				callback(null, {});
+				// should have discarded the response
+				assert(!pyramid.isPending(coord));
+				assert(!pyramid.has(coord));
+			};
+			pyramid.requestTiles([ coord ]);
+		});
 		it('should discard multiple out of sync stale request responses for the same coord', done => {
 			const coord = new Coord(0, 0, 0);
 			const hash = coord.normalize().hash;

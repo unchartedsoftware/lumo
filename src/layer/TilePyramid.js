@@ -113,8 +113,6 @@ const sortAroundCenter = function(plot, coords) {
 		const dby = center.y - bCenter.y;
 		const da = dax * dax + day * day;
 		const db = dbx * dbx + dby * dby;
-		a.d = da;
-		b.d = db;
 		return da - db;
 	});
 	return coords;
@@ -128,20 +126,31 @@ const removeDuplicates = function(coords) {
 	});
 };
 
+const flagTileAsStale = function(pyramid, tile) {
+	const hash = tile.coord.hash;
+	let uids = pyramid.stale.get(hash);
+	if (!uids) {
+		uids = new Map();
+		pyramid.stale.set(hash, uids);
+	}
+	uids.set(tile.uid, true);
+};
+
 const isTileStale = function(pyramid, tile) {
-	const coord = tile.coord;
-	if (pyramid.stale.has(coord.hash)) {
+	const hash = tile.coord.hash;
+	if (pyramid.stale.has(hash)) {
 		// check if uid is flagged as stale
-		const uids = pyramid.stale.get(coord.hash);
+		const uids = pyramid.stale.get(hash);
 		if (uids.has(tile.uid)) {
 			// tile is stale
 			uids.delete(tile.uid);
 			if (uids.size === 0) {
-				pyramid.stale.delete(coord.hash);
+				pyramid.stale.delete(hash);
 			}
 			return true;
 		}
 	}
+	return false;
 };
 
 const shouldDiscard = function(pyramid, tile) {
@@ -204,14 +213,9 @@ class TilePyramid {
 	 */
 	clear() {
 		// any pending tiles are now flagged as stale
-		this.pending.forEach((tile, hash) => {
+		this.pending.forEach(tile => {
 			// flag uid as stale
-			let uids = this.stale.get(hash);
-			if (!uids) {
-				uids = new Map();
-				this.stale.set(hash, uids);
-			}
-			uids.set(tile.uid, true);
+			flagTileAsStale(this, tile);
 		});
 		this.pending = new Map(); // fresh map
 		// clear persistent tiles
@@ -321,12 +325,16 @@ class TilePyramid {
 			// get normalized coord, we use normalized coords for requests
 			// so that we do not track / request the same tiles
 			const ncoord = coord.normalize();
-			// create the new tile
-			const tile = new Tile(ncoord);
-			// add tile to pending array
-			this.pending.set(ncoord.hash, tile);
 			// return tile
-			return tile;
+			return new Tile(ncoord);
+		});
+
+		// flag all tiles as pending
+		// NOTE: we flag them all now incase a `clear` is called inside a
+		// `requestTile` call.
+		tiles.forEach(tile => {
+			// add tile to pending array
+			this.pending.set(tile.coord.hash, tile);
 		});
 
 		// request tiles
@@ -335,10 +343,12 @@ class TilePyramid {
 			this.layer.emit(EventType.TILE_REQUEST, new TileEvent(this.layer, tile));
 			// request tile
 			this.layer.requestTile(tile.coord, (err, data) => {
-				// remove tile from pending
-				this.pending.delete(tile.coord.hash);
 				// check if stale, clears tiles any flagged as stale
 				const isStale = isTileStale(this, tile);
+				// if not stale remove tile from pending
+				if (!isStale) {
+					this.pending.delete(tile.coord.hash);
+				}
 				// check err
 				if (err !== null) {
 					// add err
