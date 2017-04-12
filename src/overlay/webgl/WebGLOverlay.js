@@ -1,8 +1,8 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const Shader = require('../../render/webgl/shader/Shader');
 const EventType = require('../../event/EventType');
+const Shader = require('../../webgl/shader/Shader');
 const Overlay = require('../Overlay');
 
 // Constants
@@ -26,6 +26,7 @@ class WebGLOverlay extends Overlay {
 		this.gl = null;
 		this.cell = null;
 		this.buffers = null;
+		this[CELL_UPDATE] = null;
 	}
 
 	/**
@@ -40,12 +41,11 @@ class WebGLOverlay extends Overlay {
 		this.gl = this.plot.gl;
 		// generate the buffers
 		this.refreshBuffers();
-		// create refresh handlers
-		const update = () => {
+		// create refresh handler
+		this[CELL_UPDATE] = () => {
 			this.refreshBuffers();
 		};
-		this.handlers.set(CELL_UPDATE, update);
-		this.plot.on(EventType.CELL_UPDATE, update);
+		this.plot.on(EventType.CELL_UPDATE, this[CELL_UPDATE]);
 		return this;
 	}
 
@@ -57,8 +57,8 @@ class WebGLOverlay extends Overlay {
 	 * @returns {WebGLOverlay} The overlay object, for chaining.
 	 */
 	onRemove(plot) {
-		this.plot.removeListener(EventType.CELL_UPDATE, this.handlers.get(CELL_UPDATE));
-		this.handlers.delete(CELL_UPDATE);
+		this.plot.removeListener(EventType.CELL_UPDATE, this[CELL_UPDATE]);
+		this[CELL_UPDATE] = null;
 		this.buffers = null;
 		this.gl = null;
 		super.onRemove(plot);

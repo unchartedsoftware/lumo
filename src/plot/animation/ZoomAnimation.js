@@ -1,29 +1,28 @@
 'use strict';
 
 const EventType = require('../../event/EventType');
-const ZoomEvent = require('../../event/ZoomEvent');
+const Event = require('../../event/Event');
+const Animation = require('./Animation');
 
 /**
  * Class representing a zoom animation.
  */
-class ZoomAnimation {
+class ZoomAnimation extends Animation {
 
 	/**
 	 * Instantiates a new ZoomAnimation object.
 	 *
 	 * @param {Object} params - The parameters of the animation.
 	 * @param {Number} params.plot - The plot target of the animation.
+	 * @param {Number} params.duration - The duration of the animation.
 	 * @param {Number} params.prevZoom - The starting zoom of the animation.
 	 * @param {Number} params.targetZoom - The target zoom of the animation.
 	 * @param {Number} params.prevViewport - The starting viewport of the animation.
 	 * @param {Number} params.targetViewport - The target viewport of the animation.
 	 * @param {Number} params.targetPos - The target position of the animation, in plot coordinates.
-	 * @param {Number} params.duration - The duration of the animation.
 	 */
 	constructor(params = {}) {
-		this.timestamp = Date.now();
-		this.plot = params.plot;
-		this.duration = params.duration;
+		super(params);
 		this.prevZoom = params.prevZoom;
 		this.targetZoom = params.targetZoom;
 		this.prevViewport = params.prevViewport;
@@ -38,8 +37,7 @@ class ZoomAnimation {
 	 * @param {Number} timestamp - The frame timestamp.
 	 */
 	update(timestamp) {
-		// get t value
-		const t = Math.min(1.0, (timestamp - this.timestamp) / (this.duration || 1));
+		const t = this.getT(timestamp);
 		// calc new zoom
 		const range = this.targetZoom - this.prevZoom;
 		const zoom = this.prevZoom + (range * t);
@@ -52,15 +50,14 @@ class ZoomAnimation {
 			plot.zoom,
 			this.targetPos);
 		// create zoom event
-		const event = new ZoomEvent(plot, this.prevZoom, plot.zoom, this.targetZoom);
+		const event = new Event(plot);
 		// check if animation is finished
 		if (t < 1) {
 			plot.emit(EventType.ZOOM, event);
-		} else {
-			plot.emit(EventType.ZOOM_END, event);
-			// remove self from plot
-			plot.zoomAnimation = null;
+			return false;
 		}
+		plot.emit(EventType.ZOOM_END, event);
+		return true;
 	}
 
 	/**
@@ -78,10 +75,8 @@ class ZoomAnimation {
 				this.targetPos);
 		}
 		// emit zoom end
-		const event = new ZoomEvent(plot, this.prevZoom, plot.zoom, this.targetZoom);
+		const event = new Event(plot);
 		plot.emit(EventType.ZOOM_END, event);
-		// remove self from plot
-		plot.zoomAnimation = null;
 	}
 
 	/**
@@ -92,10 +87,8 @@ class ZoomAnimation {
 		plot.zoom = this.targetZoom;
 		plot.viewport = this.targetViewport;
 		// emit zoom end
-		const event = new ZoomEvent(plot, this.prevZoom, plot.zoom, this.targetZoom);
+		const event = new Event(plot);
 		plot.emit(EventType.ZOOM_END, event);
-		// remove self from plot
-		plot.zoomAnimation = null;
 	}
 }
 

@@ -13,7 +13,6 @@ class Renderer extends EventEmitter {
 	constructor() {
 		super();
 		this.layer = null;
-		this.handlers = null;
 	}
 
 	/**
@@ -28,7 +27,6 @@ class Renderer extends EventEmitter {
 			throw 'No layer provided as argument';
 		}
 		this.layer = layer;
-		this.handlers = new Map();
 		return this;
 	}
 
@@ -44,8 +42,20 @@ class Renderer extends EventEmitter {
 			throw 'No layer provided as argument';
 		}
 		this.layer = null;
-		this.handlers = null;
 		return this;
+	}
+
+	/**
+	 * Executed when an event occurs on the plot. Return any interpretted events
+	 * relating to the renderer.
+	 *
+	 * @param {Event} type - Th event type to process.
+	 * @param {Event} event - The plot-level event to process.
+	 *
+	 * @returns {Event} The renderer-level event.
+	 */
+	pick() {
+		return null;
 	}
 
 	/**

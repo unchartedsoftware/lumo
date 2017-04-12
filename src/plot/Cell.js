@@ -13,14 +13,6 @@ const CELL_SIZE = Math.pow(2, 16);
  * @constant {Number}
  */
 const CELL_HALF_SIZE = CELL_SIZE / 2;
-
-/**
- * The size of the cell regeneration buffer, will regenerate the cell if you are
- * within this many pixels of it's bounds.
- * @constant {Number}
- */
-const CELL_BUFFER = Math.pow(2, 8);
-
 /**
  * Class representing a cell for clipping a rendering space.
  */
@@ -37,7 +29,6 @@ class Cell {
 		};
 		this.zoom = zoom;
 		this.halfSize = halfSize;
-		this.buffer = CELL_BUFFER / extent;
 		this.center = center;
 		this.offset = offset;
 		this.extent = extent;

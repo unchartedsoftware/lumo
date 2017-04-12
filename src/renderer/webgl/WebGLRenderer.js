@@ -1,18 +1,7 @@
 'use strict';
 
-const Shader = require('./shader/Shader');
+const Shader = require('../../webgl/shader/Shader');
 const Renderer = require('../Renderer');
-
-// Private Methods
-
-const sortByHash = function(a, b) {
-	if (a < b) {
-		return -1;
-	} else if (a > b) {
-		return  1;
-	}
-	return 0;
-};
 
 /**
  * Class representing a webgl renderer.
@@ -111,8 +100,6 @@ class WebGLRenderer extends Renderer {
 				renderables.push(renderable);
 			}
 		});
-		// sort by hash
-		renderables.sort(sortByHash);
 		return renderables;
 	}
 
@@ -155,8 +142,6 @@ class WebGLRenderer extends Renderer {
 				renderables.push(renderable);
 			}
 		});
-		// sort by hash
-		renderables.sort(sortByHash);
 		return renderables;
 	}
 }

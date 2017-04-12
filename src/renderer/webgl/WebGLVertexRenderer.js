@@ -2,20 +2,20 @@
 
 const defaultTo = require('lodash/defaultTo');
 const EventType = require('../../event/EventType');
+const VertexAtlas = require('../../webgl/vertex/VertexAtlas');
 const WebGLRenderer = require('./WebGLRenderer');
-const VertexAtlas = require('./vertex/VertexAtlas');
 
 // Constants
 
 /**
- * Add tile handler symbol.
+ * Tile add handler symbol.
  * @private
  * @constant {Symbol}
  */
 const TILE_ADD = Symbol();
 
 /**
- * Remove tile handler symbol.
+ * Tile remove handler symbol.
  * @private
  * @constant {Symbol}
  */
@@ -35,6 +35,8 @@ class WebGLVertexRenderer extends WebGLRenderer {
 	constructor(options = {}) {
 		super(options);
 		this.maxVertices = defaultTo(options.maxVertices, 128 * 128);
+		this[TILE_ADD] = new Map();
+		this[TILE_REMOVE] = new Map();
 	}
 
 	/**
@@ -73,7 +75,7 @@ class WebGLVertexRenderer extends WebGLRenderer {
 			this.gl,
 			pointers, {
 				// set num chunks to be able to fit the capacity of the pyramid
-				numChunks: this.layer.pyramid.totalCapacity,
+				numChunks: this.layer.pyramid.getCapacity(),
 				chunkSize: this.maxVertices
 			});
 		// create handlers
@@ -87,11 +89,8 @@ class WebGLVertexRenderer extends WebGLRenderer {
 		this.layer.on(EventType.TILE_ADD, add);
 		this.layer.on(EventType.TILE_REMOVE, remove);
 		// store the handlers under the atlas
-		const handlers = new Map([
-			[ TILE_ADD, add ],
-			[ TILE_REMOVE, remove ]
-		]);
-		this.handlers.set(atlas, handlers);
+		this[TILE_ADD].set(atlas, add);
+		this[TILE_REMOVE].set(atlas, remove);
 		return atlas;
 	}
 
@@ -100,13 +99,12 @@ class WebGLVertexRenderer extends WebGLRenderer {
 	 * and remove data from the atlas.
 	 */
 	destroyVertexAtlas(atlas) {
-		// get handlers associated with the atlas
-		const handlers = this.handlers.get(atlas);
 		// detach handlers
-		this.layer.removeListener(EventType.TILE_ADD, handlers.get(TILE_ADD));
-		this.layer.removeListener(EventType.TILE_REMOVE, handlers.get(TILE_REMOVE));
-		// destroy handlers
-		this.handlers.delete(atlas);
+		this.layer.removeListener(EventType.TILE_ADD, this[TILE_ADD].get(atlas));
+		this.layer.removeListener(EventType.TILE_REMOVE, this[TILE_REMOVE].get(atlas));
+		// remove handlers
+		this[TILE_ADD].delete(atlas);
+		this[TILE_REMOVE].delete(atlas);
 	}
 }
 

@@ -1,7 +1,7 @@
 'use strict';
 
 const EventType = require('./event/EventType');
-const CollisionType = require('./render/webgl/rtree/CollisionType');
+const CollisionType = require('./collision/CollisionType');
 
 module.exports = {
 	// core
@@ -30,20 +30,13 @@ module.exports = {
 	TILE_ADD: EventType.TILE_ADD,
 	TILE_DISCARD: EventType.TILE_DISCARD,
 	TILE_REMOVE: EventType.TILE_REMOVE,
-	POST_DRAW: EventType.POST_DRAW,
 	// event
 	Event: require('./event/Event'),
-	EventType: require('./event/EventType'),
-	ClickEvent: require('./event/ClickEvent'),
-	DrawEvent: require('./event/DrawEvent'),
-	FrameEvent: require('./event/FrameEvent'),
 	MouseEvent: require('./event/MouseEvent'),
-	PanEvent: require('./event/PanEvent'),
 	ResizeEvent: require('./event/ResizeEvent'),
 	TileEvent: require('./event/TileEvent'),
-	ZoomEvent: require('./event/ZoomEvent'),
 	// collision
-	RTree: require('./render/webgl/rtree/RTree.js'),
+	RTree: require('./collision/RTree.js'),
 	// collision types
 	CIRCLE: CollisionType.CIRCLE,
 	RECTANGLE: CollisionType.RECTANGLE,
@@ -57,28 +50,23 @@ module.exports = {
 	WebGLLineOverlay: require('./overlay/webgl/WebGLLineOverlay'),
 	WebGLPointOverlay: require('./overlay/webgl/WebGLPointOverlay'),
 	// render
-	Renderer: require('./render/Renderer'),
-	// dom
-	DOMRenderer: require('./render/dom/HTMLRenderer'),
-	HTMLRenderer: require('./render/dom/HTMLRenderer'),
-	SVGRenderer: require('./render/dom/SVGRenderer'),
-	// webgl
-	WebGLRenderer: require('./render/webgl/WebGLRenderer'),
-	WebGLTextureRenderer: require('./render/webgl/WebGLTextureRenderer'),
-	WebGLVertexRenderer: require('./render/webgl/WebGLVertexRenderer'),
-	WebGLInteractiveRenderer: require('./render/webgl/WebGLInteractiveRenderer'),
-	PointRenderer: require('./render/webgl/PointRenderer'),
-	ShapeRenderer: require('./render/webgl/ShapeRenderer'),
-	TextureRenderer: require('./render/webgl/TextureRenderer'),
-	InteractiveRenderer: require('./render/webgl/InteractiveRenderer'),
-	// shader
-	Shader: require('./render/webgl/shader/Shader'),
-	// texture
-	Texture: require('./render/webgl/texture/Texture'),
-	TextureArray: require('./render/webgl/texture/TextureArray'),
-	// vertex
-	VertexAtlas: require('./render/webgl/vertex/VertexAtlas'),
-	VertexBuffer: require('./render/webgl/vertex/VertexBuffer'),
+	Renderer: require('./renderer/Renderer'),
+	WebGLRenderer: require('./renderer/webgl/WebGLRenderer'),
+	WebGLTextureRenderer: require('./renderer/webgl/WebGLTextureRenderer'),
+	WebGLVertexRenderer: require('./renderer/webgl/WebGLVertexRenderer'),
+	WebGLInteractiveRenderer: require('./renderer/webgl/WebGLInteractiveRenderer'),
+	PointRenderer: require('./renderer/webgl/PointRenderer'),
+	ShapeRenderer: require('./renderer/webgl/ShapeRenderer'),
+	TextureRenderer: require('./renderer/webgl/TextureRenderer'),
+	InteractiveRenderer: require('./renderer/webgl/InteractiveRenderer'),
+	// webgl shader
+	Shader: require('./webgl/shader/Shader'),
+	// webgl texture
+	Texture: require('./webgl/texture/Texture'),
+	TextureArray: require('./webgl/texture/TextureArray'),
+	// webgl vertex
+	VertexAtlas: require('./webgl/vertex/VertexAtlas'),
+	VertexBuffer: require('./webgl/vertex/VertexBuffer'),
 	// util
 	loadBuffer: require('./util/loadBuffer'),
 	loadImage: require('./util/loadImage')

@@ -108,29 +108,36 @@ class DOMHandler {
 	}
 
 	/**
-	 * Takes a DOM event and returns the mouse button string.
+	 * Takes a DOM event and returns true if the left mouse button is down.
 	 *
 	 * @param {Event} event - The mouse event.
 	 *
-	 * @returns {String} The mouse button string.
+	 * @returns {boolean} Whether the left mouse button is down.
 	 */
-	getMouseButton(event) {
-		if (event.which) {
-			if (event.which === 1) {
-				return 'left';
-			} else if (event.which === 2) {
-				return 'middle';
-			} else if (event.which === 3) {
-				return 'right';
-			}
-		}
-		if (event.button === 0) {
-			return 'left';
-		} else if (event.button === 1) {
-			return 'middle';
-		} else if (event.button === 2) {
-			return 'right';
-		}
+	isLeftButton(event) {
+		return (event.which) ? event.which === 1 : event.button === 0;
+	}
+
+	/**
+	 * Takes a DOM event and returns true if the middle mouse button is down.
+	 *
+	 * @param {Event} event - The mouse event.
+	 *
+	 * @returns {boolean} Whether the middle mouse button is down.
+	 */
+	isMiddleButton(event) {
+		return (event.which) ? event.which === 2 : event.button === 1;
+	}
+
+	/**
+	 * Takes a DOM event and returns true if the right mouse button is down.
+	 *
+	 * @param {Event} event - The mouse event.
+	 *
+	 * @returns {boolean} Whether the right mouse button is down.
+	 */
+	isRightButton(event) {
+		return (event.which) ? event.which === 3 : event.button === 2;
 	}
 }
 

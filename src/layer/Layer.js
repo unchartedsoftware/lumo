@@ -1,13 +1,22 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const EventEmitter = require('events');
+const Renderable = require('../plot/Renderable');
 const TilePyramid = require('./TilePyramid');
+
+// Private Methods
+
+const requestVisibleTiles = function(layer) {
+	// get visible coords
+	const coords = layer.plot.getTargetVisibleCoords();
+	// request tiles
+	layer.requestTiles(coords);
+};
 
 /**
  * Class representing an individual layer.
  */
-class Layer extends EventEmitter {
+class Layer extends Renderable {
 
 	/**
 	 * Instantiates a new Layer object.
@@ -20,14 +29,10 @@ class Layer extends EventEmitter {
 	 * @param {boolean} options.muted - Whether or not the layer is muted.
 	 */
 	constructor(options = {}) {
-		super();
-		this.opacity = defaultTo(options.opacity, 1.0);
-		this.zIndex = defaultTo(options.zIndex, 0);
-		this.hidden = defaultTo(options.hidden, false);
+		super(options);
 		this.muted = defaultTo(options.muted, false);
 		this.renderer = defaultTo(options.renderer, null);
 		this.pyramid = new TilePyramid(this, options);
-		this.plot = null;
 	}
 
 	/**
@@ -38,17 +43,15 @@ class Layer extends EventEmitter {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	onAdd(plot) {
-		if (!plot) {
-			throw 'No plot argument provided';
-		}
-		// set plot
-		this.plot = plot;
+		super.onAdd(plot);
 		// execute renderer hook
 		if (this.renderer) {
 			this.renderer.onAdd(this);
 		}
-		// request initial tiles.
-		this.refresh();
+		// request tiles if not muted
+		if (!this.isMuted()) {
+			requestVisibleTiles(this);
+		}
 		return this;
 	}
 
@@ -60,17 +63,13 @@ class Layer extends EventEmitter {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	onRemove(plot) {
-		if (!plot) {
-			throw 'No plot argument provided';
-		}
+		// clear the underlying pyramid
+		this.pyramid.clear();
 		// execute renderer hook
 		if (this.renderer) {
 			this.renderer.onRemove(this);
 		}
-		// remove plot
-		this.plot = null;
-		// clear the underlying pyramid
-		this.pyramid.clear();
+		super.onRemove(plot);
 		return this;
 	}
 
@@ -112,13 +111,21 @@ class Layer extends EventEmitter {
 	}
 
 	/**
-	 * Make the layer visible.
+	 * Returns the renderer of the layer.
 	 *
-	 * @returns {Layer} The layer object, for chaining.
+	 * @returns {Renderer} The renderer object.
 	 */
-	show() {
-		this.hidden = false;
-		return this;
+	getRenderer() {
+		return this.renderer;
+	}
+
+	/**
+	 * Returns the tile pyramid of the layer.
+	 *
+	 * @returns {TilePyramid} The tile pyramid object.
+	 */
+	getPyramid() {
+		return this.pyramid;
 	}
 
 	/**
@@ -127,17 +134,8 @@ class Layer extends EventEmitter {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	hide() {
-		this.hidden = true;
+		super.hide();
 		return this;
-	}
-
-	/**
-	 * Returns true if the layer is hidden.
-	 *
-	 * @returns {boolean} Whether or not the layer is hidden.
-	 */
-	isHidden() {
-		return this.hidden;
 	}
 
 	/**
@@ -156,13 +154,11 @@ class Layer extends EventEmitter {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	unmute() {
-		if (this.muted) {
+		if (this.isMuted()) {
 			this.muted = false;
 			if (this.plot) {
-				// get visible coords
-				const coords = this.plot.getTargetVisibleCoords();
-				// request tiles
-				this.requestTiles(coords);
+				// request visible tiles
+				requestVisibleTiles(this);
 			}
 		}
 		return this;
@@ -205,7 +201,7 @@ class Layer extends EventEmitter {
 	 * @returns {boolean} Whether or not the layer is disabled.
 	 */
 	isDisabled() {
-		return this.muted && this.hidden;
+		return this.isMuted() && this.isHidden();
 	}
 
 	/**
@@ -216,15 +212,22 @@ class Layer extends EventEmitter {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	draw(timestamp) {
-		if (this.hidden) {
-			// clear renderer state
-			if (this.renderer) {
-				this.renderer.clear();
-			}
-			return this;
-		}
 		if (this.renderer) {
 			this.renderer.draw(timestamp);
+		}
+		return this;
+	}
+
+	/**
+	 * Clears any persisted state in the layer.
+	 *
+	 * @returns {Layer} The layer object, for chaining.
+	 */
+	clear() {
+		super.clear();
+		// clear renderer state
+		if (this.renderer) {
+			this.renderer.clear();
 		}
 		return this;
 	}
@@ -237,15 +240,12 @@ class Layer extends EventEmitter {
 	refresh() {
 		// clear the underlying pyramid
 		this.pyramid.clear();
-		if (this.plot) {
-			// clear renderer state
-			if (this.renderer) {
-				this.renderer.clear();
-			}
-			// get visible coords
-			const coords = this.plot.getTargetVisibleCoords();
-			// request tiles
-			this.requestTiles(coords);
+		// clear layer state
+		this.clear();
+		// request if attached and not muted
+		if (this.plot && !this.isMuted()) {
+			// request visible tiles
+			requestVisibleTiles(this);
 		}
 		return this;
 	}
@@ -268,11 +268,26 @@ class Layer extends EventEmitter {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	requestTiles(coords) {
-		if (this.muted) {
+		if (this.isMuted()) {
 			return this;
 		}
 		this.pyramid.requestTiles(coords);
 		return this;
+	}
+
+	/**
+	 * Pick a position of the renderable for a collision with any rendered
+	 * objects.
+	 *
+	 * @param {Object} pos - The plot position to pick at.
+	 *
+	 * @returns {Object} The collision, or null.
+	 */
+	pick(pos) {
+		if (this.renderer) {
+			return this.renderer.pick(pos);
+		}
+		return null;
 	}
 }
 

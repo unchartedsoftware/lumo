@@ -8,9 +8,10 @@ const DOMHandler = require('./DOMHandler');
 
 const createEvent = function(handler, plot, event) {
 	return new MouseEvent(
-		plot,
-		handler.getMouseButton(event),
-		handler.mouseToPlot(event));
+		plot, // target
+		event, // originalEvent
+		handler.mouseToPlot(event), // pos
+		handler.mouseToViewPx(event)); // px
 };
 
 /**
@@ -38,30 +39,31 @@ class MouseHandler extends DOMHandler {
 		const plot = this.plot;
 
 		this.mousedown = (event) => {
-			this.plot.emit(EventType.MOUSE_DOWN, createEvent(this, plot, event));
+			plot.emit(EventType.MOUSE_DOWN, createEvent(this, plot, event));
 		};
 
 		this.mouseup = (event) => {
-			this.plot.emit(EventType.MOUSE_UP, createEvent(this, plot, event));
+			plot.emit(EventType.MOUSE_UP, createEvent(this, plot, event));
 		};
 
 		this.mousemove = (event) => {
-			this.plot.emit(EventType.MOUSE_MOVE, createEvent(this, plot, event));
+			plot.emit(EventType.MOUSE_MOVE, createEvent(this, plot, event));
 		};
 
 		this.mouseover = (event) => {
-			this.plot.emit(EventType.MOUSE_OVER, createEvent(this, plot, event));
+			plot.emit(EventType.MOUSE_OVER, createEvent(this, plot, event));
 		};
 
 		this.mouseout = (event) => {
-			this.plot.emit(EventType.MOUSE_OUT, createEvent(this, plot, event));
+			plot.emit(EventType.MOUSE_OUT, createEvent(this, plot, event));
 		};
 
-		plot.container.addEventListener('mousedown', this.mousedown);
-		plot.container.addEventListener('mouseup', this.mouseup);
-		plot.container.addEventListener('mousemove', this.mousemove);
-		plot.container.addEventListener('mouseover', this.mouseover);
-		plot.container.addEventListener('mouseout', this.mouseout);
+		const container = plot.getContainer();
+		container.addEventListener('mousedown', this.mousedown);
+		container.addEventListener('mouseup', this.mouseup);
+		container.addEventListener('mousemove', this.mousemove);
+		container.addEventListener('mouseover', this.mouseover);
+		container.addEventListener('mouseout', this.mouseout);
 	}
 
 	/**
@@ -72,11 +74,12 @@ class MouseHandler extends DOMHandler {
 	disable() {
 		super.disable();
 
-		this.plot.container.removeEventListener('mousedown', this.mousedown);
-		this.plot.container.removeEventListener('mouseup', this.mouseup);
-		this.plot.container.removeEventListener('mousemove', this.mousemove);
-		this.plot.container.removeEventListener('mouseover', this.mouseover);
-		this.plot.container.removeEventListener('mouseout', this.mouseout);
+		const container = this.plot.getContainer();
+		container.removeEventListener('mousedown', this.mousedown);
+		container.removeEventListener('mouseup', this.mouseup);
+		container.removeEventListener('mousemove', this.mousemove);
+		container.removeEventListener('mouseover', this.mouseover);
+		container.removeEventListener('mouseout', this.mouseout);
 		this.mousedown = null;
 		this.mouseup = null;
 		this.mousemove = null;

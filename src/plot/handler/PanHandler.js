@@ -3,7 +3,7 @@
 const defaultTo = require('lodash/defaultTo');
 const PanAnimation = require('../animation/PanAnimation');
 const EventType = require('../../event/EventType');
-const PanEvent = require('../../event/PanEvent');
+const Event = require('../../event/Event');
 const DOMHandler = require('./DOMHandler');
 
 // Constants
@@ -50,23 +50,13 @@ const pan = function(plot, delta) {
 		// no panning while zooming
 		return;
 	}
-	const prev = plot.viewport.getPosition();
-	const current = {
-		x: prev.x += delta.x,
-		y: prev.y += delta.y
-	};
-
 	// update current viewport
-	plot.viewport.x = current.x;
-	plot.viewport.y = current.y;
+	plot.viewport.x += delta.x;
+	plot.viewport.y += delta.y;
 	// request tiles
 	plot.panRequest();
 	// emit pan
-	plot.emit(EventType.PAN, new PanEvent(plot, prev, current));
-};
-
-const isRightButton = function(event) {
-	return (event.which) ? event.which === 3 : event.button === 2;
+	plot.emit(EventType.PAN, new Event(plot));
 };
 
 /**
@@ -108,7 +98,7 @@ class PanHandler extends DOMHandler {
 
 		this.mousedown = (event) => {
 			// ignore if right-button
-			if (isRightButton(event)) {
+			if (!this.isLeftButton(event)) {
 				return;
 			}
 			// flag as down
@@ -133,9 +123,7 @@ class PanHandler extends DOMHandler {
 
 				if (positions.length === 0) {
 					// emit pan start
-					const prev = { x: lastPos.x, y: lastPos.y };
-					const current = { x: pos.x, y: pos.y };
-					plot.emit(EventType.PAN_START, new PanEvent(plot, prev, current));
+					plot.emit(EventType.PAN_START, new Event(plot));
 				}
 
 				if (this.inertia) {
@@ -173,7 +161,7 @@ class PanHandler extends DOMHandler {
 			}
 
 			// ignore if right-button
-			if (isRightButton(event)) {
+			if (!this.isLeftButton(event)) {
 				return;
 			}
 
@@ -184,7 +172,7 @@ class PanHandler extends DOMHandler {
 
 			if (!this.inertia) {
 				// exit early if no inertia or no movement
-				plot.emit(EventType.PAN_END, new PanEvent(plot));
+				plot.emit(EventType.PAN_END, new Event(plot));
 				return;
 			}
 
@@ -199,7 +187,7 @@ class PanHandler extends DOMHandler {
 
 			if (times.length < 2) {
 				// exit early if no remaining valid positions
-				plot.emit(EventType.PAN_END, new PanEvent(plot));
+				plot.emit(EventType.PAN_END, new Event(plot));
 				return;
 			}
 
@@ -230,22 +218,18 @@ class PanHandler extends DOMHandler {
 				x: Math.round(velocity.x * (-duration / 2)),
 				y: Math.round(velocity.y * (-duration / 2))
 			};
-			// get current viewport x / y
-			const start = {
-				x: plot.viewport.x,
-				y: plot.viewport.y
-			};
 			// set pan animation
 			plot.panAnimation = new PanAnimation({
 				plot: plot,
-				start: start,
+				start: plot.getViewportPosition(),
 				delta: this.viewPxToPlot(delta),
 				easing: easing,
 				duration: duration * 1000 // s to ms
 			});
 		};
 
-		this.plot.container.addEventListener('mousedown', this.mousedown);
+		const container = plot.getContainer();
+		container.addEventListener('mousedown', this.mousedown);
 		document.addEventListener('mousemove', this.mousemove);
 		document.addEventListener('mouseup', this.mouseup);
 	}
@@ -258,7 +242,8 @@ class PanHandler extends DOMHandler {
 	disable() {
 		super.disable();
 
-		this.plot.container.removeEventListener('mousedown', this.mousedown);
+		const container = this.plot.getContainer();
+		container.removeEventListener('mousedown', this.mousedown);
 		document.removeEventListener('mousemove', this.mousemove);
 		document.removeEventListener('mouseup', this.mouseup);
 		this.mousedown = null;
@@ -274,22 +259,22 @@ class PanHandler extends DOMHandler {
 	 */
 	panTo(pos, animate = true) {
 		const plot = this.plot;
-		const center = plot.viewport.getCenter();
+		const center = plot.getViewportCenter();
 		const delta = {
 			x: pos.x - center.x,
 			y: pos.y - center.y
 		};
 		if (!animate) {
 			// do not animate
-			plot.emit(EventType.PAN_START, new PanEvent(plot));
+			plot.emit(EventType.PAN_START, new Event(plot));
 			pan(plot, delta);
-			plot.emit(EventType.PAN_END, new PanEvent(plot));
+			plot.emit(EventType.PAN_END, new Event(plot));
 		} else {
 			// animate pan
-			plot.emit(EventType.PAN_START, new PanEvent(plot));
+			plot.emit(EventType.PAN_START, new Event(plot));
 			plot.panAnimation = new PanAnimation({
 				plot: plot,
-				start: plot.viewport.getPosition(),
+				start: plot.getVertexPosition(),
 				delta: delta,
 				easing: this.inertiaEasing,
 				duration: PAN_TO_DURATION

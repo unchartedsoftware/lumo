@@ -3,7 +3,7 @@
 const assert = require('assert');
 const sinon = require('sinon');
 const Layer = require('../../src/layer/Layer');
-const Renderer = require('../../src/render/Renderer');
+const Renderer = require('../../src/renderer/Renderer');
 
 const noop = function() {};
 
@@ -16,6 +16,12 @@ describe('Layer', () => {
 		plot = {
 			getTargetVisibleCoords: () => {
 				return [];
+			},
+			getTargetViewportCenter: function() {
+				return {
+					x: 0.5,
+					y: 0.5
+				};
 			}
 		};
 		renderer = new Renderer();
@@ -121,20 +127,12 @@ describe('Layer', () => {
 			layer.hide();
 			layer.draw();
 		});
-		it('should call `draw` on the attached renderer if the layer is not hidden', () => {
+		it('should call `draw` on the attached renderer', () => {
 			const layer = new Layer();
 			layer.setRenderer(renderer);
 			const draw = sinon.stub(renderer, 'draw').callsFake(noop);
 			layer.draw();
 			assert(draw.calledOnce);
-		});
-		it('should call `clear` on the attached renderer if the layer is hidden', () => {
-			const layer = new Layer();
-			layer.hide();
-			layer.setRenderer(renderer);
-			const clear = sinon.stub(renderer, 'clear').callsFake(noop);
-			layer.draw();
-			assert(clear.calledOnce);
 		});
 	});
 
@@ -171,12 +169,6 @@ describe('Layer', () => {
 			sinon.stub(layer, 'refresh').callsFake(noop);
 			layer.onAdd(plot);
 			assert(layer.plot === plot);
-		});
-		it('should call `refresh` to refresh the layer', () => {
-			const layer = new Layer();
-			const refresh = sinon.stub(layer, 'refresh').callsFake(noop);
-			layer.onAdd(plot);
-			assert(refresh.calledOnce);
 		});
 		it('should call `onAdd` of the attached renderer', () => {
 			const layer = new Layer({
@@ -368,6 +360,21 @@ describe('Layer', () => {
 			const requestTiles = sinon.stub(layer.pyramid, 'requestTiles').callsFake(noop);
 			layer.requestTiles([]);
 			assert(requestTiles.calledOnce);
+		});
+	});
+
+	describe('#pick()', () => {
+		it('should call `pick` on the attached renderer', () => {
+			const layer = new Layer();
+			layer.setRenderer(renderer);
+			const pick = sinon.stub(layer.getRenderer(), 'pick').callsFake(noop);
+			layer.pick();
+			assert(pick.calledOnce);
+		});
+		it('should return null if no renderer is attached', () => {
+			const layer = new Layer();
+			const res = layer.pick();
+			assert(res === null);
 		});
 	});
 

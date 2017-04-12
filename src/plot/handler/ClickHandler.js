@@ -1,10 +1,10 @@
 'use strict';
 
 const EventType = require('../../event/EventType');
-const ClickEvent = require('../../event/ClickEvent');
+const MouseEvent = require('../../event/MouseEvent');
 const DOMHandler = require('./DOMHandler');
 
-// Const
+// Constants
 
 /**
  * Distance in pixels the mouse can be moved before the click event is
@@ -17,10 +17,11 @@ const MOVE_TOLERANCE = 15;
 // Private Methods
 
 const createEvent = function(handler, plot, event) {
-	return new ClickEvent(
-		plot,
-		handler.getMouseButton(event),
-		handler.mouseToPlot(event));
+	return new MouseEvent(
+		plot, // target
+		event, // originalEvent
+		handler.mouseToPlot(event), // pos
+		handler.mouseToViewPx(event)); // px
 };
 
 /**
@@ -73,9 +74,10 @@ class ClickHandler extends DOMHandler {
 			this.plot.emit(EventType.DBL_CLICK, createEvent(this, plot, event));
 		};
 
-		plot.container.addEventListener('mousedown', this.mousedown);
-		plot.container.addEventListener('mouseup', this.mouseup);
-		plot.container.addEventListener('dblclick', this.dblclick);
+		const container = plot.getContainer();
+		container.addEventListener('mousedown', this.mousedown);
+		container.addEventListener('mouseup', this.mouseup);
+		container.addEventListener('dblclick', this.dblclick);
 	}
 
 	/**
@@ -85,9 +87,10 @@ class ClickHandler extends DOMHandler {
 	 */
 	disable() {
 		super.disable();
-		this.plot.container.removeEventListener('mousedown', this.mousedown);
-		this.plot.container.removeEventListener('mouseup', this.mouseup);
-		this.plot.container.removeEventListener('dblclick', this.dblclick);
+		const container = this.plot.getContainer();
+		container.removeEventListener('mousedown', this.mousedown);
+		container.removeEventListener('mouseup', this.mouseup);
+		container.removeEventListener('dblclick', this.dblclick);
 		this.mousedown = null;
 		this.mouseup = null;
 		this.dblclick = null;

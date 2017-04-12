@@ -2,20 +2,20 @@
 
 const defaultTo = require('lodash/defaultTo');
 const EventType = require('../../event/EventType');
+const TextureArray = require('../../webgl/texture/TextureArray');
 const WebGLRenderer = require('./WebGLRenderer');
-const TextureArray = require('./texture/TextureArray');
 
 // Constants
 
 /**
- * Add tile handler symbol.
+ * Tile add handler symbol.
  * @private
  * @constant {Symbol}
  */
 const TILE_ADD = Symbol();
 
 /**
- * Remove tile handler symbol.
+ * Tile remove handler symbol.
  * @private
  * @constant {Symbol}
  */
@@ -38,6 +38,8 @@ class WebGLTextureRenderer extends WebGLRenderer {
 		this.filter = defaultTo(options.filter, 'LINEAR');
 		this.invertY = defaultTo(options.invertY, false);
 		this.premultiplyAlpha = defaultTo(options.premultiplyAlpha, false);
+		this[TILE_ADD] = new Map();
+		this[TILE_REMOVE] = new Map();
 	}
 
 	/**
@@ -74,7 +76,7 @@ class WebGLTextureRenderer extends WebGLRenderer {
 			textureSize,
 			{
 				// set num chunks to be able to fit the capacity of the pyramid
-				numChunks: this.layer.pyramid.totalCapacity,
+				numChunks: this.layer.pyramid.getCapacity(),
 				// set texture attributes
 				format: this.format,
 				filter: this.filter,
@@ -92,12 +94,8 @@ class WebGLTextureRenderer extends WebGLRenderer {
 		this.layer.on(EventType.TILE_ADD, add);
 		this.layer.on(EventType.TILE_REMOVE, remove);
 		// store the handlers under the array
-		const handlers = new Map([
-			[ TILE_ADD, add ],
-			[ TILE_REMOVE, remove ]
-		]);
-		this.handlers.set(array, handlers);
-		// return the array
+		this[TILE_ADD].set(array, add);
+		this[TILE_REMOVE].set(array, remove);
 		return array;
 	}
 
@@ -106,13 +104,12 @@ class WebGLTextureRenderer extends WebGLRenderer {
 	 * add and remove data from the array.
 	 */
 	destroyTextureArray(array) {
-		// get handlers associated with the array
-		const handlers = this.handlers.get(array);
 		// detach handlers
-		this.layer.removeListener(EventType.TILE_ADD, handlers.get(TILE_ADD));
-		this.layer.removeListener(EventType.TILE_REMOVE, handlers.get(TILE_REMOVE));
-		// destroy handlers
-		this.handlers.delete(array);
+		this.layer.removeListener(EventType.TILE_ADD, this[TILE_ADD].get(array));
+		this.layer.removeListener(EventType.TILE_REMOVE, this[TILE_REMOVE].get(array));
+		// remove handlers
+		this[TILE_ADD].delete(array);
+		this[TILE_REMOVE].delete(array);
 	}
 }
 

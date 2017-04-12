@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('assert');
-const preprocess = require('../../../../src/render/webgl/shader/preprocess');
+const preprocess = require('../../../../src/webgl/shader/preprocess');
 
 describe('preprocess', () => {
 	it('should correctly substitute `#define` statements', () => {
