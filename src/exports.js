@@ -30,11 +30,8 @@ module.exports = {
 	TILE_ADD: EventType.TILE_ADD,
 	TILE_DISCARD: EventType.TILE_DISCARD,
 	TILE_REMOVE: EventType.TILE_REMOVE,
-	POST_DRAW: EventType.POST_DRAW,
 	// event
-	EventType: require('./event/EventType'),
 	Event: require('./event/Event'),
-	DrawEvent: require('./event/DrawEvent'),
 	MouseEvent: require('./event/MouseEvent'),
 	ResizeEvent: require('./event/ResizeEvent'),
 	TileEvent: require('./event/TileEvent'),
@@ -54,11 +51,6 @@ module.exports = {
 	WebGLPointOverlay: require('./overlay/webgl/WebGLPointOverlay'),
 	// render
 	Renderer: require('./renderer/Renderer'),
-	// dom
-	DOMRenderer: require('./renderer/dom/DOMRenderer'),
-	HTMLRenderer: require('./renderer/dom/HTMLRenderer'),
-	SVGRenderer: require('./renderer/dom/SVGRenderer'),
-	// webgl
 	WebGLRenderer: require('./renderer/webgl/WebGLRenderer'),
 	WebGLTextureRenderer: require('./renderer/webgl/WebGLTextureRenderer'),
 	WebGLVertexRenderer: require('./renderer/webgl/WebGLVertexRenderer'),
@@ -67,12 +59,12 @@ module.exports = {
 	ShapeRenderer: require('./renderer/webgl/ShapeRenderer'),
 	TextureRenderer: require('./renderer/webgl/TextureRenderer'),
 	InteractiveRenderer: require('./renderer/webgl/InteractiveRenderer'),
-	// shader
+	// webgl shader
 	Shader: require('./webgl/shader/Shader'),
-	// texture
+	// webgl texture
 	Texture: require('./webgl/texture/Texture'),
 	TextureArray: require('./webgl/texture/TextureArray'),
-	// vertex
+	// webgl vertex
 	VertexAtlas: require('./webgl/vertex/VertexAtlas'),
 	VertexBuffer: require('./webgl/vertex/VertexBuffer'),
 	// util

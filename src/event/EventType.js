@@ -136,11 +136,5 @@ module.exports = {
 	 * Emitted when all visible tiles have been loaded for a layer.
 	 * @constant {String}
 	 */
-	LOAD: 'load',
-
-	/**
-	 * Emitted by DOMRenderer after tiles are rendered to the DOM.
-	 * @constant {String}
-	 */
-	POST_DRAW: 'postdraw'
+	LOAD: 'load'
 };

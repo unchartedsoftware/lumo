@@ -154,15 +154,9 @@ class TextureRenderer extends WebGLTextureRenderer {
 		// bind quad
 		quad.bind();
 
-		let last;
 		// for each renderable
 		renderables.forEach(renderable => {
-			const hash = renderable.hash;
-			if (last !== hash) {
-				// bind texture
-				array.bind(hash, 0);
-				last = hash;
-			}
+			array.bind(renderable.hash, 0);
 			// set tile uniforms
 			shader.setUniform('uTextureCoordOffset', renderable.uvOffset);
 			shader.setUniform('uScale', renderable.scale);
