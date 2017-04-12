@@ -228,7 +228,7 @@ class Renderable extends EventEmitter {
 	 * @returns {Renderable} The renderable object, for chaining.
 	 */
 	unselect() {
-		this.selected = null;
+		this.selected = [];
 		return this;
 	}
 
@@ -249,7 +249,7 @@ class Renderable extends EventEmitter {
 	 * @returns {boolean} Whether or not there is highlighted data.
 	 */
 	isSelected(data) {
-		return this.selected.indexOf(data) === -1;
+		return this.selected.indexOf(data) !== -1;
 	}
 
 	/**

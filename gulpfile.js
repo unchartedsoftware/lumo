@@ -85,11 +85,11 @@ gulp.task('build-min-js', [ 'lint', 'clean' ], () => {
 	return build(paths.root, `${project}.min.js`, true);
 });
 
-gulp.task('build-js',[ 'lint', 'clean' ], () => {
+gulp.task('build-js', [ 'lint', 'clean' ], () => {
 	return build(paths.root, `${project}.js`, false);
 });
 
-gulp.task('build',[ 'build-js', 'build-min-js' ], () => {
+gulp.task('build', [ 'build-js', 'build-min-js' ], () => {
 });
 
 gulp.task('coverage', () => {

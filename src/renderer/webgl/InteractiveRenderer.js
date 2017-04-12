@@ -315,8 +315,7 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 		});
 
 		// render highlighted
-		if (layer.highlighted &&
-			layer.selected.indexOf(layer.highlighted) === -1) {
+		if (layer.highlighted && !layer.isSelected(layer.highlighted)) {
 			renderPoint(
 				this.point,
 				shader,

@@ -12,6 +12,15 @@ const resetCursor = function(plot) {
 	plot.getContainer().style.cursor = 'inherit';
 };
 
+const copyEvent = function(target, data, event) {
+	return new MouseEvent(
+		target,
+		event.originalEvent,
+		{ x: event.pos.x, y: event.pos.y },
+		{ x: event.px.x, y: event.px.y },
+		data);
+};
+
 const delegateMouseMove = function(delegator, child, event, collision) {
 	// create events to delegate
 	const delegations = [];
@@ -32,11 +41,7 @@ const delegateMouseMove = function(delegator, child, event, collision) {
 			// `mouseout` on previous target
 			delegations.push({
 				type: EventType.MOUSE_OUT,
-				event: new MouseEvent(
-					prev.target,
-					prev.pos,
-					null,
-					prev.data)
+				event: copyEvent(prev.target, prev.data, prev)
 			});
 			// unflag as prev `mouseover` target
 			delegator.prevMouseover = null;
@@ -52,22 +57,14 @@ const delegateMouseMove = function(delegator, child, event, collision) {
 			// `mouseout` on previous target
 			delegations.push({
 				type: EventType.MOUSE_OUT,
-				event: new MouseEvent(
-					prev.target,
-					prev.pos,
-					null,
-					prev.data)
+				event: copyEvent(prev.target, prev.data, prev)
 			});
 		}
 
 		// `mousemove` on current target
 		delegations.push({
 			type: EventType.MOUSE_MOVE,
-			event: new MouseEvent(
-				child,
-				event.pos,
-				null,
-				collision)
+			event: copyEvent(child, collision, event)
 		});
 
 		// set cursor for hover
@@ -80,11 +77,7 @@ const delegateMouseMove = function(delegator, child, event, collision) {
 			// `mouseover` on current
 			delegations.push({
 				type: EventType.MOUSE_OVER,
-				event: new MouseEvent(
-					child,
-					event.pos,
-					null,
-					collision)
+				event: copyEvent(child, collision, event)
 			});
 		}
 
@@ -99,11 +92,7 @@ const delegateMouseUp = function(delegator, child, event, collision) {
 	if (collision) {
 		return [{
 			type: EventType.MOUSE_UP,
-			event: new MouseEvent(
-				child,
-				event.pos,
-				event.button,
-				collision)
+			event: copyEvent(child, collision, event)
 		}];
 	}
 	return [];
@@ -113,11 +102,7 @@ const delegateMouseDown = function(delegator, child, event, collision) {
 	if (collision) {
 		return [{
 			type: EventType.MOUSE_DOWN,
-			event: new MouseEvent(
-				child,
-				event.pos,
-				event.button,
-				collision)
+			event: copyEvent(child, collision, event)
 		}];
 	}
 	return [];
@@ -132,11 +117,7 @@ const delegateClick = function(delegator, child, event, collision) {
 		// `click` event
 		const delegation = {
 			type: EventType.CLICK,
-			event: new MouseEvent(
-				child,
-				event.pos,
-				event.button,
-				collision)
+			event: copyEvent(child, collision, event)
 		};
 		// flag as prev `click` target
 		delegator.prevClick = delegation.event;
@@ -147,7 +128,7 @@ const delegateClick = function(delegator, child, event, collision) {
 			if (multiSelect) {
 				// if multi-select is held, don't clear selection, assume the
 				// user may have misclicked
-				return;
+				return [];
 			}
 			// unselect
 			delegator.prevClick.target.unselect();
@@ -162,11 +143,7 @@ const delegateDblClick = function(delegator, child, event, collision) {
 	if (collision) {
 		return [{
 			type: EventType.DBL_CLICK,
-			event: new MouseEvent(
-				child,
-				event.pos,
-				event.button,
-				collision)
+			event: copyEvent(child, collision, event)
 		}];
 	}
 	return [];

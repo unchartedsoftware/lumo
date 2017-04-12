@@ -490,7 +490,7 @@ class Plot extends EventEmitter {
 	getSortedRenderables() {
 		// sort by z-index
 		return this.renderables.sort((a, b) => {
-			return a.zIndex - b.zIndex;
+			return a.getZIndex() - b.getZIndex();
 		});
 	};
 

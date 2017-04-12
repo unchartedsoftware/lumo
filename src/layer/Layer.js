@@ -154,7 +154,7 @@ class Layer extends Renderable {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	unmute() {
-		if (this.muted) {
+		if (this.isMuted()) {
 			this.muted = false;
 			if (this.plot) {
 				// request visible tiles
@@ -268,7 +268,7 @@ class Layer extends Renderable {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	requestTiles(coords) {
-		if (this.muted) {
+		if (this.isMuted()) {
 			return this;
 		}
 		this.pyramid.requestTiles(coords);
