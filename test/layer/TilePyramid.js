@@ -421,9 +421,7 @@ describe('TilePyramid', () => {
 
 			// 1) request tileA
 			// 2) clear pyramid flagging tileA as stale
-			// 3) request tileB
-			// 4) resolve tileA, should be discarded
-			// 5) resolve tileB, should be added
+			// 3) resolve tileA, should be discarded
 			layer.requestTile = (_, callback) => {
 				// clear the pyramid
 				pyramid.clear();
@@ -439,7 +437,7 @@ describe('TilePyramid', () => {
 			// 1) request tileA
 			// 2) clear pyramid flagging tileA as stale
 			// 3) request tileB
-			// 4) resolve tileA, should be discarded, tileB should still be pending
+			// 4) resolve tileA, should be discarded, tileB should be pending
 			// 5) resolve tileB, should be added
 			layer.requestTile = (_0, callback0) => {
 				const tile0 = {};

@@ -193,24 +193,28 @@ const reset = function(plot) {
 		return;
 	}
 
-	// resets the position of the viewport relative to the layer such that
-	// the layer native coordinate range is within the viewports bounds.
+	// resets the position of the viewport relative to the plot such that
+	// the plot native coordinate range is within the viewports bounds.
 
-	// layer is past the left bound of the viewport
+	// get viewport width in plot coords
+	const width = Math.ceil(plot.viewport.width / 1.0);
+
+	// past the left bound of the viewport
 	if (plot.viewport.x > 1.0) {
-		plot.viewport.x -= plot.viewport.width;
+		plot.viewport.x -= width;
 		if (plot.isPanning()) {
-			plot.panAnimation.start.x -= plot.viewport.width;
+			plot.panAnimation.start.x -= width;
 		}
 	}
-	// layer is past the right bound of the viewport
+	// past the right bound of the viewport
 	if (plot.viewport.x + plot.viewport.width < 0) {
-		plot.viewport.x += plot.viewport.width;
+		plot.viewport.x += width;
 		if (plot.isPanning()) {
-			plot.panAnimation.start.x += plot.viewport.width;
+			plot.panAnimation.start.x += width;
 		}
 	}
 };
+
 
 const frame = function(plot) {
 
