@@ -30,10 +30,38 @@ const PERSISTANT_LEVELS = 4;
  */
 const LOADED_THROTTLE_MS = 200;
 
+/**
+ * The maximum distance to traverse when checking for tile ancestors.
+ * @private
+ * @constant {Number}
+ */
+const MAX_ANCESTOR_DIST = 16;
+
+/**
+ * The maximum distance to traverse when checking for tile descendants.
+ * @private
+ * @constant {Number}
+ */
+const MAX_DESCENDENT_DIST = 4;
+
 // Private Methods
 
-const getLODOffset = function(descendant, ancestor) {
-	// get difference between descendant zooma ancestor zoom
+const getAncestorUVOffset = function(descendant, ancestor) {
+	const scale = Math.pow(2, descendant.z - ancestor.z);
+	const step = 1 / scale;
+	const scaled = {
+		x: ancestor.x * scale,
+		y: ancestor.y * scale
+	};
+	return [
+		(descendant.x - scaled.x) * step,
+		(descendant.y - scaled.y) * step,
+		step,
+		step
+	];
+};
+
+const getDescendantOffset = function(ancestor, descendant) {
 	const scale = Math.pow(2, descendant.z - ancestor.z);
 	const step = 1 / scale;
 	const scaled = {
@@ -43,7 +71,7 @@ const getLODOffset = function(descendant, ancestor) {
 	return {
 		x: (descendant.x - scaled.x) * step,
 		y: (descendant.y - scaled.y) * step,
-		extent: step
+		scale: step
 	};
 };
 
@@ -100,13 +128,13 @@ const checkIfLoaded = function(pyramid) {
 	}
 };
 
-const sortAroundCenter = function(plot, coords) {
+const sortAroundCenter = function(plot, pairs) {
 	// get the plot center position
 	const center = plot.getTargetViewportCenter();
 	// sort the requests by distance from center tile
-	coords.sort((a, b) => {
-		const aCenter = a.getCenter();
-		const bCenter = b.getCenter();
+	pairs.sort((a, b) => {
+		const aCenter = a.coord.getCenter();
+		const bCenter = b.coord.getCenter();
 		const dax = center.x - aCenter.x;
 		const day = center.y - aCenter.y;
 		const dbx = center.x - bCenter.x;
@@ -115,14 +143,22 @@ const sortAroundCenter = function(plot, coords) {
 		const db = dbx * dbx + dby * dby;
 		return da - db;
 	});
-	return coords;
+	return pairs;
 };
 
-const removeDuplicates = function(coords) {
+const removeDuplicates = function(pairs) {
 	const seen = new Map();
-	return coords.filter(function(coord) {
-		const ncoord = coord.normalize();
-		return seen.has(ncoord.hash) ? false : (seen.set(ncoord.hash, true));
+	return pairs.filter(function(pair) {
+		const hash = pair.ncoord.hash;
+		return seen.has(hash) ? false : (seen.set(hash, true));
+	});
+};
+
+const removePendingOrExisting = function(pyramid, pairs) {
+	return pairs.filter(pair => {
+		// we already have the tile, or it's currently pending
+		// NOTE: use `get` here to update the recentness of the tile in LRU
+		return !pyramid.get(pair.ncoord) && !pyramid.isPending(pair.ncoord);
 	});
 };
 
@@ -138,17 +174,15 @@ const flagTileAsStale = function(pyramid, tile) {
 
 const isTileStale = function(pyramid, tile) {
 	const hash = tile.coord.hash;
-	if (pyramid.stale.has(hash)) {
-		// check if uid is flagged as stale
-		const uids = pyramid.stale.get(hash);
-		if (uids.has(tile.uid)) {
-			// tile is stale
-			uids.delete(tile.uid);
-			if (uids.size === 0) {
-				pyramid.stale.delete(hash);
-			}
-			return true;
+	// check if uid is flagged as stale
+	const uids = pyramid.stale.get(hash);
+	if (uids && uids.has(tile.uid)) {
+		// tile is stale
+		uids.delete(tile.uid);
+		if (uids.size === 0) {
+			pyramid.stale.delete(hash);
 		}
+		return true;
 	}
 	return false;
 };
@@ -268,32 +302,47 @@ class TilePyramid {
 	}
 
 	/**
-	 * Returns the closest ancestor of the provided coord. If no ancestor
-	 * exists in the pyramid, returns undefined.
+	 * Returns the ancestor tile of the coord at the provided offset. If no
+	 * tile exists in the pyramid, returns undefined.
 	 *
 	 * @param {Coord} coord - The coord of the tile.
+	 * @param {Number} dist - The offset from the tile. Optional.
 	 *
-	 * @return {Coord} The closest available ancestor of the provided coord.
+	 * @return {Tile} The ancestor tile of the provided coord.
 	 */
-	getClosestAncestor(coord) {
-		// get ancestors levels, in descending order
-		const levels = [...this.levels.keys()]
-			.sort((a, b) => {
-				// sort by key
-				return b - a;
-			}).filter(entry => {
-				// filter by key
-				return (entry < coord.z);
-			});
-		// check for closest ancestor
-		for (let i=0; i<levels.length; i++) {
-			const level = levels[i];
-			const ancestor = coord.getAncestor(coord.z - level);
-			if (this.has(ancestor)) {
-				return ancestor;
+	getAncestor(coord, dist = 1) {
+		const level = coord.z - dist;
+		if (!this.levels.has(level) || level < this.layer.plot.minZoom) {
+			return undefined;
+		}
+		const ancestor = coord.getAncestor(coord.z - level);
+		return this.get(ancestor);
+	}
+
+	/**
+	 * Returns the descendant tiles of the coord at the provided offset. If no
+	 * tile exists in the pyramid, returns undefined.
+	 *
+	 * @param {Coord} coord - The coord of the tile.
+	 * @param {Number} dist - The offset from the tile. Optional.
+	 *
+	 * @return {Array} The descendant tiles of the provided coord.
+	 */
+	getDescendants(coord, dist = 1) {
+		const level = coord.z + dist;
+		if (!this.levels.has(level) || level > this.layer.plot.maxZoom) {
+			return undefined;
+		}
+		// check for closest descendants
+		const descendants = coord.getDescendants(level - coord.z);
+		const res = [];
+		for (let i=0; i<descendants.length; i++) {
+			const descendant = this.get(descendants[i]);
+			if (descendant) {
+				res.push(descendant);
 			}
 		}
-		return undefined;
+		return res.length > 0 ? res : undefined;
 	}
 
 	/**
@@ -304,37 +353,33 @@ class TilePyramid {
 	 */
 	requestTiles(coords) {
 
-		// remove any duplicates
-		coords = removeDuplicates(coords);
-
-		// filter out coords we don't need to request
-		coords = coords.filter(coord => {
-			// get normalized coord, we use normalized coords for requests
-			// so that we do not track / request the same tiles
-			const ncoord = coord.normalize();
-			// we already have the tile, or it's currently pending
-			// NOTE: use `get` here to update the recentness of the tile in LRU
-			return !this.get(ncoord) && !this.isPending(ncoord);
+		// we need both the normalized an un-normalized coords.
+		// normalized coords are used for requests while un-normalized are used
+		// to sort them around the viewport center
+		let pairs = coords.map(coord => {
+			return {
+				coord: coord,
+				ncoord: coord.normalize()
+			};
 		});
+
+		// remove any duplicates
+		pairs = removeDuplicates(pairs);
+
+		// remove any tiles we already have or that are currently pending
+		pairs = removePendingOrExisting(this, pairs);
 
 		// sort coords by distance from viewport center
-		coords = sortAroundCenter(this.layer.plot, coords);
+		pairs = sortAroundCenter(this.layer.plot, pairs);
 
 		// generate tiles and flag as pending
-		const tiles = coords.map(coord => {
-			// get normalized coord, we use normalized coords for requests
-			// so that we do not track / request the same tiles
-			const ncoord = coord.normalize();
-			// return tile
-			return new Tile(ncoord);
-		});
-
-		// flag all tiles as pending
-		// NOTE: we flag them all now incase a `clear` is called inside a
+		// NOTE: we flag them all now incase a `clear` is called inside the
 		// `requestTile` call.
-		tiles.forEach(tile => {
+		const tiles = pairs.map(pair => {
+			const tile = new Tile(pair.ncoord);
 			// add tile to pending array
 			this.pending.set(tile.coord.hash, tile);
+			return tile;
 		});
 
 		// request tiles
@@ -386,30 +431,52 @@ class TilePyramid {
 	 * closest available tile, along with the offset and relative scale. If
 	 * no ancestor exists, return undefined.
 	 *
+	 * @param {Coord} coord - The coord of the tile.
+	 *
 	 * @return {Tile} The tile that closest matches the provided coord.
 	 */
 	getAvailableLOD(coord) {
 		const ncoord = coord.normalize();
 		// check if we have the tile
-		if (this.has(ncoord)) {
-			return {
+		const tile = this.get(ncoord);
+		if (tile) {
+			return [{
 				coord: coord,
-				tile: this.get(ncoord),
-				offset: {
-					x: 0,
-					y: 0,
-					extent: 1
-				}
-			};
+				tile: tile,
+				uvOffset: [ 0, 0, 1, 1 ],
+				offset: { x: 0, y: 0, scale: 1 }
+			}];
 		}
-		// if not, take the closest ancestor
-		const ancestor = this.getClosestAncestor(ncoord);
-		if (ancestor) {
-			return {
-				coord: coord,
-				tile: this.get(ancestor),
-				offset: getLODOffset(ncoord, ancestor)
-			};
+		// get ancestor and descendant levels to check
+		for (let i=0; i<MAX_ANCESTOR_DIST; i++) {
+			// try to find ancestor
+			const ancestor = this.getAncestor(ncoord, i);
+			if (ancestor) {
+				return [{
+					coord: coord,
+					tile: ancestor,
+					uvOffset: getAncestorUVOffset(ncoord, ancestor.coord),
+					offset: { x: 0, y: 0, scale: 1 }
+				}];
+			}
+			// descendant checks are much more expensive, so limit this
+			if (i < MAX_DESCENDENT_DIST) {
+				// try to find descendant
+				const descendants = this.getDescendants(ncoord, i);
+				if (descendants) {
+					const res = new Array(descendants.length);
+					for (let j=0; j<descendants.length; j++) {
+						const descendant = descendants[j];
+						res[j] = {
+							coord: coord,
+							tile: descendant,
+							uvOffset: [ 0, 0, 1, 1 ],
+							offset: getDescendantOffset(ncoord, descendant.coord)
+						};
+					}
+					return res;
+				}
+			}
 		}
 		return undefined;
 	}

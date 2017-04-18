@@ -75,20 +75,23 @@ class WebGLRenderer extends Renderer {
 	getRenderables() {
 		const plot = this.layer.plot;
 		const pyramid = this.layer.pyramid;
+		const tileSize = plot.tileSize;
+		const zoom = plot.zoom;
 		const viewport = plot.getViewportPixelOffset();
 		// get all currently visible tile coords
 		const coords = plot.getVisibleCoords();
 		// get available renderables
 		const renderables = [];
-		coords.forEach(coord => {
+		for (let i=0; i<coords.length; i++) {
+			const coord = coords[i];
 			const ncoord = coord.normalize();
 			// check if we have the tile
 			const tile = pyramid.get(ncoord);
 			if (tile) {
-				const scale = Math.pow(2, plot.zoom - coord.z);
+				const scale = Math.pow(2, zoom - coord.z);
 				const tileOffset = [
-					(coord.x * scale * plot.tileSize) - viewport.x,
-					(coord.y * scale * plot.tileSize) - viewport.y
+					(coord.x * scale * tileSize) - viewport.x,
+					(coord.y * scale * tileSize) - viewport.y
 				];
 				const renderable = {
 					tile: tile,
@@ -99,49 +102,50 @@ class WebGLRenderer extends Renderer {
 				};
 				renderables.push(renderable);
 			}
-		});
+		}
 		return renderables;
 	}
 
 	/**
 	 * Returns the renderables for the underlying layer at the closest
-	 * available LOD.
+	 * available level-of-detail.
 	 *
 	 * @returns {Array} The array of renderables.
 	 */
 	getRenderablesLOD() {
 		const plot = this.layer.plot;
 		const pyramid = this.layer.pyramid;
+		const tileSize = plot.tileSize;
+		const zoom = plot.zoom;
 		const viewport = plot.getViewportPixelOffset();
 		// get all currently visible tile coords
 		const coords = plot.getVisibleCoords();
 		// get available LOD renderables
 		const renderables = [];
-		coords.forEach(coord => {
+		for (let i=0; i<coords.length; i++) {
+			const coord = coords[i];
 			// check if we have any tile LOD available
-			const lod = pyramid.getAvailableLOD(coord);
-			if (lod) {
-				const scale = Math.pow(2, plot.zoom - coord.z);
-				const tileOffset = [
-					(coord.x * scale * plot.tileSize) - viewport.x,
-					(coord.y * scale * plot.tileSize) - viewport.y
-				];
-				const renderable = {
-					tile: lod.tile,
-					coord: coord,
-					scale: scale,
-					hash: lod.tile.coord.hash,
-					tileOffset: tileOffset,
-					uvOffset: [
-						lod.offset.x,
-						lod.offset.y,
-						lod.offset.extent,
-						lod.offset.extent
-					]
-				};
-				renderables.push(renderable);
+			const lods = pyramid.getAvailableLOD(coord);
+			if (lods) {
+				for (let j=0; j<lods.length; j++) {
+					const lod = lods[j];
+					const scale = Math.pow(2, zoom - coord.z);
+					const tileOffset = [
+						((coord.x + lod.offset.x) * scale * tileSize) - viewport.x,
+						((coord.y + lod.offset.y) * scale * tileSize) - viewport.y
+					];
+					const renderable = {
+						tile: lod.tile,
+						coord: coord,
+						scale: scale * lod.offset.scale,
+						hash: lod.tile.coord.hash,
+						tileOffset: tileOffset,
+						uvOffset: lod.uvOffset
+					};
+					renderables.push(renderable);
+				}
 			}
-		});
+		}
 		return renderables;
 	}
 }
