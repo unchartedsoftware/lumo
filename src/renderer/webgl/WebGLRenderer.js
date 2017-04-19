@@ -3,6 +3,37 @@
 const Shader = require('../../webgl/shader/Shader');
 const Renderer = require('../Renderer');
 
+// Private Methods
+
+const getAncestorUVOffset = function(descendant, ancestor) {
+	const scale = Math.pow(2, descendant.z - ancestor.z);
+	const step = 1 / scale;
+	const scaled = {
+		x: ancestor.x * scale,
+		y: ancestor.y * scale
+	};
+	return [
+		(descendant.x - scaled.x) * step,
+		(descendant.y - scaled.y) * step,
+		step,
+		step
+	];
+};
+
+const getDescendantOffset = function(ancestor, descendant) {
+	const scale = Math.pow(2, descendant.z - ancestor.z);
+	const step = 1 / scale;
+	const scaled = {
+		x: ancestor.x * scale,
+		y: ancestor.y * scale
+	};
+	return {
+		x: (descendant.x - scaled.x) * step,
+		y: (descendant.y - scaled.y) * step,
+		scale: step
+	};
+};
+
 /**
  * Class representing a webgl renderer.
  */
@@ -124,25 +155,57 @@ class WebGLRenderer extends Renderer {
 		const renderables = [];
 		for (let i=0; i<coords.length; i++) {
 			const coord = coords[i];
+			const ncoord = coord.normalize();
 			// check if we have any tile LOD available
-			const lods = pyramid.getAvailableLOD(coord);
-			if (lods) {
-				for (let j=0; j<lods.length; j++) {
-					const lod = lods[j];
+			const tiles = pyramid.getAvailableLOD(ncoord);
+			if (tiles) {
+				for (let j=0; j<tiles.length; j++) {
+					const tile = tiles[j];
 					const scale = Math.pow(2, zoom - coord.z);
-					const tileOffset = [
-						((coord.x + lod.offset.x) * scale * tileSize) - viewport.x,
-						((coord.y + lod.offset.y) * scale * tileSize) - viewport.y
-					];
-					const renderable = {
-						tile: lod.tile,
-						coord: coord,
-						scale: scale * lod.offset.scale,
-						hash: lod.tile.coord.hash,
-						tileOffset: tileOffset,
-						uvOffset: lod.uvOffset
-					};
-					renderables.push(renderable);
+					if (tile.coord.z === coord.z) {
+						// tile
+						const tileOffset = [
+							(coord.x * scale * tileSize) - viewport.x,
+							(coord.y * scale * tileSize) - viewport.y
+						];
+						renderables.push({
+							tile: tile,
+							coord: coord,
+							scale: scale,
+							hash: tile.coord.hash,
+							tileOffset: tileOffset,
+							uvOffset: [ 0, 0, 1, 1 ]
+						});
+					} else if (tile.coord.z < coord.z) {
+						// ancestor tile
+						const tileOffset = [
+							(coord.x * scale * tileSize) - viewport.x,
+							(coord.y * scale * tileSize) - viewport.y
+						];
+						renderables.push({
+							tile: tile,
+							coord: coord,
+							scale: scale,
+							hash: tile.coord.hash,
+							tileOffset: tileOffset,
+							uvOffset: getAncestorUVOffset(ncoord, tile.coord),
+						});
+					} else {
+						// descendant
+						const offset = getDescendantOffset(ncoord, tile.coord);
+						const tileOffset = [
+							((coord.x + offset.x) * scale * tileSize) - viewport.x,
+							((coord.y + offset.y) * scale * tileSize) - viewport.y
+						];
+						renderables.push({
+							tile: tile,
+							coord: coord,
+							scale: scale * offset.scale,
+							hash: tile.coord.hash,
+							tileOffset: tileOffset,
+							uvOffset: [ 0, 0, 1, 1 ]
+						});
+					}
 				}
 			}
 		}

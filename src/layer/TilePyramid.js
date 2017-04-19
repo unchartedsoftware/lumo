@@ -31,52 +31,16 @@ const PERSISTANT_LEVELS = 4;
 const LOADED_THROTTLE_MS = 200;
 
 /**
- * The maximum distance to traverse when checking for tile ancestors.
- * @private
- * @constant {Number}
- */
-const MAX_ANCESTOR_DIST = 16;
-
-/**
  * The maximum distance to traverse when checking for tile descendants.
  * @private
  * @constant {Number}
  */
-const MAX_DESCENDENT_DIST = 4;
+const MAX_DESCENDENT_DIST = 3;
 
 // Private Methods
 
-const getAncestorUVOffset = function(descendant, ancestor) {
-	const scale = Math.pow(2, descendant.z - ancestor.z);
-	const step = 1 / scale;
-	const scaled = {
-		x: ancestor.x * scale,
-		y: ancestor.y * scale
-	};
-	return [
-		(descendant.x - scaled.x) * step,
-		(descendant.y - scaled.y) * step,
-		step,
-		step
-	];
-};
-
-const getDescendantOffset = function(ancestor, descendant) {
-	const scale = Math.pow(2, descendant.z - ancestor.z);
-	const step = 1 / scale;
-	const scaled = {
-		x: ancestor.x * scale,
-		y: ancestor.y * scale
-	};
-	return {
-		x: (descendant.x - scaled.x) * step,
-		y: (descendant.y - scaled.y) * step,
-		scale: step
-	};
-};
-
 const add = function(pyramid, tile) {
-	if (tile.coord.z < pyramid.persistentLevels) {
+	if (tile.coord.z < pyramid.numPersistentLevels) {
 		// persistent tiles
 		if (pyramid.persistents.has(tile.coord.hash)) {
 			throw `Tile of coord ${tile.coord.hash} already exists in the pyramid`;
@@ -101,7 +65,7 @@ const add = function(pyramid, tile) {
 const remove = function(pyramid, tile) {
 	// only check for persistent since we it will already be removed from lru
 	// cache
-	if (tile.coord.z < pyramid.persistentLevels) {
+	if (tile.coord.z < pyramid.numPersistentLevels) {
 		if (!pyramid.persistents.has(tile.coord.hash)) {
 			throw `Tile of coord ${tile.coord.hash} does not exists in the pyramid`;
 		}
@@ -209,14 +173,14 @@ class TilePyramid {
 	 * @param {Layer} layer - The layer object.
 	 * @param {Object} options - The pyramid options.
 	 * @param {Number} options.cacheSize - The size of the tile cache.
-	 * @param {Number} options.persistentLevels - The number of persistent levels in the pyramid.
+	 * @param {Number} options.numPersistentLevels - The number of persistent levels in the pyramid.
 	 */
 	constructor(layer, options = {}) {
 		if (!layer) {
 			throw 'No layer parameter provided';
 		}
 		this.cacheSize = defaultTo(options.cacheSize, CACHE_SIZE);
-		this.persistentLevels = defaultTo(options.persistentLevels, PERSISTANT_LEVELS);
+		this.numPersistentLevels = defaultTo(options.numPersistentLevels, PERSISTANT_LEVELS);
 		this.layer = layer;
 		this.levels = new Map();
 		this.persistents = new Map();
@@ -238,7 +202,7 @@ class TilePyramid {
 	 * Returns the total capacity of the tile pyramid.
 	 */
 	getCapacity() {
-		return this.cacheSize + sumPowerOfFour(this.persistentLevels);
+		return this.cacheSize + sumPowerOfFour(this.numPersistentLevels);
 	}
 
 	/**
@@ -264,85 +228,91 @@ class TilePyramid {
 	/**
 	 * Test whether or not a coord is held in cache in the pyramid.
 	 *
-	 * @param {Coord} coord - The coord to test.
+	 * @param {Coord} ncoord - The normalized coord to test.
 	 *
 	 * @returns {boolean} Whether or not the coord exists in the pyramid.
 	 */
-	has(coord) {
-		if (coord.z < this.persistentLevels) {
-			return this.persistents.has(coord.hash);
+	has(ncoord) {
+		if (ncoord.z < this.numPersistentLevels) {
+			return this.persistents.has(ncoord.hash);
 		}
-		return this.tiles.has(coord.hash);
+		return this.tiles.has(ncoord.hash);
 	}
 
 	/**
 	 * Test whether or not a coord is currently pending.
 	 *
-	 * @param {Coord} coord - The coord to test.
+	 * @param {Coord} ncoord - The normalized coord to test.
 	 *
 	 * @returns {boolean} Whether or not the coord is currently pending.
 	 */
-	isPending(coord) {
-		return this.pending.has(coord.hash);
+	isPending(ncoord) {
+		return this.pending.has(ncoord.hash);
 	}
 
 	/**
 	 * Returns the tile matching the provided coord. If the tile does not
 	 * exist, returns undefined.
 	 *
-	 * @param {Coord} coord - The coord of the tile to return.
+	 * @param {Coord} ncoord - The normalized coord of the tile to return.
 	 *
 	 * @returns {Tile} The tile object.
 	 */
-	get(coord) {
-		if (coord.z < this.persistentLevels) {
-			return this.persistents.get(coord.hash);
+	get(ncoord) {
+		if (ncoord.z < this.numPersistentLevels) {
+			return this.persistents.get(ncoord.hash);
 		}
-		return this.tiles.get(coord.hash);
+		return this.tiles.get(ncoord.hash);
 	}
 
 	/**
 	 * Returns the ancestor tile of the coord at the provided offset. If no
 	 * tile exists in the pyramid, returns undefined.
 	 *
-	 * @param {Coord} coord - The coord of the tile.
-	 * @param {Number} dist - The offset from the tile. Optional.
+	 * @param {Coord} ncoord - The normalized coord of the tile.
+	 * @param {Number} dist - The offset from the tile.
 	 *
 	 * @return {Tile} The ancestor tile of the provided coord.
 	 */
-	getAncestor(coord, dist = 1) {
-		const level = coord.z - dist;
-		if (!this.levels.has(level) || level < this.layer.plot.minZoom) {
-			return undefined;
-		}
-		const ancestor = coord.getAncestor(coord.z - level);
+	getAncestor(ncoord, dist) {
+		const ancestor = ncoord.getAncestor(dist);
 		return this.get(ancestor);
 	}
 
 	/**
-	 * Returns the descendant tiles of the coord at the provided offset. If no
-	 * tile exists in the pyramid, returns undefined.
+	 * Returns the descendant tiles of the coord at the provided offset. If at
+	 * least one tile exists in the pyramid, an array of size 4^dist will be
+	 * returned. Each element will either be a tile (in the case that it exists)
+	 * or a coord (in the case that it does not exist). If no descendant tiles
+	 * are found in the pyramid, returns undefined.
 	 *
-	 * @param {Coord} coord - The coord of the tile.
-	 * @param {Number} dist - The offset from the tile. Optional.
+	 * @param {Coord} ncoord - The normalized coord of the tile.
+	 * @param {Number} dist - The offset from the tile.
 	 *
-	 * @return {Array} The descendant tiles of the provided coord.
+	 * @return {Array} The descendant tiles and or coordinates of the provided coord.
 	 */
-	getDescendants(coord, dist = 1) {
-		const level = coord.z + dist;
-		if (!this.levels.has(level) || level > this.layer.plot.maxZoom) {
-			return undefined;
-		}
-		// check for closest descendants
-		const descendants = coord.getDescendants(level - coord.z);
-		const res = [];
+	getDescendants(ncoord, dist) {
+		// get coord descendants
+		const descendants = ncoord.getDescendants(dist);
+		// check if we have any
+		let found = false;
 		for (let i=0; i<descendants.length; i++) {
-			const descendant = this.get(descendants[i]);
-			if (descendant) {
-				res.push(descendant);
+			if (this.has(descendants[i])) {
+				found = true;
+				break;
 			}
 		}
-		return res.length > 0 ? res : undefined;
+		// if so return what we have
+		if (found) {
+			const res = new Array(descendants.length);
+			for (let i=0; i<descendants.length; i++) {
+				const descendant = descendants[i];
+				// add tile if it exists, coord if it doesn't
+				res[i] = this.get(descendant) || descendant;
+			}
+			return res;
+		}
+		return undefined;
 	}
 
 	/**
@@ -428,57 +398,79 @@ class TilePyramid {
 
 	/**
 	 * If the tile exists in the pyramid, return it. Otherwise return the
-	 * closest available tile, along with the offset and relative scale. If
-	 * no ancestor exists, return undefined.
+	 * closest available level-of-detail for tile, this may be a single ancestor
+	 * or multiple descendants, or a combination of both.
 	 *
-	 * @param {Coord} coord - The coord of the tile.
+	 * If no ancestor or descendants exist, return undefined.
 	 *
-	 * @return {Tile} The tile that closest matches the provided coord.
+	 * @param {Coord} ncoord - The normalized coord of the tile.
+	 *
+	 * @return {Array} The array of tiles that closest matches the provided coord.
 	 */
-	getAvailableLOD(coord) {
-		const ncoord = coord.normalize();
+	getAvailableLOD(ncoord) {
 		// check if we have the tile
 		const tile = this.get(ncoord);
 		if (tile) {
-			return [{
-				coord: coord,
-				tile: tile,
-				uvOffset: [ 0, 0, 1, 1 ],
-				offset: { x: 0, y: 0, scale: 1 }
-			}];
+			// if exists, return it
+			return [ tile ];
 		}
-		// get ancestor and descendant levels to check
-		for (let i=0; i<MAX_ANCESTOR_DIST; i++) {
-			// try to find ancestor
-			const ancestor = this.getAncestor(ncoord, i);
-			if (ancestor) {
-				return [{
-					coord: coord,
-					tile: ancestor,
-					uvOffset: getAncestorUVOffset(ncoord, ancestor.coord),
-					offset: { x: 0, y: 0, scale: 1 }
-				}];
+		// if not, find the closest available level-of-detail
+
+		// first, get the available levels of detail, ascending in distance
+		// from the target coordinate zoom
+		const zoom = ncoord.z;
+		const levels = [];
+		this.levels.forEach((_, key) => {
+			if (key !== zoom) {
+				levels.push(key);
 			}
-			// descendant checks are much more expensive, so limit this
-			if (i < MAX_DESCENDENT_DIST) {
-				// try to find descendant
-				const descendants = this.getDescendants(ncoord, i);
-				if (descendants) {
-					const res = new Array(descendants.length);
-					for (let j=0; j<descendants.length; j++) {
-						const descendant = descendants[j];
-						res[j] = {
-							coord: coord,
-							tile: descendant,
-							uvOffset: [ 0, 0, 1, 1 ],
-							offset: getDescendantOffset(ncoord, descendant.coord)
-						};
+		});
+		levels.sort((a, b) => {
+			// give priority to ancestor levels since they are cheaper
+			const da = (a > zoom) ? (a - zoom) : (zoom - a - 0.5);
+			const db = (b > zoom) ? (b - zoom) : (zoom - b - 0.5);
+			return da - db;
+		});
+
+		const results = [];
+		const queue = [];
+		let current = ncoord;
+
+		// second, iterate through available levels seeing the closest
+		// level-of-detail for the current head of the queue
+		while (current && levels.length > 0) {
+			const level = levels.shift();
+			if (level < current.z) {
+				// try to find ancestor
+				const dist = current.z - level;
+				const ancestor = this.getAncestor(current, dist);
+				if (ancestor) {
+					results.push(ancestor);
+					current = queue.shift();
+				}
+			} else {
+				const dist = level - current.z;
+				// descendant checks are much more expensive, so limit this
+				if (dist < MAX_DESCENDENT_DIST) {
+					// try to find descendant
+					const descendants = this.getDescendants(current, dist);
+					if (descendants) {
+						for (let j=0; j<descendants.length; j++) {
+							const descendant = descendants[j];
+							if (descendant.coord) {
+								// tile found, descendant is a tile
+								results.push(descendant);
+							} else {
+								// no tile found, descendant is a coord
+								queue.push(descendant);
+							}
+						}
+						current = queue.shift();
 					}
-					return res;
 				}
 			}
 		}
-		return undefined;
+		return (results.length > 0) ? results : undefined;
 	}
 }
 
