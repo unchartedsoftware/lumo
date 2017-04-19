@@ -30,6 +30,7 @@ module.exports = {
 	TILE_ADD: EventType.TILE_ADD,
 	TILE_DISCARD: EventType.TILE_DISCARD,
 	TILE_REMOVE: EventType.TILE_REMOVE,
+	CELL_UPDATE: EventType.CELL_UPDATE,
 	// event
 	Event: require('./event/Event'),
 	MouseEvent: require('./event/MouseEvent'),
