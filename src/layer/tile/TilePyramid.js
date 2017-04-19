@@ -419,7 +419,7 @@ class TilePyramid {
 		// if not, find the closest available level-of-detail
 
 		// first, get the available levels of detail, ascending in distance
-		// from the target coordinate zoom
+		// from the original coord zoom
 		const zoom = ncoord.z;
 		const levels = [];
 		this.levels.forEach((_, key) => {
@@ -437,12 +437,12 @@ class TilePyramid {
 		const results = [];
 		const queue = [];
 		let current = ncoord;
+		let level = levels.shift();
 
-		// second, iterate through available levels seeing the closest
+		// second, iterate through available levels searching for the closest
 		// level-of-detail for the current head of the queue
-		while (current && levels.length > 0) {
+		while (current !== undefined && level !== undefined) {
 
-			const level = levels[0];
 			if (level < current.z) {
 				// try to find ancestor
 				const dist = current.z - level;
@@ -456,10 +456,17 @@ class TilePyramid {
 					continue;
 				}
 			} else {
-				const dist = level - current.z;
 				// descendant checks are much more expensive, so limit this
-				if (dist < MAX_DESCENDENT_DIST) {
+				// based on distance to the original coord zoom
+				// NOTE: this distance calculation is safe because it is always
+				// true that "current.z >= zoom" because only descendant coords
+				// are appended to the queue.
+				// therefore in the case that "level >= current.z", then
+				// "level >= zoom" must be true as well.
+				const ndist = level - zoom;
+				if (ndist < MAX_DESCENDENT_DIST) {
 					// try to find descendant
+					const dist = level - current.z;
 					const descendants = this.getDescendants(current, dist);
 					if (descendants) {
 						for (let j=0; j<descendants.length; j++) {
@@ -479,8 +486,8 @@ class TilePyramid {
 					}
 				}
 			}
-			// nothing found in level, we can safely pop this level off
-			levels.shift();
+			// nothing found in level, we can safely remove it from the search
+			level = levels.shift();
 		}
 		return (results.length > 0) ? results : undefined;
 	}
