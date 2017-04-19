@@ -1,38 +1,30 @@
 'use strict';
 
+const clamp = require('lodash/clamp');
 const defaultTo = require('lodash/defaultTo');
-const Renderable = require('../plot/Renderable');
-const TilePyramid = require('./TilePyramid');
-
-// Private Methods
-
-const requestVisibleTiles = function(layer) {
-	// get visible coords
-	const coords = layer.plot.getTargetVisibleCoords();
-	// request tiles
-	layer.requestTiles(coords);
-};
+const EventEmitter = require('events');
 
 /**
- * Class representing an individual layer.
+ * Class representing a layer component.
  */
-class Layer extends Renderable {
+class Layer extends EventEmitter {
 
 	/**
 	 * Instantiates a new Layer object.
 	 *
-	 * @param {Object} options - The layer options.
-	 * @param {Renderer} options.renderer - The layer renderer.
+	 * @param {Object} options - The options.
 	 * @param {Number} options.opacity - The layer opacity.
 	 * @param {Number} options.zIndex - The layer z-index.
 	 * @param {boolean} options.hidden - Whether or not the layer is visible.
-	 * @param {boolean} options.muted - Whether or not the layer is muted.
 	 */
 	constructor(options = {}) {
-		super(options);
-		this.muted = defaultTo(options.muted, false);
-		this.renderer = defaultTo(options.renderer, null);
-		this.pyramid = new TilePyramid(this, options);
+		super();
+		this.opacity = defaultTo(options.opacity, 1.0);
+		this.hidden = defaultTo(options.hidden, false);
+		this.zIndex = defaultTo(options.zIndex, 0);
+		this.highlighted = null;
+		this.selected = [];
+		this.plot = null;
 	}
 
 	/**
@@ -43,15 +35,11 @@ class Layer extends Renderable {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	onAdd(plot) {
-		super.onAdd(plot);
-		// execute renderer hook
-		if (this.renderer) {
-			this.renderer.onAdd(this);
+		if (!plot) {
+			throw 'No plot argument provided';
 		}
-		// request tiles if not muted
-		if (!this.isMuted()) {
-			requestVisibleTiles(this);
-		}
+		// set plot
+		this.plot = plot;
 		return this;
 	}
 
@@ -63,69 +51,65 @@ class Layer extends Renderable {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	onRemove(plot) {
-		// clear the underlying pyramid
-		this.pyramid.clear();
-		// execute renderer hook
-		if (this.renderer) {
-			this.renderer.onRemove(this);
+		if (!plot) {
+			throw 'No plot argument provided';
 		}
-		super.onRemove(plot);
+		// remove plot
+		this.plot = null;
+		// clear state
+		this.clear();
 		return this;
 	}
-
 	/**
-	 * Add a renderer to the layer.
+	 * Set the opacity of the layer.
 	 *
-	 * @param {Renderer} renderer - The renderer to add to the layer.
+	 * @param {Number} opacity - The opacity to set.
 	 *
 	 * @returns {Layer} The layer object, for chaining.
 	 */
-	setRenderer(renderer) {
-		if (!renderer) {
-			throw 'No renderer argument provided';
-		}
-		if (this.renderer && this.plot) {
-			this.renderer.onRemove(this);
-		}
-		this.renderer = renderer;
-		if (this.plot) {
-			this.renderer.onAdd(this);
-		}
+	setOpacity(opacity) {
+		this.opacity = clamp(opacity, 0, 1);
 		return this;
 	}
 
 	/**
-	 * Remove the renderer from the layer.
+	 * Get the opacity of the layer.
+	 *
+	 * @returns {Number} The opacity of the layer object,.
+	 */
+	getOpacity() {
+		return this.opacity;
+	}
+
+	/**
+	 * Set the z-index of the layer.
+	 *
+	 * @param {Number} zIndex - The z-index to set.
 	 *
 	 * @returns {Layer} The layer object, for chaining.
 	 */
-	removeRenderer() {
-		if (!this.renderer) {
-			throw 'No renderer is currently attached to the layer';
-		}
-		if (this.plot) {
-			this.renderer.onRemove(this);
-		}
-		this.renderer = null;
+	setZIndex(zIndex) {
+		this.zIndex = zIndex;
 		return this;
 	}
 
 	/**
-	 * Returns the renderer of the layer.
+	 * Get the z-index of the layer.
 	 *
-	 * @returns {Renderer} The renderer object.
+	 * @returns {Number} The zIndex of the layer object,.
 	 */
-	getRenderer() {
-		return this.renderer;
+	getZIndex() {
+		return this.zIndex;
 	}
 
 	/**
-	 * Returns the tile pyramid of the layer.
+	 * Make the layer visible.
 	 *
-	 * @returns {TilePyramid} The tile pyramid object.
+	 * @returns {Layer} The layer object, for chaining.
 	 */
-	getPyramid() {
-		return this.pyramid;
+	show() {
+		this.hidden = false;
+		return this;
 	}
 
 	/**
@@ -134,88 +118,138 @@ class Layer extends Renderable {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	hide() {
-		super.hide();
+		this.hidden = true;
+		this.clear();
 		return this;
 	}
 
 	/**
-	 * Mutes the layer, it will no longer send any tile requests.
+	 * Returns true if the layer is hidden.
 	 *
-	 * @returns {Layer} The layer object, for chaining.
+	 * @returns {boolean} Whether or not the layer is hidden.
 	 */
-	mute() {
-		this.muted = true;
-		return this;
+	isHidden() {
+		return this.hidden;
 	}
 
 	/**
-	 * Unmutes the layer and immediately requests all visible tiles.
-	 *
-	 * @returns {Layer} The layer object, for chaining.
-	 */
-	unmute() {
-		if (this.isMuted()) {
-			this.muted = false;
-			if (this.plot) {
-				// request visible tiles
-				requestVisibleTiles(this);
-			}
-		}
-		return this;
-	}
-
-	/**
-	 * Returns true if the layer is muted.
-	 *
-	 * @returns {boolean} Whether or not the layer is muted.
-	 */
-	isMuted() {
-		return this.muted;
-	}
-
-	/**
-	 * Unmutes and shows the layer.
-	 *
-	 * @returns {Layer} The layer object, for chaining.
-	 */
-	enable() {
-		this.show();
-		this.unmute();
-		return this;
-	}
-
-	/**
-	 * Mutes and hides the layer.
-	 *
-	 * @returns {Layer} The layer object, for chaining.
-	 */
-	disable() {
-		this.hide();
-		this.mute();
-		return this;
-	}
-
-	/**
-	 * Returns true if the layer is disabled (muted and hidden).
-	 *
-	 * @returns {boolean} Whether or not the layer is disabled.
-	 */
-	isDisabled() {
-		return this.isMuted() && this.isHidden();
-	}
-
-	/**
-	 * Draw the layer for the frame.
+	 * The draw function that is executed per frame.
 	 *
 	 * @param {Number} timestamp - The frame timestamp.
 	 *
 	 * @returns {Layer} The layer object, for chaining.
 	 */
-	draw(timestamp) {
-		if (this.renderer) {
-			this.renderer.draw(timestamp);
+	draw() {
+		return this;
+	}
+
+	/**
+	 * Pick a position of the layer for a collision with any rendered objects.
+	 *
+	 * @param {Object} pos - The plot position to pick at.
+	 *
+	 * @returns {Object} The collision, or null.
+	 */
+	pick() {
+		return null;
+	}
+
+	/**
+	 * Highlights the provided data.
+	 *
+	 * @param {Object} data - The data to highlight.
+	 *
+	 * @returns {Layer} The layer object, for chaining.
+	 */
+	highlight(data) {
+		this.highlighted = data;
+		return this;
+	}
+
+	/**
+	 * Clears any current highlight.
+	 *
+	 * @returns {Layer} The layer object, for chaining.
+	 */
+	unhighlight() {
+		this.highlighted = null;
+		return this;
+	}
+
+	/**
+	 * Returns any highlighted data.
+	 *
+	 * @returns {Object} The highlighted data.
+	 */
+	getHighlight() {
+		return this.highlighted;
+	}
+
+	/**
+	 * Returns true if the provided argument is highlighted.
+	 *
+	 * @returns {Object} The data to test.
+	 *
+	 * @returns {boolean} Whether or not there is highlighted data.
+	 */
+	isHighlighted(data) {
+		return this.highlighted === data;
+	}
+
+	/**
+	 * Selects the provided data.
+	 *
+	 * @param {Object} data - The data to select.
+	 * @param {Object} multiSelect - Whether mutli-select is enabled.
+	 *
+	 * @returns {Layer} The layer object, for chaining.
+	 */
+	select(data, multiSelect) {
+		if (multiSelect) {
+			// add to collection if multi-selection is enabled
+			const index = this.selected.indexOf(data);
+			if (index === -1) {
+				// select point
+				this.selected.push(data);
+			} else {
+				// remove point if already selected
+				this.selected.splice(index, 1);
+			}
+		} else {
+			// clear selection, adding only the latest entry
+			this.selected = [ data ];
 		}
 		return this;
+	}
+
+	/**
+	 * Clears any current selection.
+	 *
+	 * @returns {Layer} The layer object, for chaining.
+	 */
+	unselect() {
+		this.selected = [];
+		return this;
+	}
+
+	/**
+	 * Returns any selected data.
+	 *
+	 * @returns {Object} The selected data.
+	 */
+	getSelected() {
+		return this.selected;
+	}
+
+	/**
+	 * Returns true if the provided argument is selected.
+	 *
+	 * @returns {Object} The data to test.
+	 *
+	 * @returns {boolean} Whether or not there is highlighted data.
+	 */
+	isSelected(data) {
+		return this.selected.indexOf(data) !== -1;
 	}
 
 	/**
@@ -224,70 +258,10 @@ class Layer extends Renderable {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	clear() {
-		super.clear();
-		// clear renderer state
-		if (this.renderer) {
-			this.renderer.clear();
-		}
+		// clear selected / highlighted
+		this.highlighted = null;
+		this.selected = [];
 		return this;
-	}
-
-	/**
-	 * Clear and re-request all tiles for the layer.
-	 *
-	 * @returns {Layer} The layer object, for chaining.
-	 */
-	refresh() {
-		// clear the underlying pyramid
-		this.pyramid.clear();
-		// clear layer state
-		this.clear();
-		// request if attached and not muted
-		if (this.plot && !this.isMuted()) {
-			// request visible tiles
-			requestVisibleTiles(this);
-		}
-		return this;
-	}
-
-	/**
-	 * Request a specific tile.
-	 *
-	 * @param {Coord} coord - The coord of the tile to request.
-	 * @param {Function} done - The callback function to execute upon completion.
-	 */
-	requestTile(coord, done) {
-		done(null, null);
-	}
-
-	/**
-	 * Request an array of tiles.
-	 *
-	 * @param {Array} coords - The coords of the tiles to request.
-	 *
-	 * @returns {Layer} The layer object, for chaining.
-	 */
-	requestTiles(coords) {
-		if (this.isMuted()) {
-			return this;
-		}
-		this.pyramid.requestTiles(coords);
-		return this;
-	}
-
-	/**
-	 * Pick a position of the renderable for a collision with any rendered
-	 * objects.
-	 *
-	 * @param {Object} pos - The plot position to pick at.
-	 *
-	 * @returns {Object} The collision, or null.
-	 */
-	pick(pos) {
-		if (this.renderer) {
-			return this.renderer.pick(pos);
-		}
-		return null;
 	}
 }
 

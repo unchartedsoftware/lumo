@@ -3,9 +3,9 @@
 const defaultTo = require('lodash/defaultTo');
 const throttle = require('lodash/throttle');
 const LRU = require('lru-cache');
-const Tile = require('../core/Tile');
-const EventType = require('../event/EventType');
-const TileEvent = require('../event/TileEvent');
+const Tile = require('../../core/Tile');
+const EventType = require('../../event/EventType');
+const TileEvent = require('../../event/TileEvent');
 
 // Constants
 

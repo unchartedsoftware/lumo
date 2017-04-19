@@ -2,11 +2,11 @@
 
 const assert = require('assert');
 const sinon = require('sinon');
-const Coord = require('../../src/core/Coord');
-const EventType = require('../../src/event/EventType');
-const Layer = require('../../src/layer/Layer');
-const TilePyramid = require('../../src/layer/TilePyramid');
-const Viewport = require('../../src/plot/Viewport');
+const Coord = require('../../../src/core/Coord');
+const EventType = require('../../../src/event/EventType');
+const TileLayer = require('../../../src/layer/tile/TileLayer');
+const TilePyramid = require('../../../src/layer/tile/TilePyramid');
+const Viewport = require('../../../src/plot/Viewport');
 
 describe('TilePyramid', () => {
 
@@ -16,7 +16,7 @@ describe('TilePyramid', () => {
 
 	beforeEach(() => {
 		// layer
-		layer = new Layer();
+		layer = new TileLayer();
 		layer.requestTile = (coord, done) => {
 			done(null, {});
 		};

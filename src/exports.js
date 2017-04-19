@@ -9,7 +9,7 @@ module.exports = {
 	Browser: require('./core/Browser'),
 	Coord: require('./core/Coord'),
 	Tile: require('./core/Tile'),
-	// event types
+	// events
 	CLICK: EventType.CLICK,
 	DBL_CLICK: EventType.DBL_CLICK,
 	MOUSE_DOWN: EventType.MOUSE_DOWN,
@@ -23,8 +23,8 @@ module.exports = {
 	ZOOM_START: EventType.ZOOM_START,
 	ZOOM: EventType.ZOOM,
 	ZOOM_END: EventType.ZOOM_END,
-	FRAME: EventType.FRAME,
 	RESIZE: EventType.RESIZE,
+	FRAME: EventType.FRAME,
 	TILE_REQUEST: EventType.TILE_REQUEST,
 	TILE_FAILURE: EventType.TILE_FAILURE,
 	TILE_ADD: EventType.TILE_ADD,
@@ -41,15 +41,17 @@ module.exports = {
 	// collision types
 	CIRCLE: CollisionType.CIRCLE,
 	RECTANGLE: CollisionType.RECTANGLE,
-	// layer
-	Layer: require('./layer/Layer'),
 	// plot
 	Plot: require('./plot/Plot'),
+	// layer
+	Layer: require('./layer/Layer'),
+	// tile layer
+	TileLayer: require('./layer/tile/TileLayer'),
 	// overlay
-	Overlay: require('./overlay/Overlay'),
-	WebGLOverlay: require('./overlay/webgl/WebGLOverlay'),
-	WebGLLineOverlay: require('./overlay/webgl/WebGLLineOverlay'),
-	WebGLPointOverlay: require('./overlay/webgl/WebGLPointOverlay'),
+	Overlay: require('./layer/overlay/Overlay'),
+	WebGLOverlay: require('./layer/overlay/webgl/WebGLOverlay'),
+	WebGLLineOverlay: require('./layer/overlay/webgl/WebGLLineOverlay'),
+	WebGLPointOverlay: require('./layer/overlay/webgl/WebGLPointOverlay'),
 	// render
 	Renderer: require('./renderer/Renderer'),
 	WebGLRenderer: require('./renderer/webgl/WebGLRenderer'),

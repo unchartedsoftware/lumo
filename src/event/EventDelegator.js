@@ -187,7 +187,7 @@ class EventDelegator {
 		// attach delegation handler
 		this.plot.on(type, event => {
 			// get children sorted by z-index
-			const children = this.plot.getSortedRenderables();
+			const children = this.plot.getSortedLayers();
 			// pick children, by priority
 			let collision = null;
 			let child = null;

@@ -109,10 +109,10 @@ const requestTiles = function() {
 	// get all visible coords in the target viewport
 	const coords = this.getTargetVisibleCoords();
 	// for each layer
-	this.renderables.forEach(renderable => {
-		if (renderable.requestTiles) {
+	this.layers.forEach(layer => {
+		if (layer.requestTiles) {
 			// request tiles
-			renderable.requestTiles(coords);
+			layer.requestTiles(coords);
 		}
 	});
 	return this;
@@ -261,13 +261,13 @@ const frame = function(plot) {
 	// update cell
 	updateCell(plot);
 
-	// sort renderables by z-index
-	const renderables = plot.getSortedRenderables();
+	// sort layers by z-index
+	const layers = plot.getSortedLayers();
 
-	// render each renderable
-	renderables.forEach(renderable => {
-		if (!renderable.isHidden()) {
-			renderable.draw(timestamp);
+	// render each layer
+	layers.forEach(layer => {
+		if (!layer.isHidden()) {
+			layer.draw(timestamp);
 		}
 	});
 
@@ -381,8 +381,8 @@ class Plot extends EventEmitter {
 			leading: false // invoke only on trailing edge
 		});
 
-		// renderables
-		this.renderables = [];
+		// layers
+		this.layers = [];
 
 		// frame request
 		this.frameRequest = null;
@@ -399,7 +399,7 @@ class Plot extends EventEmitter {
 
 		// delegator
 		this[DELEGATOR] = new EventDelegator(this);
-		// delegate mouse / click events to renderables
+		// delegate mouse / click events to layers
 		this[DELEGATOR].delegate(EventType.CLICK);
 		this[DELEGATOR].delegate(EventType.DBL_CLICK);
 		this[DELEGATOR].delegate(EventType.MOUSE_MOVE);
@@ -408,7 +408,7 @@ class Plot extends EventEmitter {
 
 		// broadcaster
 		this[BROADCASTER] = new EventBroadcaster(this);
-		// broadcast zoom / pan events to renderables
+		// broadcast zoom / pan events to layers
 		this[BROADCASTER].broadcast(EventType.ZOOM_START);
 		this[BROADCASTER].broadcast(EventType.ZOOM);
 		this[BROADCASTER].broadcast(EventType.ZOOM_END);
@@ -434,9 +434,9 @@ class Plot extends EventEmitter {
 		this[HANDLERS].forEach(handler => {
 			handler.disable();
 		});
-		// remove renderables
-		this.renderables.forEach(renderable => {
-			this.remove(renderable);
+		// remove layers
+		this.layers.forEach(layer => {
+			this.remove(layer);
 		});
 		// destroy context
 		this.gl = null;
@@ -449,51 +449,51 @@ class Plot extends EventEmitter {
 	}
 
 	/**
-	 * Adds a renderable to the plot.
+	 * Adds a layer to the plot.
 	 *
-	 * @param {Renderable} renderable - The renderable to add to the plot.
+	 * @param {Layer} layer - The layer to add to the plot.
 	 *
 	 * @returns {Plot} The plot object, for chaining.
 	 */
-	add(renderable) {
-		if (!renderable) {
+	add(layer) {
+		if (!layer) {
 			throw 'No argument provided';
 		}
-		if (this.renderables.indexOf(renderable) !== -1) {
-			throw 'Provided renderable is already attached to the plot';
+		if (this.layers.indexOf(layer) !== -1) {
+			throw 'Provided layer is already attached to the plot';
 		}
-		this.renderables.push(renderable);
-		renderable.onAdd(this);
+		this.layers.push(layer);
+		layer.onAdd(this);
 		return this;
 	}
 
 	/**
-	 * Removes a renderable from the plot.
+	 * Removes a layer from the plot.
 	 *
-	 * @param {Layer} renderable - The renderable to remove from the plot.
+	 * @param {Layer} layer - The layer to remove from the plot.
 	 *
 	 * @returns {Plot} The plot object, for chaining.
 	 */
-	remove(renderable) {
-		if (!renderable) {
+	remove(layer) {
+		if (!layer) {
 			throw 'No argument provided';
 		}
-		const index = this.renderables.indexOf(renderable);
+		const index = this.layers.indexOf(layer);
 		if (index === -1) {
-			throw 'Provided renderable is not attached to the plot';
+			throw 'Provided layer is not attached to the plot';
 		}
-		this.renderables.splice(index, 1);
-		renderable.onRemove(this);
+		this.layers.splice(index, 1);
+		layer.onRemove(this);
 		return this;
 	}
 
 	/**
-	 * Returns all the renderable objects attached to the plot, in descending
+	 * Returns all the layer objects attached to the plot, in descending
 	 * order of z-index.
 	 */
-	getSortedRenderables() {
+	getSortedLayers() {
 		// sort by z-index
-		return this.renderables.sort((a, b) => {
+		return this.layers.sort((a, b) => {
 			return a.getZIndex() - b.getZIndex();
 		});
 	};
