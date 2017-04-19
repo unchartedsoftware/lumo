@@ -12,7 +12,7 @@ const mod = function(n, m) {
 class Coord {
 
 	/**
-	 * Instantiates a new Bounds object.
+	 * Instantiates a new Coord object.
 	 *
 	 * @param {Number} z - The z component of the tile.
 	 * @param {Number} x - The x component of the tile.

@@ -23,7 +23,7 @@ const getUID = function() {
 class Tile {
 
 	/**
-	 * Instantiates a new Bounds object.
+	 * Instantiates a new Tile object.
 	 *
 	 * @param {Coord} coord - The coord of the tile.
 	 */
