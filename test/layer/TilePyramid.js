@@ -216,8 +216,40 @@ describe('TilePyramid', () => {
 		it('should return the exact tile if available', () => {
 			const coord = new Coord(2, 2, 2);
 			pyramid.requestTiles([ coord ]);
-			const tiles = pyramid.getAvailableLOD(coord);
-			assert(tiles[0].coord.equals(coord));
+			const lods = pyramid.getAvailableLOD(coord);
+			assert(lods[0].tile.coord.equals(coord));
+		});
+		it('should return the closest available tile level-of-detail', () => {
+			pyramid.requestTiles([
+				new Coord(0, 0, 0),
+				new Coord(3, 4, 4),
+				new Coord(3, 3, 3),
+				new Coord(3, 4, 3),
+				new Coord(3, 3, 4),
+				new Coord(3, 2, 4),
+				new Coord(3, 5, 3),
+				new Coord(3, 1, 3),
+				new Coord(3, 1, 4),
+				new Coord(3, 6, 3),
+				new Coord(3, 6, 4),
+				new Coord(3, 5, 4),
+				new Coord(3, 2, 3)
+			]);
+			const search = [
+				new Coord(2, 0, 1),
+				new Coord(2, 0, 2),
+				new Coord(2, 1, 1),
+				new Coord(2, 1, 2),
+				new Coord(2, 2, 1),
+				new Coord(2, 2, 2),
+				new Coord(2, 3, 1),
+				new Coord(2, 3, 2),
+			];
+			let lods = [];
+			search.forEach(coord => {
+				lods = lods.concat(pyramid.getAvailableLOD(coord));
+			});
+			assert(lods.length === 32);
 		});
 		it('should return the closest available tile level-of-detail', () => {
 			const coord = new Coord(2, 2, 2);
@@ -227,13 +259,13 @@ describe('TilePyramid', () => {
 				new Coord(3, 5, 5),
 				new Coord(3, 5, 4)
 			]);
-			const tiles = pyramid.getAvailableLOD(coord);
-			tiles.forEach(tile => {
+			const lods = pyramid.getAvailableLOD(coord);
+			lods.forEach(lod => {
 				assert(
-					tile.coord.equals(new Coord(3, 4, 4)) ||
-					tile.coord.equals(new Coord(3, 5, 5)) ||
-					tile.coord.equals(new Coord(3, 5, 4)) ||
-					tile.coord.equals(new Coord(0, 0, 0)));
+					lod.tile.coord.equals(new Coord(3, 4, 4)) ||
+					lod.tile.coord.equals(new Coord(3, 5, 5)) ||
+					lod.tile.coord.equals(new Coord(3, 5, 4)) ||
+					lod.tile.coord.equals(new Coord(0, 0, 0)));
 			});
 		});
 		it('should return `undefined` if there is no available tile', () => {

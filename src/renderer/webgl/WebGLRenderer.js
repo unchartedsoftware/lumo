@@ -153,14 +153,16 @@ class WebGLRenderer extends Renderer {
 		const coords = plot.getVisibleCoords();
 		// get available LOD renderables
 		const renderables = [];
+
 		for (let i=0; i<coords.length; i++) {
 			const coord = coords[i];
 			const ncoord = coord.normalize();
 			// check if we have any tile LOD available
-			const tiles = pyramid.getAvailableLOD(ncoord);
-			if (tiles) {
-				for (let j=0; j<tiles.length; j++) {
-					const tile = tiles[j];
+			const lods = pyramid.getAvailableLOD(ncoord);
+			if (lods) {
+				for (let j=0; j<lods.length; j++) {
+					const lod = lods[j];
+					const tile = lod.tile;
 					const scale = Math.pow(2, zoom - coord.z);
 					if (tile.coord.z === coord.z) {
 						// tile
@@ -178,17 +180,23 @@ class WebGLRenderer extends Renderer {
 						});
 					} else if (tile.coord.z < coord.z) {
 						// ancestor tile
+						let offset;
+						if (lod.descendant === ncoord) {
+							offset = { x: 0, y: 0, scale: 1 };
+						} else {
+							offset = getDescendantOffset(ncoord, lod.descendant);
+						}
 						const tileOffset = [
-							(coord.x * scale * tileSize) - viewport.x,
-							(coord.y * scale * tileSize) - viewport.y
+							((coord.x + offset.x) * scale * tileSize) - viewport.x,
+							((coord.y + offset.y) * scale * tileSize) - viewport.y
 						];
 						renderables.push({
 							tile: tile,
 							coord: coord,
-							scale: scale,
+							scale: scale * offset.scale,
 							hash: tile.coord.hash,
 							tileOffset: tileOffset,
-							uvOffset: getAncestorUVOffset(ncoord, tile.coord),
+							uvOffset: getAncestorUVOffset(lod.descendant, tile.coord),
 						});
 					} else {
 						// descendant

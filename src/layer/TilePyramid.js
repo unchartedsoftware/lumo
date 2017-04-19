@@ -35,7 +35,7 @@ const LOADED_THROTTLE_MS = 200;
  * @private
  * @constant {Number}
  */
-const MAX_DESCENDENT_DIST = 3;
+const MAX_DESCENDENT_DIST = 4;
 
 // Private Methods
 
@@ -168,7 +168,7 @@ const shouldDiscard = function(pyramid, tile) {
 class TilePyramid {
 
 	/**
-	 * Instantiates a new Bounds object.
+	 * Instantiates a new TilePyramid object.
 	 *
 	 * @param {Layer} layer - The layer object.
 	 * @param {Object} options - The pyramid options.
@@ -412,7 +412,9 @@ class TilePyramid {
 		const tile = this.get(ncoord);
 		if (tile) {
 			// if exists, return it
-			return [ tile ];
+			return [{
+				tile: tile
+			}];
 		}
 		// if not, find the closest available level-of-detail
 
@@ -439,14 +441,19 @@ class TilePyramid {
 		// second, iterate through available levels seeing the closest
 		// level-of-detail for the current head of the queue
 		while (current && levels.length > 0) {
-			const level = levels.shift();
+
+			const level = levels[0];
 			if (level < current.z) {
 				// try to find ancestor
 				const dist = current.z - level;
 				const ancestor = this.getAncestor(current, dist);
 				if (ancestor) {
-					results.push(ancestor);
+					results.push({
+						tile: ancestor,
+						descendant: current
+					});
 					current = queue.shift();
+					continue;
 				}
 			} else {
 				const dist = level - current.z;
@@ -459,16 +466,21 @@ class TilePyramid {
 							const descendant = descendants[j];
 							if (descendant.coord) {
 								// tile found, descendant is a tile
-								results.push(descendant);
+								results.push({
+									tile: descendant
+								});
 							} else {
 								// no tile found, descendant is a coord
 								queue.push(descendant);
 							}
+							continue;
 						}
 						current = queue.shift();
 					}
 				}
 			}
+			// nothing found in level, we can safely pop this level off
+			levels.shift();
 		}
 		return (results.length > 0) ? results : undefined;
 	}
