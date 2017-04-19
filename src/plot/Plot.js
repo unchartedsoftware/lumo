@@ -752,8 +752,8 @@ class Plot extends EventEmitter {
 	fitToBounds(bounds) {
 		const targetZoom = this.getTargetZoom();
 		const targetViewport = this.getTargetViewport();
-		const scaleX = targetViewport.width / bounds.width();
-		const scaleY = targetViewport.height / bounds.height();
+		const scaleX = targetViewport.width / bounds.getWidth();
+		const scaleY = targetViewport.height / bounds.getHeight();
 		const scale = Math.min(scaleX, scaleY);
 		let zoom = Math.log2(scale) + targetZoom;
 		zoom = clamp(zoom, this.minZoom, this.maxZoom);
