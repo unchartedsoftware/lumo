@@ -2,7 +2,7 @@
 
 const EventType = require('./EventType');
 const MouseEvent = require('./MouseEvent');
-const Keyboard = require('../core/Keyboard');
+const Keyboard = require('../util/Keyboard');
 
 const setCursor = function(plot) {
 	plot.getContainer().style.cursor = 'pointer';

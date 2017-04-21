@@ -255,7 +255,7 @@ class TileLayer extends Layer {
 	/**
 	 * Request a specific tile.
 	 *
-	 * @param {Coord} coord - The coord of the tile to request.
+	 * @param {TileCoord} coord - The coord of the tile to request.
 	 * @param {Function} done - The callback function to execute upon completion.
 	 */
 	requestTile(coord, done) {

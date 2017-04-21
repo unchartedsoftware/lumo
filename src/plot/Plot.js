@@ -351,10 +351,9 @@ class Plot extends EventEmitter {
 
 		// set viewport
 		const span = Math.pow(2, this.zoom);
-		this.viewport = new Viewport({
-			width: this.canvas.offsetWidth / span,
-			height: this.canvas.offsetHeight / span
-		});
+		const width = this.canvas.offsetWidth / span;
+		const height = this.canvas.offsetHeight / span;
+		this.viewport = new Viewport(0, 0, width, height);
 
 		// center the plot
 		const center = defaultTo(options.center, { x: 0.5, y: 0.5 });

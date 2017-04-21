@@ -7,12 +7,7 @@ describe('Viewport', () => {
 
 	describe('#constructor()', () => {
 		it('should accept `width`, `height`, `x`, and `y` arguments', () => {
-			const viewport = new Viewport({
-				x: 0.1,
-				y: 0.2,
-				width: 0.25,
-				height: 0.15
-			});
+			const viewport = new Viewport(0.1, 0.2, 0.25, 0.15);
 			assert(viewport.width === 0.25);
 			assert(viewport.height === 0.15);
 			assert(viewport.x === 0.1);
@@ -22,10 +17,7 @@ describe('Viewport', () => {
 
 	describe('#getPixelSize()', () => {
 		it('should return the width and height of the Viewport in pixels relative to the zoom and tileSize', () => {
-			const viewport = new Viewport({
-				width: 1.0,
-				height: 0.5
-			});
+			const viewport = new Viewport(0, 0, 1.0, 0.5);
 			const tileSize = 256;
 			const size0 = viewport.getPixelSize(0, tileSize);
 			assert(size0.width === tileSize);
@@ -38,10 +30,7 @@ describe('Viewport', () => {
 
 	describe('#getTileBounds()', () => {
 		it('should return the inclusive tile bounds of the Viewport', () => {
-			const viewport = new Viewport({
-				width: 1.0,
-				height: 1.0
-			});
+			const viewport = new Viewport(0, 0, 1, 1);
 			// (0, 0, 0)
 			const bounds0 = viewport.getTileBounds(0);
 			assert(bounds0.left === 0);

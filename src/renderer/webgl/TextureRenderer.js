@@ -167,7 +167,8 @@ class TextureRenderer extends WebGLTextureRenderer {
 		quad.bind();
 
 		// for each renderable
-		renderables.forEach(renderable => {
+		for (let i=0; i<renderables.length; i++) {
+			const renderable = renderables[i];
 			array.bind(renderable.hash, 0);
 			// set tile uniforms
 			shader.setUniform('uTextureCoordOffset', renderable.uvOffset);
@@ -176,7 +177,7 @@ class TextureRenderer extends WebGLTextureRenderer {
 			// draw
 			quad.draw();
 			// no need to unbind texture
-		});
+		}
 
 		// unbind quad
 		quad.unbind();

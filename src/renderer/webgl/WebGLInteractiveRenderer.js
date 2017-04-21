@@ -2,8 +2,8 @@
 
 const defaultTo = require('lodash/defaultTo');
 const EventType = require('../../event/EventType');
-const RTree = require('../../collision/RTree');
-const CollisionType = require('../../collision/CollisionType');
+const RTree = require('../../geometry/RTree');
+const CollisionType = require('../../geometry/CollisionType');
 const WebGLVertexRenderer = require('./WebGLVertexRenderer');
 
 // Constants
@@ -115,7 +115,7 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 	/**
 	 * Indexes the provided points into an R-Tree structure.
 	 *
-	 * @param {Coord} coord - The coord for the tile.
+	 * @param {TileCoord} coord - The coord for the tile.
 	 * @param {Array} points - The point data to index.
 	 *
 	 * @returns {Renderer} The renderer object, for chaining.
@@ -135,7 +135,7 @@ class WebGLInteractiveRenderer extends WebGLVertexRenderer {
 	/**
 	 * Removes the coords worth of tiles from the R-Tree structure.
 	 *
-	 * @param {Coord} coord - The coord for the tile.
+	 * @param {TileCoord} coord - The coord for the tile.
 	 *
 	 * @returns {Renderer} The renderer object, for chaining.
 	 */

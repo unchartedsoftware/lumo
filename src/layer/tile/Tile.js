@@ -25,7 +25,7 @@ class Tile {
 	/**
 	 * Instantiates a new Tile object.
 	 *
-	 * @param {Coord} coord - The coord of the tile.
+	 * @param {TileCoord} coord - The coord of the tile.
 	 */
 	constructor(coord) {
 		this.coord = coord;

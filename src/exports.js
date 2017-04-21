@@ -1,14 +1,9 @@
 'use strict';
 
 const EventType = require('./event/EventType');
-const CollisionType = require('./collision/CollisionType');
+const CollisionType = require('./geometry/CollisionType');
 
 module.exports = {
-	// core
-	Bounds: require('./core/Bounds'),
-	Browser: require('./core/Browser'),
-	Coord: require('./core/Coord'),
-	Tile: require('./core/Tile'),
 	// events
 	CLICK: EventType.CLICK,
 	DBL_CLICK: EventType.DBL_CLICK,
@@ -36,8 +31,9 @@ module.exports = {
 	MouseEvent: require('./event/MouseEvent'),
 	ResizeEvent: require('./event/ResizeEvent'),
 	TileEvent: require('./event/TileEvent'),
-	// collision
-	RTree: require('./collision/RTree.js'),
+	// geometry
+	Bounds: require('./geometry/Bounds'),
+	RTree: require('./geometry/RTree'),
 	// collision types
 	CIRCLE: CollisionType.CIRCLE,
 	RECTANGLE: CollisionType.RECTANGLE,
@@ -46,6 +42,8 @@ module.exports = {
 	// layer
 	Layer: require('./layer/Layer'),
 	// tile layer
+	Tile: require('./layer/tile/Tile'),
+	TileCoord: require('./layer/tile/TileCoord'),
 	TileLayer: require('./layer/tile/TileLayer'),
 	// overlay
 	Overlay: require('./layer/overlay/Overlay'),
@@ -71,6 +69,8 @@ module.exports = {
 	VertexAtlas: require('./webgl/vertex/VertexAtlas'),
 	VertexBuffer: require('./webgl/vertex/VertexBuffer'),
 	// util
+	Browser: require('./util/Browser'),
+	Keyboard: require('./util/Keyboard'),
 	loadBuffer: require('./util/loadBuffer'),
 	loadImage: require('./util/loadImage')
 };

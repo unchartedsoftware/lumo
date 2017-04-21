@@ -3,9 +3,10 @@
 const defaultTo = require('lodash/defaultTo');
 const throttle = require('lodash/throttle');
 const LRU = require('lru-cache');
-const Tile = require('../../core/Tile');
 const EventType = require('../../event/EventType');
 const TileEvent = require('../../event/TileEvent');
+const Tile = require('./Tile');
+const TilePartial = require('./TilePartial');
 
 // Constants
 
@@ -228,7 +229,7 @@ class TilePyramid {
 	/**
 	 * Test whether or not a coord is held in cache in the pyramid.
 	 *
-	 * @param {Coord} ncoord - The normalized coord to test.
+	 * @param {TileCoord} ncoord - The normalized coord to test.
 	 *
 	 * @returns {boolean} Whether or not the coord exists in the pyramid.
 	 */
@@ -242,7 +243,7 @@ class TilePyramid {
 	/**
 	 * Test whether or not a coord is currently pending.
 	 *
-	 * @param {Coord} ncoord - The normalized coord to test.
+	 * @param {TileCoord} ncoord - The normalized coord to test.
 	 *
 	 * @returns {boolean} Whether or not the coord is currently pending.
 	 */
@@ -254,7 +255,7 @@ class TilePyramid {
 	 * Returns the tile matching the provided coord. If the tile does not
 	 * exist, returns undefined.
 	 *
-	 * @param {Coord} ncoord - The normalized coord of the tile to return.
+	 * @param {TileCoord} ncoord - The normalized coord of the tile to return.
 	 *
 	 * @returns {Tile} The tile object.
 	 */
@@ -269,7 +270,7 @@ class TilePyramid {
 	 * Returns the ancestor tile of the coord at the provided offset. If no
 	 * tile exists in the pyramid, returns undefined.
 	 *
-	 * @param {Coord} ncoord - The normalized coord of the tile.
+	 * @param {TileCoord} ncoord - The normalized coord of the tile.
 	 * @param {Number} dist - The offset from the tile.
 	 *
 	 * @return {Tile} The ancestor tile of the provided coord.
@@ -286,7 +287,7 @@ class TilePyramid {
 	 * or a coord (in the case that it does not exist). If no descendant tiles
 	 * are found in the pyramid, returns undefined.
 	 *
-	 * @param {Coord} ncoord - The normalized coord of the tile.
+	 * @param {TileCoord} ncoord - The normalized coord of the tile.
 	 * @param {Number} dist - The offset from the tile.
 	 *
 	 * @return {Array} The descendant tiles and or coordinates of the provided coord.
@@ -352,8 +353,9 @@ class TilePyramid {
 			return tile;
 		});
 
-		// request tiles
-		tiles.forEach(tile => {
+		// request the tiles
+		for (let i=0; i<tiles.length; i++) {
+			const tile = tiles[i];
 			// emit request
 			this.layer.emit(EventType.TILE_REQUEST, new TileEvent(this.layer, tile));
 			// request tile
@@ -393,7 +395,7 @@ class TilePyramid {
 				// check if loaded
 				checkIfLoaded(this);
 			});
-		});
+		}
 	}
 
 	/**
@@ -403,18 +405,18 @@ class TilePyramid {
 	 *
 	 * If no ancestor or descendants exist, return undefined.
 	 *
-	 * @param {Coord} ncoord - The normalized coord of the tile.
+	 * @param {TileCoord} ncoord - The normalized coord of the tile.
 	 *
-	 * @return {Array} The array of tiles that closest matches the provided coord.
+	 * @return {Array} The array of tile partials that closest match the provided coord.
 	 */
 	getAvailableLOD(ncoord) {
 		// check if we have the tile
 		const tile = this.get(ncoord);
 		if (tile) {
 			// if exists, return it
-			return [{
-				tile: tile
-			}];
+			return [
+				TilePartial.fromTile(tile)
+			];
 		}
 		// if not, find the closest available level-of-detail
 
@@ -448,10 +450,13 @@ class TilePyramid {
 				const dist = current.z - level;
 				const ancestor = this.getAncestor(current, dist);
 				if (ancestor) {
-					results.push({
-						tile: ancestor,
-						descendant: current
-					});
+					// tile found, create a tile partial from the ancestor
+					results.push(
+						TilePartial.fromAncestor(
+							ncoord, // target
+							ancestor, // tile
+							current)); // relative
+					// pop next coord to search off the queue
 					current = queue.shift();
 					continue;
 				}
@@ -472,10 +477,12 @@ class TilePyramid {
 						for (let j=0; j<descendants.length; j++) {
 							const descendant = descendants[j];
 							if (descendant.coord) {
-								// tile found, descendant is a tile
-								results.push({
-									tile: descendant
-								});
+								// tile found,  create a tile partial from the
+								// descendant
+								results.push(
+									TilePartial.fromDescendant(
+										ncoord, // target
+										descendant)); // tile
 							} else {
 								// no tile found, descendant is a coord
 								queue.push(descendant);

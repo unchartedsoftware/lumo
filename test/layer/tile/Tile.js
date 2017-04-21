@@ -1,14 +1,14 @@
 'use strict';
 
 const assert = require('assert');
-const Coord = require('../../src/core/Coord');
-const Tile = require('../../src/core/Tile');
+const TileCoord = require('../../../src/layer/tile/TileCoord');
+const Tile = require('../../../src/layer/tile/Tile');
 
 describe('Tile', () => {
 
 	describe('#constructor()', () => {
 		it('should accept a `coord` argument', () => {
-			const coord = new Coord(4, 5, 6);
+			const coord = new TileCoord(4, 5, 6);
 			const tile = new Tile(coord);
 			assert(tile.coord === coord);
 		});
@@ -16,7 +16,7 @@ describe('Tile', () => {
 			const tiles = [];
 			const n = 100;
 			for (let i=0; i<n; i++) {
-				tiles.push(new Tile(new Coord(0, 0, 0)));
+				tiles.push(new Tile(new TileCoord(0, 0, 0)));
 			}
 			for (let i=0; i<n; i++) {
 				for (let j=i+1; j<n; j++) {

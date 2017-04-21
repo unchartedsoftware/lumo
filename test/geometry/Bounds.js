@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('assert');
-const Bounds = require('../../src/core/Bounds');
+const Bounds = require('../../src/geometry/Bounds');
 const TILE_SIZE = 256;
 
 describe('Bounds', () => {

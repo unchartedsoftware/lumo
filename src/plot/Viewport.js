@@ -1,7 +1,7 @@
 'use strict';
 
-const Bounds = require('../core/Bounds');
-const Coord = require('../core/Coord');
+const Bounds = require('../geometry/Bounds');
+const TileCoord = require('../layer/tile/TileCoord');
 
 // Private Methods
 
@@ -73,17 +73,16 @@ class Viewport {
 	/**
 	 * Instantiates a new Viewport object.
 	 *
-	 * @param {Object} params - The viewport parameters.
-	 * @param {Number} params.x - The x coordinate of the viewport.
-	 * @param {Number} params.y - The y coordinate of the viewport.
-	 * @param {Number} params.width - The width of the viewport.
-	 * @param {Number} params.height - The height of the viewport.
+	 * @param {Number} x - The x coordinate of the viewport.
+	 * @param {Number} y - The y coordinate of the viewport.
+	 * @param {Number} width - The width of the viewport.
+	 * @param {Number} height - The height of the viewport.
 	 */
-	constructor(params = {}) {
-		this.x = params.x ? params.x : 0;
-		this.y = params.y ? params.y : 0;
-		this.width = params.width ? params.width : 0;
-		this.height = params.height ? params.height : 0;
+	constructor(x, y, width, height) {
+		this.x = x;
+		this.y = y;
+		this.width = width;
+		this.height = height;
 	}
 
 	/**
@@ -124,7 +123,7 @@ class Viewport {
 		const coords = [];
 		for (let x=bounds.left; x<=bounds.right; x++) {
 			for (let y=bounds.bottom; y<=bounds.top; y++) {
-				coords.push(new Coord(tileZoom, x, y));
+				coords.push(new TileCoord(tileZoom, x, y));
 			}
 		}
 		return coords;
@@ -133,7 +132,7 @@ class Viewport {
 	/**
 	 * Returns whether or not the provided coord is within the viewport.
 	 *
-	 * @param {Coord} coord - The coord.
+	 * @param {TileCoord} coord - The coord.
 	 * @param {boolean} wraparound - The if the horizontal axis should wraparound. Optional.
 	 *
 	 * @return {boolean} Whether or not the coord is in view.
@@ -167,12 +166,11 @@ class Viewport {
 			x: (targetPos.x - this.x) / scale,
 			y: (targetPos.y - this.y) / scale
 		};
-		return new Viewport({
-			width: scaledWidth,
-			height: scaledHeight,
-			x: targetPos.x - diff.x,
-			y: targetPos.y - diff.y,
-		});
+		return new Viewport(
+			targetPos.x - diff.x,
+			targetPos.y - diff.y,
+			scaledWidth,
+			scaledHeight);
 	}
 
 	/**
