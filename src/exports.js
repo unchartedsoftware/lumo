@@ -1,15 +1,10 @@
 'use strict';
 
 const EventType = require('./event/EventType');
-const CollisionType = require('./collision/CollisionType');
+const CollisionType = require('./geometry/CollisionType');
 
 module.exports = {
-	// core
-	Bounds: require('./core/Bounds'),
-	Browser: require('./core/Browser'),
-	Coord: require('./core/Coord'),
-	Tile: require('./core/Tile'),
-	// event types
+	// events
 	CLICK: EventType.CLICK,
 	DBL_CLICK: EventType.DBL_CLICK,
 	MOUSE_DOWN: EventType.MOUSE_DOWN,
@@ -23,32 +18,38 @@ module.exports = {
 	ZOOM_START: EventType.ZOOM_START,
 	ZOOM: EventType.ZOOM,
 	ZOOM_END: EventType.ZOOM_END,
-	FRAME: EventType.FRAME,
 	RESIZE: EventType.RESIZE,
+	FRAME: EventType.FRAME,
 	TILE_REQUEST: EventType.TILE_REQUEST,
 	TILE_FAILURE: EventType.TILE_FAILURE,
 	TILE_ADD: EventType.TILE_ADD,
 	TILE_DISCARD: EventType.TILE_DISCARD,
 	TILE_REMOVE: EventType.TILE_REMOVE,
+	CELL_UPDATE: EventType.CELL_UPDATE,
 	// event
 	Event: require('./event/Event'),
 	MouseEvent: require('./event/MouseEvent'),
 	ResizeEvent: require('./event/ResizeEvent'),
 	TileEvent: require('./event/TileEvent'),
-	// collision
-	RTree: require('./collision/RTree.js'),
+	// geometry
+	Bounds: require('./geometry/Bounds'),
+	RTree: require('./geometry/RTree'),
 	// collision types
 	CIRCLE: CollisionType.CIRCLE,
 	RECTANGLE: CollisionType.RECTANGLE,
-	// layer
-	Layer: require('./layer/Layer'),
 	// plot
 	Plot: require('./plot/Plot'),
+	// layer
+	Layer: require('./layer/Layer'),
+	// tile layer
+	Tile: require('./layer/tile/Tile'),
+	TileCoord: require('./layer/tile/TileCoord'),
+	TileLayer: require('./layer/tile/TileLayer'),
 	// overlay
-	Overlay: require('./overlay/Overlay'),
-	WebGLOverlay: require('./overlay/webgl/WebGLOverlay'),
-	WebGLLineOverlay: require('./overlay/webgl/WebGLLineOverlay'),
-	WebGLPointOverlay: require('./overlay/webgl/WebGLPointOverlay'),
+	Overlay: require('./layer/overlay/Overlay'),
+	WebGLOverlay: require('./layer/overlay/webgl/WebGLOverlay'),
+	WebGLLineOverlay: require('./layer/overlay/webgl/WebGLLineOverlay'),
+	WebGLPointOverlay: require('./layer/overlay/webgl/WebGLPointOverlay'),
 	// render
 	Renderer: require('./renderer/Renderer'),
 	WebGLRenderer: require('./renderer/webgl/WebGLRenderer'),
@@ -68,6 +69,8 @@ module.exports = {
 	VertexAtlas: require('./webgl/vertex/VertexAtlas'),
 	VertexBuffer: require('./webgl/vertex/VertexBuffer'),
 	// util
+	Browser: require('./util/Browser'),
+	Keyboard: require('./util/Keyboard'),
 	loadBuffer: require('./util/loadBuffer'),
 	loadImage: require('./util/loadImage')
 };

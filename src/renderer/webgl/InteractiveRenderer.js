@@ -97,13 +97,14 @@ const renderTiles = function(atlas, shader, renderables, color) {
 	atlas.bind();
 
 	// for each renderable
-	renderables.forEach(renderable => {
+	for (let i=0; i<renderables.length; i++) {
+		const renderable = renderables[i];
 		// set tile uniforms
 		shader.setUniform('uScale', renderable.scale);
 		shader.setUniform('uTileOffset', renderable.tileOffset);
 		// draw points
 		atlas.draw(renderable.hash, 'POINTS');
-	});
+	}
 
 	// unbind
 	atlas.unbind();

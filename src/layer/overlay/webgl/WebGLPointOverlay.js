@@ -1,7 +1,7 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const VertexBuffer = require('../../webgl/vertex/VertexBuffer');
+const VertexBuffer = require('../../../webgl/vertex/VertexBuffer');
 const WebGLOverlay = require('./WebGLOverlay');
 
 // Constants
@@ -220,7 +220,7 @@ class WebGLPointOverlay extends WebGLOverlay {
 
 		// set blending func
 		gl.enable(gl.BLEND);
-		gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
 		// bind shader
 		shader.use();

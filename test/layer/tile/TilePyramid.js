@@ -2,11 +2,11 @@
 
 const assert = require('assert');
 const sinon = require('sinon');
-const Coord = require('../../src/core/Coord');
-const EventType = require('../../src/event/EventType');
-const Layer = require('../../src/layer/Layer');
-const TilePyramid = require('../../src/layer/TilePyramid');
-const Viewport = require('../../src/plot/Viewport');
+const EventType = require('../../../src/event/EventType');
+const TileCoord = require('../../../src/layer/tile/TileCoord');
+const TileLayer = require('../../../src/layer/tile/TileLayer');
+const TilePyramid = require('../../../src/layer/tile/TilePyramid');
+const Viewport = require('../../../src/plot/Viewport');
 
 describe('TilePyramid', () => {
 
@@ -16,7 +16,7 @@ describe('TilePyramid', () => {
 
 	beforeEach(() => {
 		// layer
-		layer = new Layer();
+		layer = new TileLayer();
 		layer.requestTile = (coord, done) => {
 			done(null, {});
 		};
@@ -24,12 +24,7 @@ describe('TilePyramid', () => {
 		plot = {
 			zoom: 0,
 			tileSize: 256,
-			viewport: new Viewport({
-				x: -0.5,
-				y: -0.5,
-				width: 2.0,
-				height: 2.0
-			}),
+			viewport: new Viewport(-0.5, -0.5, 2.0, 2.0),
 			getTargetViewportCenter: function() {
 				return this.viewport.getCenter();
 			},
@@ -67,22 +62,22 @@ describe('TilePyramid', () => {
 	describe('#getCapacity()', () => {
 		it('should return the maximum capacity of the pyramid', () => {
 			const capacity = pyramid.getCapacity();
-			const sumPowOfFour = (1/3) * (Math.pow(4, pyramid.persistentLevels) - 1);
+			const sumPowOfFour = (1/3) * (Math.pow(4, pyramid.numPersistentLevels) - 1);
 			assert(capacity === pyramid.cacheSize + sumPowOfFour);
 		});
 	});
 
 	describe('#has()', () => {
 		it('should return `true` if the pyramid contains a tile for the provided coord', () => {
-			const coordA = new Coord(0, 0, 0);
-			const coordB = new Coord(pyramid.persistentLevels + 1, 0, 0);
+			const coordA = new TileCoord(0, 0, 0);
+			const coordB = new TileCoord(pyramid.numPersistentLevels + 1, 0, 0);
 			pyramid.requestTiles([ coordA, coordB ]);
 			assert(pyramid.has(coordA));
 			assert(pyramid.has(coordB));
 		});
 		it('should return `false` if the pyramid does not contain the tile', () => {
-			const coordA = new Coord(0, 0, 0);
-			const coordB = new Coord(pyramid.persistentLevels + 1, 0, 0);
+			const coordA = new TileCoord(0, 0, 0);
+			const coordB = new TileCoord(pyramid.numPersistentLevels + 1, 0, 0);
 			assert(!pyramid.has(coordA));
 			assert(!pyramid.has(coordB));
 		});
@@ -90,15 +85,15 @@ describe('TilePyramid', () => {
 
 	describe('#get()', () => {
 		it('should get an active tile from the pyramid', () => {
-			const coordA = new Coord(0, 0, 0);
-			const coordB = new Coord(pyramid.persistentLevels + 1, 0, 0);
+			const coordA = new TileCoord(0, 0, 0);
+			const coordB = new TileCoord(pyramid.numPersistentLevels + 1, 0, 0);
 			pyramid.requestTiles([ coordA, coordB ]);
 			assert(pyramid.get(coordA) !== undefined);
 			assert(pyramid.get(coordB) !== undefined);
 		});
 		it('should return `undefined` if the pyramid does not contain the tile', () => {
-			const coordA = new Coord(0, 0, 0);
-			const coordB = new Coord(pyramid.persistentLevels + 1, 0, 0);
+			const coordA = new TileCoord(0, 0, 0);
+			const coordB = new TileCoord(pyramid.numPersistentLevels + 1, 0, 0);
 			assert(pyramid.get(coordA) === undefined);
 			assert(pyramid.get(coordB) === undefined);
 		});
@@ -106,9 +101,9 @@ describe('TilePyramid', () => {
 
 	describe('#clear()', () => {
 		it('should clear all tile references held in the tile pyramid', () => {
-			const coordA = new Coord(0, 0, 0);
-			const coordB = new Coord(pyramid.persistentLevels + 1, 0, 0);
-			const coordC = new Coord(pyramid.persistentLevels + 1, 1, 0);
+			const coordA = new TileCoord(0, 0, 0);
+			const coordB = new TileCoord(pyramid.numPersistentLevels + 1, 0, 0);
+			const coordC = new TileCoord(pyramid.numPersistentLevels + 1, 1, 0);
 			pyramid.requestTiles([ coordA, coordB, coordC ]);
 			pyramid.clear();
 			assert(!pyramid.has(coordA));
@@ -116,8 +111,8 @@ describe('TilePyramid', () => {
 			assert(!pyramid.has(coordC));
 		});
 		it('should flag all currently pending tiles as stale', () => {
-			const coordA = new Coord(0, 0, 0);
-			const coordB = new Coord(pyramid.persistentLevels + 1, 0, 0);
+			const coordA = new TileCoord(0, 0, 0);
+			const coordB = new TileCoord(pyramid.numPersistentLevels + 1, 0, 0);
 			let resolve;
 			const promise = new Promise(res => {
 				resolve = res;
@@ -135,49 +130,149 @@ describe('TilePyramid', () => {
 		});
 	});
 
-	describe('#getClosestAncestor()', () => {
-		it('should return the closest ancestor of the coord held in the pyramid', () => {
-			const coordA = new Coord(0, 0, 0);
-			const coordB = new Coord(pyramid.persistentLevels + 1, 0, 0);
-			const coordC = new Coord(1, 0, 0);
-			const coordD = new Coord(pyramid.persistentLevels + 2, 0, 0);
-			pyramid.requestTiles([ coordA, coordB ]);
-			assert(pyramid.getClosestAncestor(coordC).equals(coordA));
-			assert(pyramid.getClosestAncestor(coordD).equals(coordB));
+	describe('#getAncestor()', () => {
+		it('should return the ancestor tile of the coord at the provided distance', () => {
+			const coordA = new TileCoord(0, 0, 0);
+			const coordB = new TileCoord(1, 0, 0);
+			const coordC = new TileCoord(2, 0, 0);
+			const coordD = new TileCoord(3, 0, 0);
+			const coordE = new TileCoord(4, 0, 0);
+			pyramid.requestTiles([ coordA, coordB, coordC, coordD, coordE ]);
+			assert(pyramid.getAncestor(coordE, 1).coord.equals(coordD));
+			assert(pyramid.getAncestor(coordE, 2).coord.equals(coordC));
+			assert(pyramid.getAncestor(coordE, 3).coord.equals(coordB));
+			assert(pyramid.getAncestor(coordE, 4).coord.equals(coordA));
+			assert(pyramid.getAncestor(coordD, 1).coord.equals(coordC));
+			assert(pyramid.getAncestor(coordD, 2).coord.equals(coordB));
+			assert(pyramid.getAncestor(coordD, 3).coord.equals(coordA));
+			assert(pyramid.getAncestor(coordC, 1).coord.equals(coordB));
+			assert(pyramid.getAncestor(coordC, 2).coord.equals(coordA));
+			assert(pyramid.getAncestor(coordB, 1).coord.equals(coordA));
 		});
-		it('should return `undefined` if there is no ancestor for the the coord in the pyramid', () => {
-			const coordA = new Coord(0, 0, 0);
-			const coordB = new Coord(pyramid.persistentLevels + 1, 0, 0);
-			const coordC = new Coord(2, 3, 3);
-			const coordD = new Coord(1, 0, 0);
-			pyramid.requestTiles([ coordC ]);
-			assert(pyramid.getClosestAncestor(coordA) === undefined);
-			assert(pyramid.getClosestAncestor(coordB) === undefined);
-			assert(pyramid.getClosestAncestor(coordD) === undefined);
+		it('should return `undefined` if no ancestor exists in the pyramid for the provided distance', () => {
+			const coordA = new TileCoord(0, 0, 0);
+			const coordB = new TileCoord(1, 0, 0);
+			const coordC = new TileCoord(2, 3, 3);
+			pyramid.requestTiles([ coordA, coordB, coordC ]);
+			assert(pyramid.getAncestor(coordA, 1) === undefined);
+			assert(pyramid.getAncestor(coordB, 2) === undefined);
+			assert(pyramid.getAncestor(coordC, 1) === undefined);
+		});
+	});
+
+	describe('#getDescendants()', () => {
+		it('should return the descendant tiles of the coord at the provided distance', () => {
+			const coordA = new TileCoord(0, 0, 0);
+			const coordB = new TileCoord(1, 0, 0);
+			const coordC = new TileCoord(1, 1, 0);
+			const coordD = new TileCoord(1, 1, 1);
+			const coordE = new TileCoord(1, 0, 1);
+			pyramid.requestTiles([ coordB, coordC, coordD, coordE ]);
+			const descendants = pyramid.getDescendants(coordA, 1);
+			assert(descendants.length === 4);
+			descendants.forEach(descendant => {
+				assert(
+					descendant.coord.equals(coordB) ||
+					descendant.coord.equals(coordC) ||
+					descendant.coord.equals(coordD) ||
+					descendant.coord.equals(coordE));
+			});
+		});
+		it('should return the missing coordinates if there is at least one descendant in the pyramid', () => {
+			const coordA = new TileCoord(0, 0, 0);
+			const coordB = new TileCoord(1, 0, 0);
+			const coordC = new TileCoord(1, 1, 0);
+			const coordD = new TileCoord(1, 1, 1);
+			const coordE = new TileCoord(1, 0, 1);
+			pyramid.requestTiles([ coordB, coordC, coordD ]);
+			const descendants = pyramid.getDescendants(coordA, 1);
+			assert(descendants.length === 4);
+			descendants.forEach(descendant => {
+				if (descendant.coord) {
+					// found tiles
+					assert(
+						descendant.coord.equals(coordB) ||
+						descendant.coord.equals(coordC) ||
+						descendant.coord.equals(coordD));
+				} else {
+					// missing tile
+					assert(descendant.equals(coordE));
+				}
+			});
+		});
+		it('should return `undefined` if no descendants exists in the pyramid for the provided distance', () => {
+			const coordA = new TileCoord(0, 0, 0);
+			const descendants = pyramid.getDescendants(coordA, 1);
+			assert(descendants === undefined);
 		});
 	});
 
 	describe('#getAvailableLOD()', () => {
-		it('should return the closest available tile coordinate', () => {
-			const coordA = new Coord(0, 0, 0);
-			const coordB = new Coord(pyramid.persistentLevels + 1, 0, 0);
-			const coordC = new Coord(1, 0, 0);
-			const coordD = new Coord(pyramid.persistentLevels + 2, 0, 0);
-			pyramid.requestTiles([ coordA, coordB ]);
-			assert(pyramid.getAvailableLOD(coordA).tile.coord.equals(coordA));
-			assert(pyramid.getAvailableLOD(coordC).tile.coord.equals(coordA));
-			assert(pyramid.getAvailableLOD(coordD).tile.coord.equals(coordB));
+		it('should return the exact tile if available', () => {
+			const coord = new TileCoord(2, 2, 2);
+			pyramid.requestTiles([ coord ]);
+			const lods = pyramid.getAvailableLOD(coord);
+			assert(lods[0].tile.coord.equals(coord));
+		});
+		it('should return the closest available tile level-of-detail', () => {
+			pyramid.requestTiles([
+				new TileCoord(0, 0, 0),
+				new TileCoord(3, 4, 4),
+				new TileCoord(3, 3, 3),
+				new TileCoord(3, 4, 3),
+				new TileCoord(3, 3, 4),
+				new TileCoord(3, 2, 4),
+				new TileCoord(3, 5, 3),
+				new TileCoord(3, 1, 3),
+				new TileCoord(3, 1, 4),
+				new TileCoord(3, 6, 3),
+				new TileCoord(3, 6, 4),
+				new TileCoord(3, 5, 4),
+				new TileCoord(3, 2, 3)
+			]);
+			const search = [
+				new TileCoord(2, 0, 1),
+				new TileCoord(2, 0, 2),
+				new TileCoord(2, 1, 1),
+				new TileCoord(2, 1, 2),
+				new TileCoord(2, 2, 1),
+				new TileCoord(2, 2, 2),
+				new TileCoord(2, 3, 1),
+				new TileCoord(2, 3, 2),
+			];
+			let lods = [];
+			search.forEach(coord => {
+				lods = lods.concat(pyramid.getAvailableLOD(coord));
+			});
+			assert(lods.length === 32);
+		});
+		it('should return the closest available tile level-of-detail', () => {
+			const coord = new TileCoord(2, 2, 2);
+			pyramid.requestTiles([
+				new TileCoord(0, 0, 0),
+				new TileCoord(3, 4, 4),
+				new TileCoord(3, 5, 5),
+				new TileCoord(3, 5, 4)
+			]);
+			const lods = pyramid.getAvailableLOD(coord);
+			lods.forEach(lod => {
+				assert(
+					lod.tile.coord.equals(new TileCoord(3, 4, 4)) ||
+					lod.tile.coord.equals(new TileCoord(3, 5, 5)) ||
+					lod.tile.coord.equals(new TileCoord(3, 5, 4)) ||
+					lod.tile.coord.equals(new TileCoord(0, 0, 0)));
+			});
 		});
 		it('should return `undefined` if there is no available tile', () => {
-			const coordA = new Coord(0, 0, 0);
-			assert(pyramid.getAvailableLOD(coordA) === undefined);
+			const coord = new TileCoord(0, 0, 0);
+			assert(pyramid.getAvailableLOD(coord) === undefined);
 		});
 	});
 
 	describe('#requestTiles()', () => {
 		it('should request tiles for the provided tile coordinates', () => {
-			const coordA = new Coord(0, 0, 0);
-			const coordB = new Coord(1, 0, 0);
+			const coordA = new TileCoord(0, 0, 0);
+			const coordB = new TileCoord(1, 0, 0);
 			const tiles = {
 				[coordA.hash]: 'A',
 				[coordB.hash]: 'B'
@@ -192,21 +287,21 @@ describe('TilePyramid', () => {
 		it('should not request duplicate coordinates', () => {
 			const requestTile = sinon.stub(layer, 'requestTile');
 			pyramid.requestTiles([
-				new Coord(0, 0, 0),
-				new Coord(0, 0, 0),
-				new Coord(0, 0, 0)
+				new TileCoord(0, 0, 0),
+				new TileCoord(0, 0, 0),
+				new TileCoord(0, 0, 0)
 			]);
 			assert(requestTile.callCount === 1);
 		});
 		it('should normalize coordinates before making requests', () => {
 			const coords = [
-				new Coord(0, 0, 0),
-				new Coord(0, 1, 0),
-				new Coord(0, -1, 0),
-				new Coord(0, 0, 1),
-				new Coord(0, 0, -1),
-				new Coord(0, 1, 1),
-				new Coord(0, -1, -1)
+				new TileCoord(0, 0, 0),
+				new TileCoord(0, 1, 0),
+				new TileCoord(0, -1, 0),
+				new TileCoord(0, 0, 1),
+				new TileCoord(0, 0, -1),
+				new TileCoord(0, 1, 1),
+				new TileCoord(0, -1, -1)
 			];
 			const requestTile = sinon.stub(layer, 'requestTile');
 			pyramid.requestTiles(coords);
@@ -217,7 +312,7 @@ describe('TilePyramid', () => {
 				done();
 			});
 			pyramid.requestTiles([
-				new Coord(0, 0, 0)
+				new TileCoord(0, 0, 0)
 			]);
 		});
 		it('should emit a `TILE_FAILURE` event from the layer if the tile request fails', done => {
@@ -228,7 +323,7 @@ describe('TilePyramid', () => {
 				done();
 			});
 			pyramid.requestTiles([
-				new Coord(0, 0, 0)
+				new TileCoord(0, 0, 0)
 			]);
 		});
 		it('should emit a `TILE_DISCARD` event from the layer if the tile is no longer in view', done => {
@@ -244,7 +339,7 @@ describe('TilePyramid', () => {
 				done();
 			});
 			pyramid.requestTiles([
-				new Coord(0, 0, 0)
+				new TileCoord(0, 0, 0)
 			]);
 		});
 		it('should emit a `TILE_DISCARD` event from the layer if pyramid has been cleared before the response is received', done => {
@@ -261,17 +356,17 @@ describe('TilePyramid', () => {
 				done();
 			});
 			pyramid.requestTiles([
-				new Coord(0, 0, 0)
+				new TileCoord(0, 0, 0)
 			]);
 			pyramid.clear();
 			resolve();
 		});
 		it('should emit a `LOAD` event from the layer if all pending tile requests have succeeded', done => {
 			const coords = [
-				new Coord(0, 0, 0),
-				new Coord(1, 0, 0),
-				new Coord(2, 0, 0),
-				new Coord(3, 0, 0)
+				new TileCoord(0, 0, 0),
+				new TileCoord(1, 0, 0),
+				new TileCoord(2, 0, 0),
+				new TileCoord(3, 0, 0)
 			];
 			layer.on(EventType.LOAD, function() {
 				assert(count === coords.length);
@@ -286,10 +381,10 @@ describe('TilePyramid', () => {
 		});
 		it('should emit a `LOAD` event from the layer if all pending tile requests have failed', done => {
 			const coords = [
-				new Coord(0, 0, 0),
-				new Coord(1, 0, 0),
-				new Coord(2, 0, 0),
-				new Coord(3, 0, 0)
+				new TileCoord(0, 0, 0),
+				new TileCoord(1, 0, 0),
+				new TileCoord(2, 0, 0),
+				new TileCoord(3, 0, 0)
 			];
 			let count = 0;
 			layer.requestTile = (coord, callback) => {
@@ -304,10 +399,10 @@ describe('TilePyramid', () => {
 		});
 		it('should not emit a `LOAD` event from the layer if all pending tile requests are stale', done => {
 			const coords = [
-				new Coord(0, 0, 0),
-				new Coord(1, 0, 0),
-				new Coord(2, 0, 0),
-				new Coord(3, 0, 0)
+				new TileCoord(0, 0, 0),
+				new TileCoord(1, 0, 0),
+				new TileCoord(2, 0, 0),
+				new TileCoord(3, 0, 0)
 			];
 			const promises = [];
 			const resolves = {};
@@ -345,10 +440,10 @@ describe('TilePyramid', () => {
 		});
 		it('should emit a `LOAD` event from the layer if all pending tile requests are discarded', done => {
 			const coords = [
-				new Coord(0, 0, 0),
-				new Coord(1, 0, 0),
-				new Coord(2, 0, 0),
-				new Coord(3, 0, 0)
+				new TileCoord(0, 0, 0),
+				new TileCoord(1, 0, 0),
+				new TileCoord(2, 0, 0),
+				new TileCoord(3, 0, 0)
 			];
 			let count = 0;
 			layer.requestTile = (coord, callback) => {
@@ -367,7 +462,7 @@ describe('TilePyramid', () => {
 			pyramid.requestTiles(coords);
 		});
 		it('should discard multiple stale requests for the same coord', done => {
-			const coord = new Coord(0, 0, 0);
+			const coord = new TileCoord(0, 0, 0);
 
 			let r0, r1, r2;
 			const p0 = new Promise(resolve => { r0 = resolve; });
@@ -417,7 +512,7 @@ describe('TilePyramid', () => {
 			});
 		});
 		it('should handle calling `clear` inside the `requestTile` method', done => {
-			const coord = new Coord(0, 0, 0);
+			const coord = new TileCoord(0, 0, 0);
 
 			// 1) request tileA
 			// 2) clear pyramid flagging tileA as stale
@@ -477,7 +572,7 @@ describe('TilePyramid', () => {
 			pyramid.requestTiles([ coord ]);
 		});
 		it('should handle calling `clear` inside the `requestTile` method', () => {
-			const coord = new Coord(0, 0, 0);
+			const coord = new TileCoord(0, 0, 0);
 			// first request
 			layer.requestTile = (_, callback) => {
 				// clear the pyramid
@@ -491,7 +586,7 @@ describe('TilePyramid', () => {
 			pyramid.requestTiles([ coord ]);
 		});
 		it('should discard multiple out of sync stale request responses for the same coord', done => {
-			const coord = new Coord(0, 0, 0);
+			const coord = new TileCoord(0, 0, 0);
 			const hash = coord.normalize().hash;
 			let r0, r1, r2;
 			const p0 = new Promise(resolve => { r0 = resolve; });

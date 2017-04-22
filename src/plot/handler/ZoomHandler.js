@@ -2,7 +2,7 @@
 
 const clamp = require('lodash/clamp');
 const defaultTo = require('lodash/defaultTo');
-const Browser = require('../../core/Browser');
+const Browser = require('../../util/Browser');
 const EventType = require('../../event/EventType');
 const Event = require('../../event/Event');
 const ZoomAnimation = require('../animation/ZoomAnimation');
@@ -131,7 +131,11 @@ const zoom = function(plot, targetPos, zoomDelta, duration) {
 				duration: duration,
 				prevZoom: plot.zoom,
 				targetZoom: targetZoom,
-				prevViewport: new Viewport(plot.viewport),
+				prevViewport: new Viewport(
+					plot.viewport.x,
+					plot.viewport.y, 
+					plot.viewport.width,
+					plot.viewport.height),
 				targetViewport: targetViewport,
 				targetPos: targetPos
 			});

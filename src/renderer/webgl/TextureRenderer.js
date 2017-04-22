@@ -45,19 +45,31 @@ const SHADER_GLSL = {
 const createQuad = function(gl, min, max) {
 	const vertices = new Float32Array(24);
 	// positions
-	vertices[0] = min;	   vertices[1] = min;
-	vertices[2] = max;	   vertices[3] = min;
-	vertices[4] = max;	   vertices[5] = max;
-	vertices[6] = min;	   vertices[7] = min;
-	vertices[8] = max;	   vertices[9] = max;
-	vertices[10] = min;	   vertices[11] = max;
+	vertices[0] = min;
+	vertices[1] = min;
+	vertices[2] = max;
+	vertices[3] = min;
+	vertices[4] = max;
+	vertices[5] = max;
+	vertices[6] = min;
+	vertices[7] = min;
+	vertices[8] = max;
+	vertices[9] = max;
+	vertices[10] = min;
+	vertices[11] = max;
 	// uvs
-	vertices[12] = 0;	   vertices[13] = 0;
-	vertices[14] = 1;	   vertices[15] = 0;
-	vertices[16] = 1;	   vertices[17] = 1;
-	vertices[18] = 0;	   vertices[19] = 0;
-	vertices[20] = 1;	   vertices[21] = 1;
-	vertices[22] = 0;	   vertices[23] = 1;
+	vertices[12] = 0;
+	vertices[13] = 0;
+	vertices[14] = 1;
+	vertices[15] = 0;
+	vertices[16] = 1;
+	vertices[17] = 1;
+	vertices[18] = 0;
+	vertices[19] = 0;
+	vertices[20] = 1;
+	vertices[21] = 1;
+	vertices[22] = 0;
+	vertices[23] = 1;
 	// create quad buffer
 	return new VertexBuffer(
 		gl,
@@ -155,7 +167,8 @@ class TextureRenderer extends WebGLTextureRenderer {
 		quad.bind();
 
 		// for each renderable
-		renderables.forEach(renderable => {
+		for (let i=0; i<renderables.length; i++) {
+			const renderable = renderables[i];
 			array.bind(renderable.hash, 0);
 			// set tile uniforms
 			shader.setUniform('uTextureCoordOffset', renderable.uvOffset);
@@ -164,7 +177,7 @@ class TextureRenderer extends WebGLTextureRenderer {
 			// draw
 			quad.draw();
 			// no need to unbind texture
-		});
+		}
 
 		// unbind quad
 		quad.unbind();

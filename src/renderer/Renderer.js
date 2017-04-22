@@ -1,6 +1,7 @@
 'use strict';
 
 const EventEmitter = require('events');
+const Renderable = require('./Renderable');
 
 /**
  * Class representing a renderer.
@@ -76,6 +77,95 @@ class Renderer extends EventEmitter {
 	 */
 	draw() {
 		return this;
+	}
+
+	/**
+	 * Returns the tile renderables for the underlying layer.
+	 *
+	 * @returns {Array} The array of tile renderables.
+	 */
+	getRenderables() {
+		const plot = this.layer.plot;
+		const pyramid = this.layer.pyramid;
+		const tileSize = plot.tileSize;
+		const zoom = plot.zoom;
+		const viewport = plot.getViewportPixelOffset();
+		const coords = plot.getVisibleCoords();
+		const renderables = [];
+		for (let i=0; i<coords.length; i++) {
+			const coord = coords[i];
+			const ncoord = coord.normalize();
+			// check if we have the tile
+			const tile = pyramid.get(ncoord);
+			if (tile) {
+				const scale = Math.pow(2, zoom - coord.z);
+				const renderable = Renderable.fromTile(
+					tile,
+					coord,
+					scale,
+					tileSize,
+					viewport);
+				renderables.push(renderable);
+			}
+		}
+		return renderables;
+	}
+
+	/**
+	 * Returns the tile renderables for the underlying layer at the closest
+	 * available level-of-detail.
+	 *
+	 * @returns {Array} The array of tile renderables.
+	 */
+	getRenderablesLOD() {
+		const plot = this.layer.plot;
+		const pyramid = this.layer.pyramid;
+		const tileSize = plot.tileSize;
+		const zoom = plot.zoom;
+		const viewport = plot.getViewportPixelOffset();
+		const coords = plot.getVisibleCoords();
+		const renderables = [];
+		for (let i=0; i<coords.length; i++) {
+			const coord = coords[i];
+			const ncoord = coord.normalize();
+			const scale = Math.pow(2, zoom - coord.z);
+			// check if we have any tile LOD available
+			const partials = pyramid.getAvailableLOD(ncoord);
+			if (partials) {
+				for (let j=0; j<partials.length; j++) {
+					const partial = partials[j];
+					const tile = partial.tile;
+					let renderable;
+					if (tile.coord.z === coord.z) {
+						// exact tile
+						renderable = Renderable.fromTile(
+							tile,
+							coord,
+							scale,
+							tileSize,
+							viewport);
+					} else if (tile.coord.z < coord.z) {
+						// ancestor of the tile
+						renderable = Renderable.fromAncestorPartial(
+							partial,
+							coord,
+							scale,
+							tileSize,
+							viewport);
+					} else {
+						// descendant of the tile
+						renderable = Renderable.fromDescendantPartial(
+							partial,
+							coord,
+							scale,
+							tileSize,
+							viewport);
+					}
+					renderables.push(renderable);
+				}
+			}
+		}
+		return renderables;
 	}
 }
 

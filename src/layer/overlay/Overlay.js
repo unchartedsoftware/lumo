@@ -1,18 +1,19 @@
 'use strict';
 
-const Renderable = require('../plot/Renderable');
+const Layer = require('../Layer');
 
 /**
- * Class representing an overlay.
+ * Class representing an overlay layer.
  */
-class Overlay extends Renderable {
+class Overlay extends Layer {
 
 	/**
-	 * Instantiates a new Overlay object.*
+	 * Instantiates a new Overlay object.
 	 *
 	 * @param {Object} options - The overlay options.
 	 * @param {Number} options.opacity - The overlay opacity.
 	 * @param {Number} options.zIndex - The overlay z-index.
+	 * @param {boolean} options.hidden - Whether or not the overlay is visible.
 	 */
 	constructor(options = {}) {
 		super(options);

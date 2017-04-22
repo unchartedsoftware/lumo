@@ -21,7 +21,7 @@ class EventBroadcaster {
 	 */
 	broadcast(type) {
 		this.plot.on(type, event => {
-			const children = this.plot.getSortedRenderables();
+			const children = this.plot.getSortedLayers();
 			for (let i=children.length-1; i>=0; i--) {
 				if (!children[i].isHidden()) {
 					children[i].emit(type, event);

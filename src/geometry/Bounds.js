@@ -137,7 +137,7 @@ class Bounds {
 	 *
 	 * @returns {Number} The width of the bounds.
 	 */
-	width() {
+	getWidth() {
 		return this.right - this.left;
 	}
 
@@ -146,7 +146,7 @@ class Bounds {
 	 *
 	 * @returns {Number} The height of the bounds.
 	 */
-	height() {
+	getHeight() {
 		return this.top - this.bottom;
 	}
 
@@ -199,8 +199,8 @@ class Bounds {
 	 */
 	getCenter() {
 		return {
-			x: this.left + (this.width() / 2),
-			y: this.bottom + (this.height() / 2)
+			x: this.left + (this.getWidth() / 2),
+			y: this.bottom + (this.getHeight() / 2)
 		};
 	}
 

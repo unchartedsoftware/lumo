@@ -1,6 +1,6 @@
 'use strict';
 
-const Bounds = require('../core/Bounds');
+const Bounds = require('../geometry/Bounds');
 
 /**
  * The size of the cell, in pixels.

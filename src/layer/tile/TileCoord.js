@@ -9,14 +9,14 @@ const mod = function(n, m) {
 /**
  * Class representing a tile coordinate.
  */
-class Coord {
+class TileCoord {
 
 	/**
-	 * Instantiates a new Bounds object.
+	 * Instantiates a new TileCoord object.
 	 *
-	 * @param {Number} z - The z component of the tile.
-	 * @param {Number} x - The x component of the tile.
-	 * @param {Number} y - The y component of the tile.
+	 * @param {Number} z - The z component of the tile coordinate.
+	 * @param {Number} x - The x component of the tile coordinate.
+	 * @param {Number} y - The y component of the tile coordinate.
 	 */
 	constructor(z, x, y) {
 		this.z = z;
@@ -47,7 +47,7 @@ class Coord {
 	/**
 	 * Test if the bounds equals another.
 	 *
-	 * @param {Coord} coord - The coord object to test.
+	 * @param {TileCoord} coord - The coord object to test.
 	 *
 	 * @returns {boolean} Whether or not the coord objects are equal.
 	 */
@@ -62,11 +62,11 @@ class Coord {
 	 *
 	 * @param {Number} offset - The offset of the ancestor from the coord. Optional.
 	 *
-	 * @returns {Coord} The ancestor coord.
+	 * @returns {TileCoord} The ancestor coord.
 	 */
 	getAncestor(offset = 1) {
 		const scale = Math.pow(2, offset);
-		return new Coord(
+		return new TileCoord(
 			this.z - offset,
 			Math.floor(this.x / scale),
 			Math.floor(this.y / scale));
@@ -84,7 +84,7 @@ class Coord {
 		const coords = [];
 		for (let x=0; x<scale; x++) {
 			for (let y=0; y<scale; y++) {
-				coords.push(new Coord(
+				coords.push(new TileCoord(
 					this.z + offset,
 					this.x * scale + x,
 					this.y * scale + y));
@@ -96,7 +96,7 @@ class Coord {
 	/**
 	 * Test if the coord is an ancestor of the provided coord.
 	 *
-	 * @param {Coord} coord - The coord object to test.
+	 * @param {TileCoord} coord - The coord object to test.
 	 *
 	 * @returns {boolean} Whether or not the provided coord is an ancestor.
 	 */
@@ -117,7 +117,7 @@ class Coord {
 	/**
 	 * Test if the coord is a descendant of the provided coord.
 	 *
-	 * @param {Coord} coord - The coord object to test.
+	 * @param {TileCoord} coord - The coord object to test.
 	 *
 	 * @returns {boolean} Whether or not the provided coord is a descendant.
 	 */
@@ -128,11 +128,11 @@ class Coord {
 	/**
 	 * Returns the normalized coord.
 	 *
-	 * @returns {Coord} The normalized coord.
+	 * @returns {TileCoord} The normalized coord.
 	 */
 	normalize() {
 		const dim = Math.pow(2, this.z);
-		return new Coord(
+		return new TileCoord(
 			this.z,
 			mod(this.x, dim),
 			mod(this.y, dim));
@@ -165,4 +165,4 @@ class Coord {
 	}
 }
 
-module.exports = Coord;
+module.exports = TileCoord;

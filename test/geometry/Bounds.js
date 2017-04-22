@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('assert');
-const Bounds = require('../../src/core/Bounds');
+const Bounds = require('../../src/geometry/Bounds');
 const TILE_SIZE = 256;
 
 describe('Bounds', () => {
@@ -16,25 +16,25 @@ describe('Bounds', () => {
 		});
 	});
 
-	describe('#width()', () => {
+	describe('#getWidth()', () => {
 		it('should return the width of the bounds', () => {
 			const bounds = new Bounds(
 				Math.floor(Math.random() * TILE_SIZE),
 				Math.floor(TILE_SIZE + Math.random() * TILE_SIZE),
 				Math.floor(Math.random() * TILE_SIZE),
 				Math.floor(TILE_SIZE + Math.random() * TILE_SIZE));
-			assert(bounds.width() === (bounds.right - bounds.left));
+			assert(bounds.getWidth() === (bounds.right - bounds.left));
 		});
 	});
 
-	describe('#height()', () => {
+	describe('#getHeight()', () => {
 		it('should return the width of the bounds', () => {
 			const bounds = new Bounds(
 				Math.floor(Math.random() * TILE_SIZE),
 				Math.floor(TILE_SIZE + Math.random() * TILE_SIZE),
 				Math.floor(Math.random() * TILE_SIZE),
 				Math.floor(TILE_SIZE + Math.random() * TILE_SIZE));
-			assert(bounds.height() === (bounds.top - bounds.bottom));
+			assert(bounds.getHeight() === (bounds.top - bounds.bottom));
 		});
 	});
 
@@ -81,8 +81,8 @@ describe('Bounds', () => {
 				Math.floor(TILE_SIZE + Math.random() * TILE_SIZE),
 				Math.floor(Math.random() * TILE_SIZE),
 				Math.floor(TILE_SIZE + Math.random() * TILE_SIZE));
-			assert(bounds.getCenter().x === bounds.left + (bounds.width() / 2));
-			assert(bounds.getCenter().y === bounds.bottom + (bounds.height() / 2));
+			assert(bounds.getCenter().x === bounds.left + (bounds.getWidth() / 2));
+			assert(bounds.getCenter().y === bounds.bottom + (bounds.getHeight() / 2));
 		});
 	});
 

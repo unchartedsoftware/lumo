@@ -2,7 +2,7 @@
 
 const EventType = require('./EventType');
 const MouseEvent = require('./MouseEvent');
-const Keyboard = require('../core/Keyboard');
+const Keyboard = require('../util/Keyboard');
 
 const setCursor = function(plot) {
 	plot.getContainer().style.cursor = 'pointer';
@@ -187,7 +187,7 @@ class EventDelegator {
 		// attach delegation handler
 		this.plot.on(type, event => {
 			// get children sorted by z-index
-			const children = this.plot.getSortedRenderables();
+			const children = this.plot.getSortedLayers();
 			// pick children, by priority
 			let collision = null;
 			let child = null;
