@@ -1,6 +1,6 @@
 {
   "name": "lumo",
-  "version": "0.14.1",
+  "version": "0.15.0",
   "description": "A high performance WebGL tile rendering library",
   "main": "src/exports.js",
   "author": "Kevin Birk <birk.kevin@gmail.com>",
