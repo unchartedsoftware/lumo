@@ -9,9 +9,9 @@
 
 ## Introduction
 
-Lumo is a lightweight rendering library designed for highly scalable, customizable, and performant WebGL tile-based visualizations. Lumo is composed of simple and extensible interfaces for retrieving, managing, and rendering tile-based data.
+Lumo is a lightweight WebGL rendering library designed for highly scalable, customizable, and performant tile-based visualizations. Lumo is composed of simple and extensible interfaces for retrieving, managing, and viewing tile-based data.
 
-While Lumo does provide some high-level data abstractions for WebGL, it assumes a degree of familiarity with the WebGL API and GLSL.
+While Lumo does provide some higher level data abstractions for WebGL, it assumes a degree of familiarity with the WebGL API and GLSL.
 
 **Note:** The library is currently a work-in-progress and the interfaces are likely to change.
 
@@ -32,7 +32,7 @@ Lumo is written in ES6 and requires a 6.x+ distribution of [node](http://nodejs.
 
 ## Example
 
-The following is a simple application that creates a single `lumo.Plot` and attaches two `lumo.Layer` objects. The first layer `base` retrieves [CARTO Basemap tiles](https://carto.com/location-data-services/basemaps/) and renders them using the `lumo.TextureRenderer`. The `points` layer generates random points of varying radius and renders them with the `lumo.PointRenderer`.
+The following is a simple application that creates a single `lumo.Plot` and attaches two `lumo.TileLayer` objects. The first layer `base` retrieves [CARTO Basemap tiles](https://carto.com/location-data-services/basemaps/) and renders them using the `lumo.TextureRenderer`. The `points` layer generates random points of varying radius and renders them with the `lumo.PointRenderer`.
 
 * [JSFiddle Example](https://jsfiddle.net/wu4osomt/)
 
@@ -49,9 +49,9 @@ const plot = new lumo.Plot('#plot', {
 	zoom: 3
 });
 
-// WebGL Texture Base Layer
+// WebGL CARTO Texture Layer
 
-const base = new lumo.Layer({
+const base = new lumo.TileLayer({
 	renderer: new lumo.TextureRenderer()
 });
 
@@ -66,7 +66,7 @@ plot.add(base);
 
 // WebGL Point Layer
 
-const points = new lumo.Layer({
+const points = new lumo.TileLayer({
 	renderer: new lumo.PointRenderer({
 		color: [ 0.4, 1.0, 0.1, 0.8 ]
 	})
@@ -90,7 +90,7 @@ plot.add(points);
 
 ### Plot
 
-The central component tying all tile based visualizations together is a plot. A plot is instantiated by providing a selector string for a containing DOM element, along with an optional configuration object.
+The central component tying all tile based visualizations together is a `lumo.Plot` which is instantiated by providing a selector string for the containing DOM element, along with an optional configuration object.
 
 ```javascript
 const plot = new lumo.Plot('#plot', {
@@ -101,12 +101,12 @@ const plot = new lumo.Plot('#plot', {
 });
 ```
 
-### Layer
+### TileLayer
 
-A layer represents a single source of tile data. A layer is only responsible for retrieving and storing tile data in it's retrieved format.
+A `lumo.TileLayer` represents a single source of tile data and is only responsible for retrieving and storing tile data in it's transmission format.
 
 ```javascript
-const layer = new lumo.Layer();
+const layer = new lumo.TileLayer();
 
 layer.requestTile = (coord, done) => {
 	done(null, {});
@@ -117,7 +117,7 @@ plot.add(layer)
 
 ### Renderer
 
-A renderer is attached to a layer and is responsible for storing the data on the GPU and subsequently rendering the data to the plot.
+A `lumo.Renderer` is attached to a `lumo.TileLayer` and is responsible for converting and storing the data on the GPU and subsequently rendering the data to the plot.
 
 ```javascript
 const renderer = new lumo.PointRenderer();
@@ -126,17 +126,17 @@ layer.setRenderer(renderer);
 
 The base `lumo.Renderer` class provides a simple and unstructured class for rendering layer data.
 
-The `lumo.WebGLRenderer` class implements a more refined class specific to custom WebGL renderings. This is iterated upon further with the `lumo.WebGLVertexRenderer` and `lumo.WebGLTextureRenderer` which provide high-level abstractions for efficiently storing and accessing tile data on the GPU.
+The `lumo.WebGLRenderer` class implements a more refined class specific to custom WebGL renderings. This is iterated upon further with the `lumo.WebGLVertexRenderer` and `lumo.WebGLTextureRenderer` which provide higher level abstractions for efficiently storing and accessing tile data on the GPU in vertex and texture format, respectively.
 
-Lumo provides four sample renderers to act as guides for creating your own:
+Lumo currently provides four extensible sample renderers to be used and act as guides for creating new more complicated renderers:
 
-- **TextureRenderer** renders texture-based data at varying levels of detail. It assumes data is retrieved as a Uint8Array of RGBA values. Tiles that do not currently have tile data are rendered using the highest available level of detail.
+- **TextureRenderer** renders texture-based data at varying levels of detail. It assumes data is retrieved as a Uint8Array of RGBA values. Tiles that do not currently have tile data are rendered using the highest available level of detail. This renderer implements the `lumo.WebGLTextureRenderer` which provides interfaces for storing and accessing texture data efficiently.
 
-- **PointRenderer** renders vertex-based data of varying x, y, and radius. It assumes data is retrieved as a Float32Array with interleaved vertices in the format [x, y, radius, x, y, radius, ...].
+- **PointRenderer** renders vertex-based data of varying x, y, and radius. It assumes data is retrieved as a Float32Array with interleaved vertices in the format [x, y, radius, x, y, radius, ...]. This renderer implements the `lumo.WebGLVertexRenderer` which provides interfaces for storing and accessing texture data efficiently.
 
-- **ShapeRenderer** renders instanced shapes (stars in this implementation) for vertex-based data of varying x, y, and radius. It assumes data is retrieved as a Float32Array with interleaved vertices in the format [x, y, radius, x, y, radius, ...].
+- **ShapeRenderer** renders instanced shapes (stars in this implementation) for vertex-based data of varying x, y, and radius. It assumes data is retrieved as a Float32Array with interleaved vertices in the format [x, y, radius, x, y, radius, ...]. This renderer implements the `lumo.WebGLVertexRenderer` which provides interfaces for storing and accessing texture data efficiently.
 
-- **InteractiveRenderer** renders vertex-based data of varying x, y, and radius. It assumes data is retrieved as an array of objects of the format { x: , y:, radius: }, however the exact field names are configurable. This renderer implements the `lumo.WebGLInteractiveRenderer` which provides interfaces for spatially indexing point data and emitting `click`, `mouseover`, and `mouseout` events.
+- **InteractiveRenderer** renders vertex-based data of varying x, y, and radius. It assumes data is retrieved as an array of objects of the format { x: , y:, radius: }, however the exact field names are configurable. This renderer implements the `lumo.WebGLInteractiveRenderer` which provides interfaces for spatially indexing and searching point data.
 
 Below is an example of a minimalistic vertex-based renderer implemented by extending the `lemo.WebGLVertexRenderer` class:
 
@@ -149,6 +149,8 @@ class SampleRenderer extends WebGLVertexRenderer {
 	}
 	onAdd(layer) {
 		super.onAdd(layer);
+		// Instantiate the shader object providing the source for both the
+		// vertex and fragment shaders.
 		this.shader = this.createShader({
 			vert:
 				`
@@ -171,6 +173,10 @@ class SampleRenderer extends WebGLVertexRenderer {
 				}
 				`
 		});
+		// Create the vertex atlas to store the vertex data, in this case we
+		// only have a single vertex attribute, the position.
+		// This method registers handles to pipe the tile data and created
+		// atlas to the `addTile` and `removeTile` methods.
 		this.atlas = this.createVertexAtlas({
 			0: {
 				size: 2,
@@ -180,6 +186,8 @@ class SampleRenderer extends WebGLVertexRenderer {
 		return this;
 	}
 	onRemove(layer) {
+		// Clean up the vertex atlas and remove `addTile` and `removeTile`
+		// handlers.
 		this.destroyVertexAtlas(this.atlas);
 		this.atlas = null;
 		this.shader = null;
@@ -187,22 +195,26 @@ class SampleRenderer extends WebGLVertexRenderer {
 		return this;
 	}
 	draw() {
+		const shader = this.shader;
+		const atlas = this.atlas;
+		const proj = this.getOrthoMatrix();
+		const renderables = this.getRenderables();
 		// use shader
-		this.shader.use();
+		shader.use();
 		// set projection
-		this.shader.setUniform('uProjectionMatrix', this.getOrthoMatrix());
+		shader.setUniform('uProjectionMatrix', proj);
 		// binds the vertex atlas
-		this.atlas.bind();
+		atlas.bind();
 		// for each renderable tile
-		this.getRenderables().forEach(renderable => {
+		renderables.forEach(renderable => {
 			// set tile uniforms
-			this.shader.setUniform('uScale', renderable.scale);
-			this.shader.setUniform('uTileOffset', renderable.tileOffset);
+			shader.setUniform('uScale', renderable.scale);
+			shader.setUniform('uTileOffset', renderable.tileOffset);
 			// draw the points
-			this.atlas.draw(renderable.hash, 'POINTS');
+			atlas.draw(renderable.hash, 'POINTS');
 		});
 		// unbind the vertex atlas
-		this.atlas.unbind();
+		atlas.unbind();
 		return this;
 	}
 }
@@ -210,7 +222,7 @@ class SampleRenderer extends WebGLVertexRenderer {
 
 ### Overlay
 
-An overlay represents a single source of data. The data is not tiled and is added / removed in a global sense. An overlay is responsible for storing and rendering it's data.
+An overlay represents a single source of data. The data is not tiled and is added and removed in a global sense. An overlay is responsible for storing and rendering it's data. Overlays are typically used when a small amount of client-side static data needs to be displayed.
 
 ```javascript
 const overlay = new lumo.WebGLLineOverlay();
@@ -238,7 +250,7 @@ There are three coordinate systems used by Lumo. Tile coordinates, plot coordina
 
 ### Events
 
-All `lumo.Plot`, `lumo.Layer`, `lumo.Overlay`, and `lumo.Renderer` classes extend the `EventEmitter` class and are capable of emitting events.
+All `lumo.Plot`, `lumo.TileLayer`, `lumo.Overlay`, and `lumo.Renderer` classes extend the `EventEmitter` class and are capable of emitting events.
 
 The following events are emitted by Lumo:
 
@@ -264,7 +276,7 @@ The following events are emitted by Lumo:
 - **Frame**
 	- **frame**: Emitted at the beginning of every render frame.
 
-#### Layer
+#### TileLayer
 
 - **Mouse**
 	- **click**: Emitted when an element of the layer is clicked.
