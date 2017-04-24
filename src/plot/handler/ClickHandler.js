@@ -68,9 +68,11 @@ class ClickHandler extends DOMHandler {
 				this.plot.emit(EventType.CLICK, createEvent(this, plot, event));
 			}
 			last = null;
+			plot.setDirty();
 		};
 
 		this.dblclick = (event) => {
+			plot.setDirty();
 			this.plot.emit(EventType.DBL_CLICK, createEvent(this, plot, event));
 		};
 

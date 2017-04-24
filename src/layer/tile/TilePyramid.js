@@ -394,6 +394,7 @@ class TilePyramid {
 				add(this, tile);
 				// check if loaded
 				checkIfLoaded(this);
+				this.layer.plot.setDirty();
 			});
 		}
 	}

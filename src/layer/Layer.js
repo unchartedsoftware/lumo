@@ -69,6 +69,10 @@ class Layer extends EventEmitter {
 	 */
 	setOpacity(opacity) {
 		this.opacity = clamp(opacity, 0, 1);
+
+		if (this.plot) {
+			this.plot.setDirty();
+		}
 		return this;
 	}
 
@@ -90,6 +94,10 @@ class Layer extends EventEmitter {
 	 */
 	setZIndex(zIndex) {
 		this.zIndex = zIndex;
+
+		if (this.plot) {
+			this.plot.setDirty();
+		}
 		return this;
 	}
 
@@ -109,6 +117,10 @@ class Layer extends EventEmitter {
 	 */
 	show() {
 		this.hidden = false;
+
+		if (this.plot) {
+			this.plot.setDirty();
+		}
 		return this;
 	}
 
@@ -120,6 +132,10 @@ class Layer extends EventEmitter {
 	hide() {
 		this.hidden = true;
 		this.clear();
+
+		if (this.plot) {
+			this.plot.setDirty();
+		}
 		return this;
 	}
 
@@ -163,6 +179,10 @@ class Layer extends EventEmitter {
 	 */
 	highlight(data) {
 		this.highlighted = data;
+
+		if (this.plot) {
+			this.plot.setDirty();
+		}
 		return this;
 	}
 
@@ -173,6 +193,10 @@ class Layer extends EventEmitter {
 	 */
 	unhighlight() {
 		this.highlighted = null;
+
+		if (this.plot) {
+			this.plot.setDirty();
+		}
 		return this;
 	}
 
@@ -219,6 +243,10 @@ class Layer extends EventEmitter {
 			// clear selection, adding only the latest entry
 			this.selected = [ data ];
 		}
+
+		if (this.plot) {
+			this.plot.setDirty();
+		}
 		return this;
 	}
 
@@ -229,6 +257,10 @@ class Layer extends EventEmitter {
 	 */
 	unselect() {
 		this.selected = [];
+
+		if (this.plot) {
+			this.plot.setDirty();
+		}
 		return this;
 	}
 
@@ -261,6 +293,10 @@ class Layer extends EventEmitter {
 		// clear selected / highlighted
 		this.highlighted = null;
 		this.selected = [];
+
+		if (this.plot) {
+			this.plot.setDirty();
+		}
 		return this;
 	}
 }
