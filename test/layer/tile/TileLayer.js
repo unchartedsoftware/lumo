@@ -22,6 +22,9 @@ describe('TileLayer', () => {
 					x: 0.5,
 					y: 0.5
 				};
+			},
+			setDirty: function() {
+
 			}
 		};
 		renderer = new Renderer();
@@ -30,22 +33,25 @@ describe('TileLayer', () => {
 	describe('#constructor()', () => {
 		it('should accept no argument', () => {
 			const layer = new TileLayer();
-			assert(layer.opacity === 1.0);
-			assert(layer.hidden === false);
-			assert(layer.muted === false);
-			assert(layer.renderer === null);
+			assert(layer.getOpacity() === 1.0);
+			assert(layer.isHidden() === false);
+			assert(layer.getZIndex() === 0);
+			assert(layer.isMuted() === false);
+			assert(layer.getRenderer() === null);
 		});
 		it('should accept an optional `options` argument', () => {
 			const layer = new TileLayer({
 				opacity: 0.123,
 				hidden: true,
+				zIndex: 4,
 				muted: true,
 				renderer: null
 			});
-			assert(layer.opacity === 0.123);
-			assert(layer.hidden === true);
-			assert(layer.muted === true);
-			assert(layer.renderer === null);
+			assert(layer.getOpacity() === 0.123);
+			assert(layer.isHidden() === true);
+			assert(layer.getZIndex() === 4);
+			assert(layer.isMuted() === true);
+			assert(layer.getRenderer() === null);
 		});
 	});
 
@@ -164,12 +170,6 @@ describe('TileLayer', () => {
 	});
 
 	describe('#onAdd()', () => {
-		it('should set the plot property of the layer', () => {
-			const layer = new TileLayer();
-			sinon.stub(layer, 'refresh').callsFake(noop);
-			layer.onAdd(plot);
-			assert(layer.plot === plot);
-		});
 		it('should call `onAdd` of the attached renderer', () => {
 			const layer = new TileLayer({
 				renderer: renderer
@@ -179,31 +179,9 @@ describe('TileLayer', () => {
 			layer.onAdd(plot);
 			assert(onAdd.calledOnce);
 		});
-		it('should throw an exception if there is no plot provided', () => {
-			let threw = false;
-			try {
-				const layer = new TileLayer();
-				layer.onAdd();
-			} catch (e) {
-				threw = true;
-			}
-			assert(threw);
-		});
 	});
 
 	describe('#onRemove()', () => {
-		it('should remove the plot property from the layer', () => {
-			const layer = new TileLayer();
-
-			sinon.stub(layer, 'refresh').callsFake(noop);
-			layer.onAdd(plot);
-
-			const clear = sinon.stub(layer.pyramid, 'clear').callsFake(noop);
-
-			layer.onRemove(plot);
-			assert(layer.plot === null);
-			assert(clear.calledOnce);
-		});
 		it('should call `clear` on the layer\'s tile pyramid', () => {
 			const layer = new TileLayer({
 				renderer: renderer
@@ -223,45 +201,6 @@ describe('TileLayer', () => {
 			layer.onAdd(plot);
 			layer.onRemove(plot);
 			assert(onRemove.calledOnce);
-		});
-		it('should throw an exception if there is no plot provided', () => {
-			let threw = false;
-			try {
-				const layer = new TileLayer();
-				layer.onRemove();
-			} catch (e) {
-				threw = true;
-			}
-			assert(threw);
-		});
-	});
-
-	describe('#show()', () => {
-		it('should set the `hidden` property to false', () => {
-			const layer = new TileLayer();
-			layer.show();
-			assert(layer.hidden === false);
-		});
-	});
-
-	describe('#hide()', () => {
-		it('should set the `hidden` property to true', () => {
-			const layer = new TileLayer();
-			layer.hide();
-			assert(layer.hidden === true);
-		});
-	});
-
-	describe('#isHidden()', () => {
-		it('should return true if the layer is hidden', () => {
-			const layer = new TileLayer();
-			layer.hide();
-			assert(layer.isHidden() === true);
-		});
-		it('should return false if the layer is not hidden', () => {
-			const layer = new TileLayer();
-			layer.show();
-			assert(layer.isHidden() === false);
 		});
 	});
 
@@ -307,7 +246,7 @@ describe('TileLayer', () => {
 		it('should set the `hidden` and `muted` properties to true', () => {
 			const layer = new TileLayer();
 			layer.disable();
-			assert(layer.hidden === true);
+			assert(layer.isHidden() === true);
 			assert(layer.muted === true);
 		});
 	});
@@ -316,7 +255,7 @@ describe('TileLayer', () => {
 		it('should set the `hidden` and `muted` properties to false', () => {
 			const layer = new TileLayer();
 			layer.enable();
-			assert(layer.hidden === false);
+			assert(layer.isHidden() === false);
 			assert(layer.muted === false);
 		});
 	});
