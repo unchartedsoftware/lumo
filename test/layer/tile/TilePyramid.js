@@ -33,6 +33,9 @@ describe('TilePyramid', () => {
 			},
 			getTargetViewport: function() {
 				return this.viewport;
+			},
+			setDirty: function() {
+
 			}
 		};
 		layer.plot = plot;

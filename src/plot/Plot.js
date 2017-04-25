@@ -103,6 +103,13 @@ const DELEGATOR = Symbol();
  */
 const BROADCASTER = Symbol();
 
+/**
+ * Dirty plot symbol.
+ * @private
+ * @constant {Symbol}
+ */
+const DIRTY = Symbol();
+
 // Private Methods
 
 const requestTiles = function() {
@@ -149,6 +156,7 @@ const resize = function(plot) {
 		// request tiles
 		plot.resizeRequest();
 		// emit resize
+		plot.setDirty();
 		plot.emit(EventType.RESIZE, new ResizeEvent(plot, prev, current));
 	}
 };
@@ -182,7 +190,7 @@ const updateCell = function(plot) {
 	if (refresh) {
 		// update cell
 		plot.cell = cell;
-		// emit cell refresh event
+		// emit cell refresh
 		plot.emit(EventType.CELL_UPDATE, new Event(cell));
 	}
 };
@@ -215,61 +223,69 @@ const reset = function(plot) {
 	}
 };
 
-
 const frame = function(plot) {
 
 	// get frame timestamp
 	const timestamp = Date.now();
 
-	// emit start frame
+	// emit frame event
 	plot.emit(EventType.FRAME, new Event(plot, timestamp));
 
 	// update size
 	resize(plot);
 
-	const gl = plot.gl;
+	if (plot.isDirty()) {
 
-	// clear the backbuffer
-	gl.clearColor(0, 0, 0, 0);
-	gl.clear(gl.COLOR_BUFFER_BIT);
+		// clear flag now, this way layers that may be animating can signal
+		// that the animation is not complete by flagging as dirty during the
+		// draw call.
+		plot.clearDirty();
 
-	// set the viewport
-	const size = plot.getViewportPixelSize();
-	gl.viewport(
-		0, 0,
-		size.width * window.devicePixelRatio,
-		size.height * window.devicePixelRatio);
-
-	// apply the zoom animation
-	if (plot.isZooming()) {
-		if (plot.zoomAnimation.update(timestamp)) {
-			plot.zoomAnimation = null;
+		// apply the zoom animation
+		if (plot.isZooming()) {
+			if (plot.zoomAnimation.update(timestamp)) {
+				plot.zoomAnimation = null;
+			}
 		}
+
+		// apply the pan animation
+		if (plot.isPanning()) {
+			if (plot.panAnimation.update(timestamp)) {
+				plot.panAnimation = null;
+			}
+			plot.panRequest();
+		}
+
+		// reset viewport / plot
+		reset(plot);
+
+		// update cell
+		updateCell(plot);
+
+		// context shorthand
+		const gl = plot.gl;
+
+		// clear the backbuffer
+		gl.clearColor(0, 0, 0, 0);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+
+		// set the viewport
+		const size = plot.getViewportPixelSize();
+		gl.viewport(
+			0, 0,
+			size.width * plot.pixelRatio,
+			size.height * plot.pixelRatio);
+
+		// sort layers by z-index
+		const layers = plot.getSortedLayers();
+
+		// render each layer
+		layers.forEach(layer => {
+			if (!layer.isHidden()) {
+				layer.draw(timestamp);
+			}
+		});
 	}
-
-	// apply the pan animation
-	if (plot.isPanning()) {
-		if (plot.panAnimation.update(timestamp)) {
-			plot.panAnimation = null;
-		}
-		plot.panRequest();
-	}
-
-	// reset viewport / plot
-	reset(plot);
-
-	// update cell
-	updateCell(plot);
-
-	// sort layers by z-index
-	const layers = plot.getSortedLayers();
-
-	// render each layer
-	layers.forEach(layer => {
-		if (!layer.isHidden()) {
-			layer.draw(timestamp);
-		}
-	});
 
 	// request next frame
 	plot.frameRequest = requestAnimationFrame(() => {
@@ -415,7 +431,10 @@ class Plot extends EventEmitter {
 		this[BROADCASTER].broadcast(EventType.PAN);
 		this[BROADCASTER].broadcast(EventType.PAN_END);
 
-		// being frame loop
+		// flag as dirty
+		this[DIRTY] = true;
+
+		// begin frame loop
 		frame(this);
 	}
 
@@ -448,6 +467,30 @@ class Plot extends EventEmitter {
 	}
 
 	/**
+	 * Flags the plot as dirty singalling that it should be redrawn in the next
+	 * frame.
+	 */
+	setDirty() {
+		this[DIRTY] = true;
+	}
+
+	/**
+	 * Check if the plot is dirty and requires a redraw.
+	 *
+	 * @returns {boolean} Whether or not the plot should be redrawn.
+ 	*/
+	isDirty() {
+		return this[DIRTY] || this.isPanning() || this.isZooming();
+	}
+
+	/**
+	 * Clears the dirty flag for the next frame.
+	 */
+	clearDirty() {
+		this[DIRTY] = false;
+	}
+
+	/**
 	 * Adds a layer to the plot.
 	 *
 	 * @param {Layer} layer - The layer to add to the plot.
@@ -463,6 +506,7 @@ class Plot extends EventEmitter {
 		}
 		this.layers.push(layer);
 		layer.onAdd(this);
+		this.setDirty();
 		return this;
 	}
 
@@ -483,6 +527,7 @@ class Plot extends EventEmitter {
 		}
 		this.layers.splice(index, 1);
 		layer.onRemove(this);
+		this.setDirty();
 		return this;
 	}
 
@@ -720,6 +765,7 @@ class Plot extends EventEmitter {
 		this.cancelPan();
 		this.cancelZoom();
 		this[HANDLERS].get(PAN).panTo(pos, animate);
+		this.setDirty();
 		return this;
 	}
 
@@ -738,6 +784,7 @@ class Plot extends EventEmitter {
 		this.cancelPan();
 		this.cancelZoom();
 		this[HANDLERS].get(ZOOM).zoomTo(level, animate);
+		this.setDirty();
 		return this;
 	}
 
@@ -762,6 +809,7 @@ class Plot extends EventEmitter {
 		const center = bounds.getCenter();
 		this.zoomTo(zoom, false);
 		this.panTo(center, false);
+		this.setDirty();
 		return this;
 	}
 

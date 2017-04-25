@@ -40,6 +40,8 @@ class Layer extends EventEmitter {
 		}
 		// set plot
 		this.plot = plot;
+		// flag as dirty
+		this.plot.setDirty();
 		return this;
 	}
 
@@ -54,10 +56,12 @@ class Layer extends EventEmitter {
 		if (!plot) {
 			throw 'No plot argument provided';
 		}
-		// remove plot
-		this.plot = null;
 		// clear state
 		this.clear();
+		// flag as dirty
+		this.plot.setDirty();
+		// remove plot
+		this.plot = null;
 		return this;
 	}
 	/**
@@ -68,7 +72,13 @@ class Layer extends EventEmitter {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	setOpacity(opacity) {
-		this.opacity = clamp(opacity, 0, 1);
+		opacity = clamp(opacity, 0, 1);
+		if (this.opacity !== opacity) {
+			this.opacity = opacity;
+			if (this.plot) {
+				this.plot.setDirty();
+			}
+		}
 		return this;
 	}
 
@@ -89,7 +99,12 @@ class Layer extends EventEmitter {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	setZIndex(zIndex) {
-		this.zIndex = zIndex;
+		if (this.zIndex !== zIndex) {
+			this.zIndex = zIndex;
+			if (this.plot) {
+				this.plot.setDirty();
+			}
+		}
 		return this;
 	}
 
@@ -108,7 +123,12 @@ class Layer extends EventEmitter {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	show() {
-		this.hidden = false;
+		if (this.hidden) {
+			this.hidden = false;
+			if (this.plot) {
+				this.plot.setDirty();
+			}
+		}
 		return this;
 	}
 
@@ -118,8 +138,13 @@ class Layer extends EventEmitter {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	hide() {
-		this.hidden = true;
-		this.clear();
+		if (!this.hidden) {
+			this.hidden = true;
+			this.clear();
+			if (this.plot) {
+				this.plot.setDirty();
+			}
+		}
 		return this;
 	}
 
@@ -162,7 +187,12 @@ class Layer extends EventEmitter {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	highlight(data) {
-		this.highlighted = data;
+		if (this.highlighted !== data) {
+			this.highlighted = data;
+			if (this.plot) {
+				this.plot.setDirty();
+			}
+		}
 		return this;
 	}
 
@@ -172,7 +202,12 @@ class Layer extends EventEmitter {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	unhighlight() {
-		this.highlighted = null;
+		if (this.highlighted !== null) {
+			this.highlighted = null;
+			if (this.plot) {
+				this.plot.setDirty();
+			}
+		}
 		return this;
 	}
 
@@ -181,7 +216,7 @@ class Layer extends EventEmitter {
 	 *
 	 * @returns {Object} The highlighted data.
 	 */
-	getHighlight() {
+	getHighlighted() {
 		return this.highlighted;
 	}
 
@@ -205,30 +240,44 @@ class Layer extends EventEmitter {
 	 * @returns {Layer} The layer object, for chaining.
 	 */
 	select(data, multiSelect) {
+		let changed = false;
 		if (multiSelect) {
 			// add to collection if multi-selection is enabled
 			const index = this.selected.indexOf(data);
 			if (index === -1) {
 				// select point
 				this.selected.push(data);
-			} else {
-				// remove point if already selected
-				this.selected.splice(index, 1);
+				changed = true;
 			}
 		} else {
 			// clear selection, adding only the latest entry
-			this.selected = [ data ];
+			if (this.selected.length !== 1 || this.selected[0] !== data) {
+				this.selected = [ data ];
+				changed = true;
+			}
+		}
+		if (this.plot && changed) {
+			this.plot.setDirty();
 		}
 		return this;
 	}
 
 	/**
-	 * Clears any current selection.
+	 * Remove the provided data from the current selection.
+	 *
+	 * @param {Object} data - The data to unselect.
 	 *
 	 * @returns {Layer} The layer object, for chaining.
 	 */
-	unselect() {
-		this.selected = [];
+	unselect(data) {
+		const index = this.selected.indexOf(data);
+		if (index !== -1) {
+			// unselect point
+			this.selected.splice(index, 1);
+			if (this.plot) {
+				this.plot.setDirty();
+			}
+		}
 		return this;
 	}
 
@@ -259,8 +308,13 @@ class Layer extends EventEmitter {
 	 */
 	clear() {
 		// clear selected / highlighted
-		this.highlighted = null;
-		this.selected = [];
+		if (this.highlighted || this.selected.length > 0) {
+			this.highlighted = null;
+			this.selected = [];
+			if (this.plot) {
+				this.plot.setDirty();
+			}
+		}
 		return this;
 	}
 }
