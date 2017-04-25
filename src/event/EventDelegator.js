@@ -113,7 +113,13 @@ const delegateClick = function(delegator, child, event, collision) {
 	const multiSelect = Keyboard.poll('ctrl') || Keyboard.poll('meta');
 	if (collision) {
 		// select
-		child.select(collision, multiSelect);
+		if (!child.isSelected(collision)) {
+			// add if not selected
+			child.select(collision, multiSelect);
+		} else {
+			// remove if already selected
+			child.unselect(collision);
+		}
 		// `click` event
 		const delegation = {
 			type: EventType.CLICK,
@@ -130,8 +136,8 @@ const delegateClick = function(delegator, child, event, collision) {
 				// user may have misclicked
 				return [];
 			}
-			// unselect
-			delegator.prevClick.target.unselect();
+			// unselect the data
+			delegator.prevClick.target.unselect(delegator.prevClick.data);
 			// unflag as prev `click` target
 			delegator.prevClick = null;
 		}
