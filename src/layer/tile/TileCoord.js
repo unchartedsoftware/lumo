@@ -81,13 +81,14 @@ class TileCoord {
 	 */
 	getDescendants(offset = 1) {
 		const scale = Math.pow(2, offset);
-		const coords = [];
+		const coords = new Array(scale*scale);
 		for (let x=0; x<scale; x++) {
+			const stride = x * scale;
 			for (let y=0; y<scale; y++) {
-				coords.push(new TileCoord(
+				coords[stride + y] = new TileCoord(
 					this.z + offset,
 					this.x * scale + x,
-					this.y * scale + y));
+					this.y * scale + y);
 			}
 		}
 		return coords;
