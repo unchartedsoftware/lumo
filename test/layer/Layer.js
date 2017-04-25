@@ -329,7 +329,7 @@ describe('Layer', () => {
 			layer.select(data1);
 			assert(layer.getSelected()[0] === data1);
 		});
-		it('should flag the plot as dirty if attached', () => {
+		it('should flag the plot as dirty if attached and data is selected', () => {
 			const layer = new Layer();
 			layer.onAdd(plot);
 			const setDirty = sinon.stub(plot, 'setDirty');
@@ -348,14 +348,14 @@ describe('Layer', () => {
 	});
 
 	describe('#unselect()', () => {
-		it('should empty the selection of the layer', () => {
+		it('should unselect the provided data', () => {
 			const layer = new Layer();
 			const data = {};
 			layer.select(data);
 			layer.unselect(data);
-			assert(layer.getSelected().length === 0);
+			assert(!layer.isSelected(data));
 		});
-		it('should flag the plot as dirty if attached', () => {
+		it('should flag the plot as dirty if attached and data is selected', () => {
 			const layer = new Layer();
 			layer.onAdd(plot);
 			const data = {};
@@ -363,6 +363,40 @@ describe('Layer', () => {
 			const setDirty = sinon.stub(plot, 'setDirty');
 			layer.unselect(data);
 			assert(setDirty.called);
+		});
+		it('should not flag the plot as dirty if data is not selected', () => {
+			const layer = new Layer();
+			layer.onAdd(plot);
+			const setDirty = sinon.stub(plot, 'setDirty');
+			layer.unselect({});
+			assert(!setDirty.called);
+		});
+	});
+
+	describe('#unselectAll()', () => {
+		it('should empty the selection of the layer', () => {
+			const layer = new Layer();
+			layer.select({});
+			layer.select({});
+			layer.select({});
+			layer.unselectAll();
+			assert(layer.getSelected().length === 0);
+		});
+		it('should flag the plot as dirty if attached and data is selected', () => {
+			const layer = new Layer();
+			layer.onAdd(plot);
+			const data = {};
+			layer.select(data);
+			const setDirty = sinon.stub(plot, 'setDirty');
+			layer.unselectAll();
+			assert(setDirty.called);
+		});
+		it('should not flag the plot as dirty if data is not selected', () => {
+			const layer = new Layer();
+			layer.onAdd(plot);
+			const setDirty = sinon.stub(plot, 'setDirty');
+			layer.unselectAll();
+			assert(!setDirty.called);
 		});
 	});
 

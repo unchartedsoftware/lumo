@@ -282,6 +282,22 @@ class Layer extends EventEmitter {
 	}
 
 	/**
+	 * Clears the current selection.
+	 *
+	 * @returns {Layer} The layer object, for chaining.
+	 */
+	unselectAll() {
+		if (this.selected.length > 0) {
+			// unselect all
+			this.selected = [];
+			if (this.plot) {
+				this.plot.setDirty();
+			}
+		}
+		return this;
+	}
+
+	/**
 	 * Returns any selected data.
 	 *
 	 * @returns {Object} The selected data.
