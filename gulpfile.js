@@ -38,7 +38,7 @@ function handleErrorTimeout(err) {
 	logError(err);
 	setTimeout(() => {
 		// set delay for full mocha error message
-		this.emit('end');
+		process.exit(1);
 	});
 }
 
