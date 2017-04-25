@@ -31,13 +31,10 @@ const delegateMouseMove = function(delegator, child, event, collision) {
 
 		// check for prev
 		if (prev) {
-
 			// clear cursor style
 			resetCursor(delegator.plot);
-
 			// un-highlight previous target
 			prev.target.unhighlight();
-
 			// `mouseout` on previous target
 			delegations.push({
 				type: EventType.MOUSE_OUT,
@@ -112,13 +109,16 @@ const delegateClick = function(delegator, child, event, collision) {
 	// check if multi-select is enabled
 	const multiSelect = Keyboard.poll('ctrl') || Keyboard.poll('meta');
 	if (collision) {
+
 		// select
 		if (!child.isSelected(collision)) {
-			// add if not selected
+			// add to selection if not selected
 			child.select(collision, multiSelect);
 		} else {
-			// remove if already selected
-			child.unselect(collision);
+			if (multiSelect) {
+				// remove if already selected
+				child.unselect(collision);
+			}
 		}
 		// `click` event
 		const delegation = {
@@ -129,7 +129,9 @@ const delegateClick = function(delegator, child, event, collision) {
 		delegator.prevClick = delegation.event;
 		// return delegation
 		return [ delegation ];
+
 	} else {
+
 		if (delegator.prevClick) {
 			if (multiSelect) {
 				// if multi-select is held, don't clear selection, assume the
@@ -137,10 +139,11 @@ const delegateClick = function(delegator, child, event, collision) {
 				return [];
 			}
 			// unselect the data
-			delegator.prevClick.target.unselect(delegator.prevClick.data);
+			delegator.prevClick.target.unselectAll();
 			// unflag as prev `click` target
 			delegator.prevClick = null;
 		}
+
 	}
 	return [];
 };
