@@ -103,6 +103,13 @@ const DELEGATOR = Symbol();
  */
 const BROADCASTER = Symbol();
 
+/**
+ * Dirty plot symbol.
+ * @private
+ * @constant {Symbol}
+ */
+const DIRTY = Symbol();
+
 // Private Methods
 
 const requestTiles = function() {
@@ -183,7 +190,7 @@ const updateCell = function(plot) {
 	if (refresh) {
 		// update cell
 		plot.cell = cell;
-		// emit cell refresh event
+		// emit cell refresh
 		plot.emit(EventType.CELL_UPDATE, new Event(cell));
 	}
 };
@@ -216,32 +223,23 @@ const reset = function(plot) {
 	}
 };
 
-
 const frame = function(plot) {
 
-	if(plot.isDirty()) {
+	// get frame timestamp
+	const timestamp = Date.now();
 
-		// get frame timestamp
-		const timestamp = Date.now();
+	// emit frame event
+	plot.emit(EventType.FRAME, new Event(plot, timestamp));
 
-		// emit start frame
-		plot.emit(EventType.FRAME, new Event(plot, timestamp));
+	// update size
+	resize(plot);
 
-		// update size
-		resize(plot);
+	if (plot.isDirty()) {
 
-		const gl = plot.gl;
-
-		// clear the backbuffer
-		gl.clearColor(0, 0, 0, 0);
-		gl.clear(gl.COLOR_BUFFER_BIT);
-
-		// set the viewport
-		const size = plot.getViewportPixelSize();
-		gl.viewport(
-			0, 0,
-			size.width * window.devicePixelRatio,
-			size.height * window.devicePixelRatio);
+		// clear flag now, this way layers that may be animating can signal
+		// that the animation is not complete by flagging as dirty during the
+		// draw call.
+		plot.clearDirty();
 
 		// apply the zoom animation
 		if (plot.isZooming()) {
@@ -264,6 +262,20 @@ const frame = function(plot) {
 		// update cell
 		updateCell(plot);
 
+		// context shorthand
+		const gl = plot.gl;
+
+		// clear the backbuffer
+		gl.clearColor(0, 0, 0, 0);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+
+		// set the viewport
+		const size = plot.getViewportPixelSize();
+		gl.viewport(
+			0, 0,
+			size.width * plot.pixelRatio,
+			size.height * plot.pixelRatio);
+
 		// sort layers by z-index
 		const layers = plot.getSortedLayers();
 
@@ -273,9 +285,8 @@ const frame = function(plot) {
 				layer.draw(timestamp);
 			}
 		});
-
-		plot.clearDirty();
 	}
+
 	// request next frame
 	plot.frameRequest = requestAnimationFrame(() => {
 		frame(plot);
@@ -420,8 +431,10 @@ class Plot extends EventEmitter {
 		this[BROADCASTER].broadcast(EventType.PAN);
 		this[BROADCASTER].broadcast(EventType.PAN_END);
 
+		// flag as dirty
+		this[DIRTY] = true;
+
 		// begin frame loop
-		this.setDirty();
 		frame(this);
 	}
 
@@ -454,29 +467,27 @@ class Plot extends EventEmitter {
 	}
 
 	/**
-	 * Flags the plot as needing a redraw on the next frame.
-	 *
-	 * @returns {Plot} The plot object, for chaining.
+	 * Flags the plot as dirty singalling that it should be redrawn in the next
+	 * frame.
 	 */
 	setDirty() {
-		this._isDirty = true;
-		return this;
+		this[DIRTY] = true;
 	}
 
 	/**
-	 * Check if the plot is dirty (requires re-draw)
+	 * Check if the plot is dirty and requires a redraw.
 	 *
-	 * @returns {boolean}
-     */
+	 * @returns {boolean} Whether or not the plot should be redrawn.
+ 	*/
 	isDirty() {
-		return this._isDirty || this.isPanning() || this.isZooming();
+		return this[DIRTY] || this.isPanning() || this.isZooming();
 	}
 
 	/**
 	 * Clears the dirty flag for the next frame.
 	 */
 	clearDirty() {
-		this._isDirty = false;
+		this[DIRTY] = false;
 	}
 
 	/**
