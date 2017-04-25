@@ -234,7 +234,7 @@ const frame = function(plot) {
 	// update size
 	resize(plot);
 
-	if (plot.isDirty()) {
+	if (!plot.dirtyChecking || plot.isDirty()) {
 
 		// clear flag now, this way layers that may be animating can signal
 		// that the animation is not complete by flagging as dirty during the
@@ -309,6 +309,7 @@ class Plot extends EventEmitter {
 	 * @param {Number} options.maxZoom - The maximum zoom of the plot.
 	 * @param {Object} options.center - The center of the plot, in plot pixels.
 	 * @param {boolean} options.wraparound - Whether or not the plot wraps around.
+	 * @param {boolean} options.dirtyChecking - Whether or not the plot uses dirty checking or renders every frame.
 	 *
 	 * @param {Number} options.panThrottle - Pan request throttle timeout in ms.
 	 * @param {Number} options.resizeThrottle - Resize request throttle timeout in ms.
@@ -430,6 +431,9 @@ class Plot extends EventEmitter {
 		this[BROADCASTER].broadcast(EventType.PAN_START);
 		this[BROADCASTER].broadcast(EventType.PAN);
 		this[BROADCASTER].broadcast(EventType.PAN_END);
+
+		// whether or not to use dirty checking
+		this.dirtyChecking = defaultTo(options.dirtyChecking, true);
 
 		// flag as dirty
 		this[DIRTY] = true;
