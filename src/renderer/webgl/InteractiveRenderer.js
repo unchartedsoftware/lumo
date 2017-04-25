@@ -305,7 +305,7 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 			this.color);
 
 		// render selected
-		layer.selected.forEach(selected => {
+		layer.getSelected().forEach(selected => {
 			renderPoint(
 				this.point,
 				shader,
@@ -316,12 +316,13 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 		});
 
 		// render highlighted
-		if (layer.highlighted && !layer.isSelected(layer.highlighted)) {
+		const highlighted = layer.getHighlighted();
+		if (highlighted && !layer.isSelected(highlighted)) {
 			renderPoint(
 				this.point,
 				shader,
 				plot,
-				layer.highlighted,
+				highlighted,
 				this.color,
 				HIGHLIGHTED_RADIUS_OFFSET);
 		}
