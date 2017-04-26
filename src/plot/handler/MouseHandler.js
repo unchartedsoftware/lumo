@@ -40,26 +40,31 @@ class MouseHandler extends DOMHandler {
 
 		this.mousedown = (event) => {
 			plot.setDirty();
+			event.preventDefault();
 			plot.emit(EventType.MOUSE_DOWN, createEvent(this, plot, event));
 		};
 
 		this.mouseup = (event) => {
 			plot.setDirty();
+			event.preventDefault();
 			plot.emit(EventType.MOUSE_UP, createEvent(this, plot, event));
 		};
 
 		this.mousemove = (event) => {
 			plot.setDirty();
+			event.preventDefault();
 			plot.emit(EventType.MOUSE_MOVE, createEvent(this, plot, event));
 		};
 
 		this.mouseover = (event) => {
 			plot.setDirty();
+			event.preventDefault();
 			plot.emit(EventType.MOUSE_OVER, createEvent(this, plot, event));
 		};
 
 		this.mouseout = (event) => {
 			plot.setDirty();
+			event.preventDefault();
 			plot.emit(EventType.MOUSE_OUT, createEvent(this, plot, event));
 		};
 

@@ -65,14 +65,16 @@ class ClickHandler extends DOMHandler {
 			const distSqrd = diff.x * diff.x + diff.y * diff.y;
 			if (distSqrd < MOVE_TOLERANCE * MOVE_TOLERANCE) {
 				// movement was within tolerance, emit click
+				plot.setDirty();
+				event.preventDefault();
 				this.plot.emit(EventType.CLICK, createEvent(this, plot, event));
 			}
 			last = null;
-			plot.setDirty();
 		};
 
 		this.dblclick = (event) => {
 			plot.setDirty();
+			event.preventDefault();
 			this.plot.emit(EventType.DBL_CLICK, createEvent(this, plot, event));
 		};
 
