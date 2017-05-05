@@ -294,9 +294,6 @@ const frame = function(plot) {
 
 /**
  * Class representing a plot.
- *
- * @property {HTMLElement} container - The plot container element.
- * @property {HTMLCanvasElement} canvas - The plot canvas element.
  */
 class Plot extends EventEmitter {
 
@@ -861,6 +858,73 @@ class Plot extends EventEmitter {
 			this.zoomAnimation.cancel();
 			this.zoomAnimation = null;
 			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Returns any highlighted data.
+	 *
+	 * @returns {Object} The highlighted data.
+	 */
+	getHighlighted() {
+		const layers = this.layers;
+		for (let i=0; i<layers.length; i++) {
+			const highlight = layers[i].getHighlighted();
+			if (highlight) {
+				return highlight;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Returns true if the provided argument is highlighted.
+	 *
+	 * @param {Object} data - The data to test.
+	 *
+	 * @returns {boolean} Whether or not there is highlighted data.
+	 */
+	isHighlighted(data) {
+		const layers = this.layers;
+		for (let i=0; i<layers.length; i++) {
+			if (layers[i].isHighlighted(data)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Returns any selected data.
+	 *
+	 * @returns {Array} The selected data.
+	 */
+	getSelected() {
+		const selection = [];
+		const layers = this.layers;
+		for (let i=0; i<layers.length; i++) {
+			const selected = layers[i].getSelected();
+			for (let j=0; j<selected.length; j++) {
+				selection.push(selected[j]);
+			}
+		}
+		return selection;
+	}
+
+	/**
+	 * Returns true if the provided argument is selected.
+	 *
+	 * @param {Object} data - The data to test.
+	 *
+	 * @returns {boolean} Whether or not the data is selected.
+	 */
+	isSelected(data) {
+		const layers = this.layers;
+		for (let i=0; i<layers.length; i++) {
+			if (layers[i].isSelected(data)) {
+				return true;
+			}
 		}
 		return false;
 	}

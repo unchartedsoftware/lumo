@@ -78,7 +78,7 @@ const delegateMouseMove = function(delegator, child, event, collision) {
 			});
 		}
 
-		// flag as prev `mouseover` target
+		// flag as prev `mouseover`
 		delegator.prevMouseover = delegations[delegations.length-1].event;
 	}
 
@@ -112,7 +112,14 @@ const delegateClick = function(delegator, child, event, collision) {
 
 		// select
 		if (!child.isSelected(collision)) {
-			// add to selection if not selected
+			if (!multiSelect) {
+				// if not multi-select, unselect the data prev selected data
+				delegator.prevClick.forEach(prev => {
+					prev.target.unselectAll();
+				});
+				delegator.prevClick = [];
+			}
+			// if not already selected, add to selection
 			child.select(collision, multiSelect);
 		} else {
 			if (multiSelect) {
@@ -126,22 +133,24 @@ const delegateClick = function(delegator, child, event, collision) {
 			event: copyEvent(child, collision, event)
 		};
 		// flag as prev `click` target
-		delegator.prevClick = delegation.event;
+		delegator.prevClick.push(delegation.event);
 		// return delegation
 		return [ delegation ];
 
 	} else {
 
-		if (delegator.prevClick) {
+		if (delegator.prevClick.length > 0) {
 			if (multiSelect) {
 				// if multi-select is held, don't clear selection, assume the
 				// user may have misclicked
 				return [];
 			}
 			// unselect the data
-			delegator.prevClick.target.unselectAll();
+			delegator.prevClick.forEach(prev => {
+				prev.target.unselectAll();
+			});
 			// unflag as prev `click` target
-			delegator.prevClick = null;
+			delegator.prevClick = [];
 		}
 
 	}
@@ -179,7 +188,7 @@ class EventDelegator {
 	 */
 	constructor(plot) {
 		this.plot = plot;
-		this.prevClick = null;
+		this.prevClick = [];
 		this.prevMouseover = null;
 	}
 
