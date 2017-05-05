@@ -2,6 +2,7 @@
 
 /**
  * Class representing an event broadcaster.
+ * @private
  */
 class EventBroadcaster {
 
@@ -17,7 +18,7 @@ class EventBroadcaster {
 	/**
 	 * Broadcasts the provided event type to all children of the plot.
 	 *
-	 * @param {String} type - The event type to broadcast.
+	 * @param {string} type - The event type to broadcast.
 	 */
 	broadcast(type) {
 		this.plot.on(type, event => {

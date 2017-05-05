@@ -9,21 +9,21 @@ const WebGLVertexRenderer = require('./WebGLVertexRenderer');
 /**
  * Inner radius of star.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const STAR_INNER_RADIUS = 0.4;
 
 /**
  * Outer radius of star.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const STAR_OUTER_RADIUS = 1.0;
 
 /**
- * Number of points on the star.
+ * number of points on the star.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const STAR_NUM_POINTS = 5;
 
@@ -157,8 +157,6 @@ class ShapeRenderer extends WebGLVertexRenderer {
 
 	/**
 	 * The draw function that is executed per frame.
-	 *
-	 * @param {Number} timestamp - The frame timestamp.
 	 *
 	 * @returns {Renderer} The renderer object, for chaining.
 	 */

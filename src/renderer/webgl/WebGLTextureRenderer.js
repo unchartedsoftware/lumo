@@ -67,7 +67,9 @@ class WebGLTextureRenderer extends WebGLRenderer {
 	 * the provided texture size. Creates and attaches the necessary event
 	 * handlers to add and remove data from the array accordingly.
 	 *
-	 * @param {Number} textureSize - The resolution of the tile texture.
+	 * @param {number} textureSize - The resolution of the tile texture.
+	 *
+	 * @returns {TextureArray} The texture array object.
 	 */
 	createTextureArray(textureSize) {
 		// create texture array
@@ -102,6 +104,8 @@ class WebGLTextureRenderer extends WebGLRenderer {
 	/**
 	 * Destroys a texture array object and removes all event handlers used to
 	 * add and remove data from the array.
+	 *
+	 * @param {TextureArray} array - The texture array to destroy.
 	 */
 	destroyTextureArray(array) {
 		// detach handlers

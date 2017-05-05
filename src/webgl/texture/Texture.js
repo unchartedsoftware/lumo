@@ -13,14 +13,14 @@ class Texture {
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
 	 * @param {ArrayBuffer|CanvasElement} src - The data to buffer.
 	 * @param {Object} options - The texture options.
-	 * @param {Number} options.width - The width of the texture.
-	 * @param {Number} options.height - The height of the texture.
-	 * @param {String} options.wrap - The wrapping type over both S and T dimension.
-	 * @param {String} options.filter - The min / mag filter used during scaling.
+	 * @param {number} options.width - The width of the texture.
+	 * @param {number} options.height - The height of the texture.
+	 * @param {string} options.wrap - The wrapping type over both S and T dimension.
+	 * @param {string} options.filter - The min / mag filter used during scaling.
 	 * @param {bool} options.invertY - Whether or not invert-y is enabled.
 	 * @param {bool} options.premultiplyAlpha - Whether or not alpha premultiplying is enabled.
-	 * @param {String} options.format - The texture pixel format.
-	 * @param {String} options.type - The texture pixel component type.
+	 * @param {string} options.format - The texture pixel format.
+	 * @param {string} options.type - The texture pixel component type.
 	 */
 	constructor(gl, src = null, options = {}) {
 		this.gl = gl;
@@ -44,9 +44,9 @@ class Texture {
 	/**
 	 * Binds the texture object to the provided texture unit location.
 	 *
-	 * @param {Number} location - The texture unit location index. Optional.
+	 * @param {number} location - The texture unit location index. Optional.
 	 *
-	 * @return {Texture} The texture object, for chaining.
+	 * @returns {Texture} The texture object, for chaining.
 	 */
 	bind(location = 0) {
 		const gl = this.gl;
@@ -58,7 +58,7 @@ class Texture {
 	/**
 	 * Unbinds the texture object.
 	 *
-	 * @return {Texture} The texture object, for chaining.
+	 * @returns {Texture} The texture object, for chaining.
 	 */
 	unbind() {
 		const gl = this.gl;
@@ -70,10 +70,10 @@ class Texture {
 	 * Buffer data into the texture.
 	 *
 	 * @param {Array|ArrayBufferView|null} data - The data array to buffer.
-	 * @param {Number} width - The width of the data.
-	 * @param {Number} height - The height of the data.
+	 * @param {number} width - The width of the data.
+	 * @param {number} height - The height of the data.
 	 *
-	 * @return {Texture} The texture object, for chaining.
+	 * @returns {Texture} The texture object, for chaining.
 	 */
 	bufferData(data, width, height) {
 		const gl = this.gl;
@@ -117,12 +117,12 @@ class Texture {
 	 * Buffer partial data into the texture.
 	 *
 	 * @param {Array|ArrayBufferView|null} data - The data array to buffer.
-	 * @param {Number} xOffset - The x offset at which to buffer.
-	 * @param {Number} yOffset - The y offset at which to buffer.
-	 * @param {Number} width - The width of the data.
-	 * @param {Number} height - The height of the data.
+	 * @param {number} xOffset - The x offset at which to buffer.
+	 * @param {number} yOffset - The y offset at which to buffer.
+	 * @param {number} width - The width of the data.
+	 * @param {number} height - The height of the data.
 	 *
-	 * @return {Texture} The texture object, for chaining.
+	 * @returns {Texture} The texture object, for chaining.
 	 */
 	bufferSubData(data, xOffset = 0, yOffset = 0, width = undefined, height = undefined) {
 		const gl = this.gl;
@@ -160,10 +160,10 @@ class Texture {
 	/**
 	 * Resize the underlying texture. This clears the texture data.
 	 *
-	 * @param {Number} width - The new width of the texture.
-	 * @param {Number} height - The new height of the texture.
+	 * @param {number} width - The new width of the texture.
+	 * @param {number} height - The new height of the texture.
 	 *
-	 * @return {Texture} The texture object, for chaining.
+	 * @returns {Texture} The texture object, for chaining.
 	 */
 	resize(width, height) {
 		this.bufferData(null, width, height);

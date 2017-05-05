@@ -9,14 +9,14 @@ const WebGLInteractiveRenderer = require('./WebGLInteractiveRenderer');
 /**
  * Highlighted point radius increase.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const HIGHLIGHTED_RADIUS_OFFSET = 2;
 
 /**
  * Selected point radius increase.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const SELECTED_RADIUS_OFFSET = 4;
 
@@ -269,8 +269,6 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 
 	/**
 	 * The draw function that is executed per frame.
-	 *
-	 * @param {Number} timestamp - The frame timestamp.
 	 *
 	 * @returns {Renderer} The renderer object, for chaining.
 	 */

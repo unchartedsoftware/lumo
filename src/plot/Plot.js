@@ -22,35 +22,35 @@ const ZoomHandler = require('./handler/ZoomHandler');
 /**
  * Pan request throttle in milliseconds.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const PAN_THROTTLE_MS = 100;
 
 /**
  * Resize request throttle in milliseconds.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const RESIZE_THROTTLE_MS = 200;
 
 /**
  * Zoom request throttle in milliseconds.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const ZOOM_THROTTLE_MS = 400;
 
 /**
  * The maximum zoom delta until a cell update event.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const CELL_ZOOM_DELTA = 1.0;
 
 /**
  * The maximum zoom level supported.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const MAX_ZOOM = 24;
 
@@ -167,9 +167,8 @@ const updateCell = function(plot) {
 	const extent = plot.getTargetPixelExtent();
 	const size = plot.getViewportPixelSize();
 	const cell = new Cell(zoom, center, extent);
-
 	let refresh = false;
-	// check if forced or no cell exists
+	// check if no cell exists
 	if (!plot.cell) {
 		refresh = true;
 	} else {
@@ -295,35 +294,38 @@ const frame = function(plot) {
 
 /**
  * Class representing a plot.
+ *
+ * @property {HTMLElement} container - The plot container element.
+ * @property {HTMLCanvasElement} canvas - The plot canvas element.
  */
 class Plot extends EventEmitter {
 
 	/**
 	 * Instantiates a new Plot object.
 	 *
-	 * @param {String} selector - The selector for the canvas element.
+	 * @param {string} selector - The selector for the container element.
 	 * @param {Object} options - The plot options.
-	 * @param {Number} options.tileSize - The dimension in pixels of a tile.
-	 * @param {Number} options.zoom - The zoom of the plot.
-	 * @param {Number} options.minZoom - The minimum zoom of the plot.
-	 * @param {Number} options.maxZoom - The maximum zoom of the plot.
+	 * @param {number} options.tileSize - The dimension in pixels of a tile.
+	 * @param {number} options.zoom - The zoom of the plot.
+	 * @param {number} options.minZoom - The minimum zoom of the plot.
+	 * @param {number} options.maxZoom - The maximum zoom of the plot.
 	 * @param {Object} options.center - The center of the plot, in plot pixels.
 	 * @param {boolean} options.wraparound - Whether or not the plot wraps around.
 	 * @param {boolean} options.dirtyChecking - Whether or not the plot uses dirty checking or renders every frame.
 	 *
-	 * @param {Number} options.panThrottle - Pan request throttle timeout in ms.
-	 * @param {Number} options.resizeThrottle - Resize request throttle timeout in ms.
-	 * @param {Number} options.zoomThrottle - Zoom request throttle timeout in ms.
+	 * @param {number} options.panThrottle - Pan request throttle timeout in ms.
+	 * @param {number} options.resizeThrottle - Resize request throttle timeout in ms.
+	 * @param {number} options.zoomThrottle - Zoom request throttle timeout in ms.
 	 *
-	 * @param {Number} options.inertia - Whether or not pan inertia is enabled.
-	 * @param {Number} options.inertiaEasing - The inertia easing factor.
-	 * @param {Number} options.inertiaDeceleration - The inertia deceleration factor.
+	 * @param {number} options.inertia - Whether or not pan inertia is enabled.
+	 * @param {number} options.inertiaEasing - The inertia easing factor.
+	 * @param {number} options.inertiaDeceleration - The inertia deceleration factor.
 	 *
-	 * @param {Number} options.continuousZoom - Whether or not continuous zoom is enabled.
-	 * @param {Number} options.zoomDuration - The duration of the zoom animation.
-	 * @param {Number} options.maxConcurrentZooms - The maximum concurrent zooms in a single batch.
-	 * @param {Number} options.deltaPerZoom - The scroll delta required per zoom level.
-	 * @param {Number} options.zoomDebounce - The debounce duration of the zoom in ms.
+	 * @param {number} options.continuousZoom - Whether or not continuous zoom is enabled.
+	 * @param {number} options.zoomDuration - The duration of the zoom animation.
+	 * @param {number} options.maxConcurrentZooms - The maximum concurrent zooms in a single batch.
+	 * @param {number} options.deltaPerZoom - The scroll delta required per zoom level.
+	 * @param {number} options.zoomDebounce - The debounce duration of the zoom in ms.
 	 */
 	constructor(selector, options = {}) {
 		super();
@@ -549,7 +551,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Returns the current zoom of the plot.
 	 *
-	 * @returns {Number} The current zoom of the plot.
+	 * @returns {number} The current zoom of the plot.
 	 */
 	getZoom() {
 		return this.zoom;
@@ -560,7 +562,7 @@ class Plot extends EventEmitter {
 	 * will return the destination zoom. If the plot is not actively zooming, it
 	 * will return the current zoom.
 	 *
-	 * @returns {Number} The target zoom of the plot.
+	 * @returns {number} The target zoom of the plot.
 	 */
 	getTargetZoom() {
 		if (this.isZooming()) {
@@ -574,7 +576,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Returns the current viewport of the plot.
 	 *
-	 * @returns {Number} The current viewport of the plot.
+	 * @returns {number} The current viewport of the plot.
 	 */
 	getViewport() {
 		return this.viewport;
@@ -722,7 +724,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Returns the orthographic projection matrix for the viewport.
 	 *
-	 * @return {Float32Array} The orthographic projection matrix.
+	 * @returns {Float32Array} The orthographic projection matrix.
 	 */
 	getOrthoMatrix() {
 		const size = this.getViewportPixelSize();
@@ -759,7 +761,7 @@ class Plot extends EventEmitter {
 	 * Pans to the target plot coordinate. Cancels any current zoom or pan
 	 * animations.
 	 *
-	 * @param {Number} pos - The target plot position.
+	 * @param {number} pos - The target plot position.
 	 * @param {boolean} animate - Whether or not to animate the pan. Defaults to `true`.
 	 *
 	 * @returns {Plot} The plot object, for chaining.
@@ -778,7 +780,7 @@ class Plot extends EventEmitter {
 	 * minZoom and maxZoom attributes. Cancels any current zoom or pan
 	 * animations.
 	 *
-	 * @param {Number} level - The target zoom level.
+	 * @param {number} level - The target zoom level.
 	 * @param {boolean} animate - Whether or not to animate the zoom. Defaults to `true`.
 	 *
 	 * @returns {Plot} The plot object, for chaining.
@@ -820,7 +822,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Returns whether or not the plot is actively panning.
 	 *
-	 * @returns {bool} - Whether or not the plot is panning.
+	 * @returns {bool} Whether or not the plot is panning.
 	 */
 	isPanning() {
 		return !!this.panAnimation;
@@ -829,7 +831,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Returns whether or not the plot is actively zooming.
 	 *
-	 * @returns {bool} - Whether or not the plot is zooming.
+	 * @returns {bool} Whether or not the plot is zooming.
 	 */
 	isZooming() {
 		return !!this.zoomAnimation;
@@ -838,7 +840,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Cancels any current pan animation.
 	 *
-	 * @returns {boolean} - Whether or not the plot was panning.
+	 * @returns {boolean} Whether or not the plot was panning.
 	 */
 	cancelPan() {
 		if (this.isPanning()) {
@@ -852,7 +854,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Cancels any current zoom animation.
 	 *
-	 * @returns {boolean} - Whether or not the plot was zooming.
+	 * @returns {boolean} Whether or not the plot was zooming.
 	 */
 	cancelZoom() {
 		if (this.isZooming()) {
@@ -866,7 +868,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Return the containing element of the plot.
 	 *
-	 * @returns {DOMElement} The container of the plot.
+	 * @returns {HTMLElement} The container of the plot.
 	 */
 	getContainer() {
 		return this.container;

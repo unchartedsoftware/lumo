@@ -1,15 +1,18 @@
 'use strict';
 
+/**
+ * R-Tree collision primitives.
+ */
 module.exports = {
 	/**
 	 * A circle collision primitive.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	CIRCLE: 'circle',
 
 	/**
 	 * A rectangle collision primitive.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	RECTANGLE: 'rectangle',
 };

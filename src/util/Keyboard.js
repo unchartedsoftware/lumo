@@ -30,12 +30,15 @@ document.addEventListener('keyup', event => {
 	}
 });
 
+/**
+ * Keyboard state polling.
+ */
 module.exports = {
 
 	/**
 	 * Poll if a modifier key is currently held down.
 	 *
-	 * @param {String} key - The key identifier.
+	 * @param {string} key - The key identifier.
 	 *
 	 * @returns {boolean} Whether or not the key is held down.
 	 */

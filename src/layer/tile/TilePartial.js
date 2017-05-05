@@ -10,7 +10,7 @@ class TilePartial {
 	 *
 	 * A TilePartial is used to render at least a portion of a missing tile at
 	 * the closest available level-of-detail. There are three cases of
-	 * instantiation:
+	 * instantiation.
 	 *
 	 * A) Closest available level of detail is an ancestor tile.
 	 *    - The "target" tile is completely covered by a portion of the "found"

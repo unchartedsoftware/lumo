@@ -47,10 +47,11 @@ class WebGLRenderer extends Renderer {
 	/**
 	 * Instantiate and return a new Shader object using the renderers internal
 	 * WebGLRenderingContext.
-	 * @param {Object} params - The shader param object.
-	 * @param {String} params.common - Common glsl to be shared by both vertex and fragment shaders.
-	 * @param {String} params.vert - The vertex shader glsl.
-	 * @param {String} params.frag - The fragment shader glsl.
+	 *
+	 * @param {Object} source - The shader param object.
+	 * @param {string} source.common - Common glsl to be shared by both vertex and fragment shaders.
+	 * @param {string} source.vert - The vertex shader glsl.
+	 * @param {string} source.frag - The fragment shader glsl.
 	 *
 	 * @returns {Shader} The shader object.
 	 */
@@ -61,7 +62,7 @@ class WebGLRenderer extends Renderer {
 	/**
 	 * Returns the orthographic projection matrix for the viewport.
 	 *
-	 * @return {Float32Array} The orthographic projection matrix.
+	 * @returns {Float32Array} The orthographic projection matrix.
 	 */
 	getOrthoMatrix() {
 		return this.layer.plot.getOrthoMatrix();

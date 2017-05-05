@@ -14,9 +14,9 @@ class TileCoord {
 	/**
 	 * Instantiates a new TileCoord object.
 	 *
-	 * @param {Number} z - The z component of the tile coordinate.
-	 * @param {Number} x - The x component of the tile coordinate.
-	 * @param {Number} y - The y component of the tile coordinate.
+	 * @param {number} z - The z component of the tile coordinate.
+	 * @param {number} x - The x component of the tile coordinate.
+	 * @param {number} y - The y component of the tile coordinate.
 	 */
 	constructor(z, x, y) {
 		this.z = z;
@@ -28,7 +28,7 @@ class TileCoord {
 	/**
 	 * Returns the XYZ URL string.
 	 *
-	 * @returns {String} The XYZ URL string.
+	 * @returns {string} The XYZ URL string.
 	 */
 	xyz() {
 		const dim = Math.pow(2, this.z);
@@ -38,7 +38,7 @@ class TileCoord {
 	/**
 	 * Returns the TMS URL string.
 	 *
-	 * @returns {String} The TMS URL string.
+	 * @returns {string} The TMS URL string.
 	 */
 	tms() {
 		return `${this.z}/${this.x}/${this.y}`;
@@ -60,7 +60,7 @@ class TileCoord {
 	/**
 	 * Get the ancestor coord.
 	 *
-	 * @param {Number} offset - The offset of the ancestor from the coord. Optional.
+	 * @param {number} offset - The offset of the ancestor from the coord. Optional.
 	 *
 	 * @returns {TileCoord} The ancestor coord.
 	 */
@@ -75,7 +75,7 @@ class TileCoord {
 	/**
 	 * Get the descendants of the coord.
 	 *
-	 * @param {Number} offset - The offset of the descendants from the coord. Optional.
+	 * @param {number} offset - The offset of the descendants from the coord. Optional.
 	 *
 	 * @returns {Array} The array of descendant coords.
 	 */
@@ -101,17 +101,17 @@ class TileCoord {
 	 *
 	 * @returns {boolean} Whether or not the provided coord is an ancestor.
 	 */
-	isAncestorOf(child) {
-		if (this.z >= child.z) {
+	isAncestorOf(coord) {
+		if (this.z >= coord.z) {
 			return false;
 		}
-		const diff = child.z - this.z;
+		const diff = coord.z - this.z;
 		const scale = Math.pow(2, diff);
-		const x = Math.floor(child.x / scale);
+		const x = Math.floor(coord.x / scale);
 		if (this.x !== x) {
 			return false;
 		}
-		const y = Math.floor(child.y / scale);
+		const y = Math.floor(coord.y / scale);
 		return this.y === y;
 	}
 
@@ -122,8 +122,8 @@ class TileCoord {
 	 *
 	 * @returns {boolean} Whether or not the provided coord is a descendant.
 	 */
-	isDescendantOf(parent) {
-		return parent.isAncestorOf(this);
+	isDescendantOf(coord) {
+		return coord.isAncestorOf(this);
 	}
 
 	/**

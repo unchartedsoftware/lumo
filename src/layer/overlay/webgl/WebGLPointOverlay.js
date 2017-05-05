@@ -100,6 +100,13 @@ class WebGLPointOverlay extends WebGLOverlay {
 
 	/**
 	 * Instantiates a new WebGLPointOverlay object.
+	 *
+	 * @param {Object} options - The layer options.
+	 * @param {Renderer} options.renderer - The layer renderer.
+	 * @param {number} options.opacity - The layer opacity.
+	 * @param {number} options.zIndex - The layer z-index.
+	 * @param {Array} options.pointColor - The color of the points.
+	 * @param {number} options.pointRadius - The pixel radius of the points.
 	 */
 	constructor(options = {}) {
 		super(options);
@@ -158,7 +165,7 @@ class WebGLPointOverlay extends WebGLOverlay {
 	/**
 	 * Add a set of points to render.
 	 *
-	 * @param {String} id - The id to store the points under.
+	 * @param {string} id - The id to store the points under.
 	 * @param {Array} points - The points.
 	 *
 	 * @returns {WebGLPointOverlay} The overlay object, for chaining.
@@ -174,7 +181,7 @@ class WebGLPointOverlay extends WebGLOverlay {
 	/**
 	 * Remove a set of points by id from the overlay.
 	 *
-	 * @param {String} id - The id to store the points under.
+	 * @param {string} id - The id to store the points under.
 	 *
 	 * @returns {WebGLPointOverlay} The overlay object, for chaining.
 	 */
@@ -201,8 +208,6 @@ class WebGLPointOverlay extends WebGLOverlay {
 
 	/**
 	 * The draw function that is executed per frame.
-	 *
-	 * @param {Number} timestamp - The frame timestamp.
 	 *
 	 * @returns {WebGLPointOverlay} The overlay object, for chaining.
 	 */

@@ -5,7 +5,7 @@
 /**
  * Maximum safe integer.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const MAX_SAFE_INT = Math.pow(2, 53) - 1;
 

@@ -13,13 +13,13 @@ class ZoomAnimation extends Animation {
 	 * Instantiates a new ZoomAnimation object.
 	 *
 	 * @param {Object} params - The parameters of the animation.
-	 * @param {Number} params.plot - The plot target of the animation.
-	 * @param {Number} params.duration - The duration of the animation.
-	 * @param {Number} params.prevZoom - The starting zoom of the animation.
-	 * @param {Number} params.targetZoom - The target zoom of the animation.
-	 * @param {Number} params.prevViewport - The starting viewport of the animation.
-	 * @param {Number} params.targetViewport - The target viewport of the animation.
-	 * @param {Number} params.targetPos - The target position of the animation, in plot coordinates.
+	 * @param {number} params.plot - The plot target of the animation.
+	 * @param {number} params.duration - The duration of the animation.
+	 * @param {number} params.prevZoom - The starting zoom of the animation.
+	 * @param {number} params.targetZoom - The target zoom of the animation.
+	 * @param {number} params.prevViewport - The starting viewport of the animation.
+	 * @param {number} params.targetViewport - The target viewport of the animation.
+	 * @param {number} params.targetPos - The target position of the animation, in plot coordinates.
 	 */
 	constructor(params = {}) {
 		super(params);
@@ -34,7 +34,9 @@ class ZoomAnimation extends Animation {
 	 * Updates the zoom of the plot based on the current state of the
 	 * animation.
 	 *
-	 * @param {Number} timestamp - The frame timestamp.
+	 * @param {number} timestamp - The frame timestamp.
+	 *
+	 * @returns {boolean} Whether or not the animation has finished.
 	 */
 	update(timestamp) {
 		const t = this.getT(timestamp);

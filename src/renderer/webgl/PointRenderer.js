@@ -114,8 +114,6 @@ class PointRenderer extends WebGLVertexRenderer {
 	/**
 	 * The draw function that is executed per frame.
 	 *
-	 * @param {Number} timestamp - The frame timestamp.
-	 *
 	 * @returns {Renderer} The renderer object, for chaining.
 	 */
 	draw() {

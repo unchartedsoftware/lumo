@@ -168,6 +168,7 @@ const DELEGATION_FUNCS = {
 
 /**
  * Class representing an event delegator.
+ * @private
  */
 class EventDelegator {
 
@@ -185,7 +186,7 @@ class EventDelegator {
 	/**
 	 * Delegates the provided event type to all children of the plot.
 	 *
-	 * @param {String} type - The event type to delegate.
+	 * @param {string} type - The event type to delegate.
 	 */
 	delegate(type) {
 		// get appropriate delegation function

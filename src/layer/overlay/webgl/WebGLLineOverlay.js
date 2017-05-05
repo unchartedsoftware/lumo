@@ -493,6 +493,13 @@ class WebGLLineOverlay extends WebGLOverlay {
 
 	/**
 	 * Instantiates a new WebGLLineOverlay object.
+	 *
+	 * @param {Object} options - The layer options.
+	 * @param {Renderer} options.renderer - The layer renderer.
+	 * @param {number} options.opacity - The layer opacity.
+	 * @param {number} options.zIndex - The layer z-index.
+	 * @param {Array} options.lineColor - The color of the line.
+	 * @param {number} options.lineWidth - The pixel width of the line.
 	 */
 	constructor(options = {}) {
 		super(options);
@@ -546,7 +553,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 	/**
 	 * Add a set of points to render as a single polyline.
 	 *
-	 * @param {String} id - The id to store the polyline under.
+	 * @param {string} id - The id to store the polyline under.
 	 * @param {Array} points - The polyline points.
 	 *
 	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
@@ -562,7 +569,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 	/**
 	 * Remove a polyline by id from the overlay.
 	 *
-	 * @param {String} id - The id to store the polyline under.
+	 * @param {string} id - The id to store the polyline under.
 	 *
 	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
 	 */
@@ -589,8 +596,6 @@ class WebGLLineOverlay extends WebGLOverlay {
 
 	/**
 	 * The draw function that is executed per frame.
-	 *
-	 * @param {Number} timestamp - The frame timestamp.
 	 *
 	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
 	 */

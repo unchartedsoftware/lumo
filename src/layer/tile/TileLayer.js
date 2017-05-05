@@ -23,12 +23,12 @@ class TileLayer extends Layer {
 	 *
 	 * @param {Object} options - The layer options.
 	 * @param {Renderer} options.renderer - The layer renderer.
-	 * @param {Number} options.opacity - The layer opacity.
-	 * @param {Number} options.zIndex - The layer z-index.
+	 * @param {number} options.opacity - The layer opacity.
+	 * @param {number} options.zIndex - The layer z-index.
 	 * @param {boolean} options.hidden - Whether or not the layer is visible.
 	 * @param {boolean} options.muted - Whether or not the layer is muted.
-	 * @param {Number} options.cacheSize - The size of the temporary tile cache.
-	 * @param {Number} options.numPersistentLevels - The number of persistent levels in the tile pyramid.
+	 * @param {number} options.cacheSize - The size of the temporary tile cache.
+	 * @param {number} options.numPersistentLevels - The number of persistent levels in the tile pyramid.
 	 */
 	constructor(options = {}) {
 		super(options);
@@ -209,7 +209,7 @@ class TileLayer extends Layer {
 	/**
 	 * Draw the layer for the frame.
 	 *
-	 * @param {Number} timestamp - The frame timestamp.
+	 * @param {number} timestamp - The frame timestamp.
 	 *
 	 * @returns {TileLayer} The layer object, for chaining.
 	 */

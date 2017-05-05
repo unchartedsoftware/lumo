@@ -98,6 +98,8 @@ class TextureRenderer extends WebGLTextureRenderer {
 
 	/**
 	 * Instantiates a new TextureRenderer object.
+	 *
+	 * @param {Object} options - The options object.
 	 */
 	constructor(options = {}) {
 		super(options);
@@ -139,8 +141,6 @@ class TextureRenderer extends WebGLTextureRenderer {
 
 	/**
 	 * The draw function that is executed per frame.
-	 *
-	 * @param {Number} timestamp - The frame timestamp.
 	 *
 	 * @returns {Renderer} The renderer object, for chaining.
 	 */

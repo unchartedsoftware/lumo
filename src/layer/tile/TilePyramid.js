@@ -11,30 +11,30 @@ const TilePartial = require('./TilePartial');
 // Constants
 
 /**
- * Number of the tiles held in the pyramid.
+ * number of the tiles held in the pyramid.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const CACHE_SIZE = 256;
 
 /**
- * Number of persistent zoom levels held in the pyramids.
+ * number of persistent zoom levels held in the pyramids.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const PERSISTANT_LEVELS = 4;
 
 /**
  * Loaded event throttle in milliseconds.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const LOADED_THROTTLE_MS = 200;
 
 /**
  * The maximum distance to traverse when checking for tile descendants.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const MAX_DESCENDENT_DIST = 4;
 
@@ -173,8 +173,8 @@ class TilePyramid {
 	 *
 	 * @param {Layer} layer - The layer object.
 	 * @param {Object} options - The pyramid options.
-	 * @param {Number} options.cacheSize - The size of the tile cache.
-	 * @param {Number} options.numPersistentLevels - The number of persistent levels in the pyramid.
+	 * @param {number} options.cacheSize - The size of the tile cache.
+	 * @param {number} options.numPersistentLevels - The number of persistent levels in the pyramid.
 	 */
 	constructor(layer, options = {}) {
 		if (!layer) {
@@ -201,6 +201,8 @@ class TilePyramid {
 
 	/**
 	 * Returns the total capacity of the tile pyramid.
+	 *
+	 * @returns {number} The total capacity of the pyramid.
 	 */
 	getCapacity() {
 		return this.cacheSize + sumPowerOfFour(this.numPersistentLevels);
@@ -271,9 +273,9 @@ class TilePyramid {
 	 * tile exists in the pyramid, returns undefined.
 	 *
 	 * @param {TileCoord} ncoord - The normalized coord of the tile.
-	 * @param {Number} dist - The offset from the tile.
+	 * @param {number} dist - The offset from the tile.
 	 *
-	 * @return {Tile} The ancestor tile of the provided coord.
+	 * @returns {Tile} The ancestor tile of the provided coord.
 	 */
 	getAncestor(ncoord, dist) {
 		const ancestor = ncoord.getAncestor(dist);
@@ -288,9 +290,9 @@ class TilePyramid {
 	 * are found in the pyramid, returns undefined.
 	 *
 	 * @param {TileCoord} ncoord - The normalized coord of the tile.
-	 * @param {Number} dist - The offset from the tile.
+	 * @param {number} dist - The offset from the tile.
 	 *
-	 * @return {Array} The descendant tiles and or coordinates of the provided coord.
+	 * @returns {Array} The descendant tiles and or coordinates of the provided coord.
 	 */
 	getDescendants(ncoord, dist) {
 		// get coord descendants
@@ -408,7 +410,7 @@ class TilePyramid {
 	 *
 	 * @param {TileCoord} ncoord - The normalized coord of the tile.
 	 *
-	 * @return {Array} The array of tile partials that closest match the provided coord.
+	 * @returns {Array} The array of tile partials that closest match the provided coord.
 	 */
 	getAvailableLOD(ncoord) {
 		// check if we have the tile

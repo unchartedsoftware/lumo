@@ -7,6 +7,7 @@ const vendor = (navigator && navigator.vendor || '').toLowerCase();
 
 /**
  * Test if the browser is firefox.
+ *
  * @private
  *
  * @returns {Array} Whether or not the browser is firefox.
@@ -17,6 +18,7 @@ const isFirefox = function() {
 
 /**
  * Test if the browser is chrome.
+ *
  * @private
  *
  * @returns {Array} Whether or not the browser is chrome.
@@ -27,6 +29,7 @@ const isChrome = function() {
 
 /**
  * Test if the browser is internet explorer.
+ *
  * @private
  *
  * @returns {Array} Whether or not the browser is internet explorer.
@@ -37,6 +40,7 @@ const isIE = function() {
 
 /**
  * Test if the browser is edge.
+ *
  * @private
  *
  * @returns {Array} Whether or not the browser is edge.
@@ -47,6 +51,7 @@ const isEdge = function() {
 
 /**
  * Test if the browser is opera.
+ *
  * @private
  *
  * @returns {Array} Whether or not the browser is opera.
@@ -57,6 +62,7 @@ const isOpera = function() {
 
 /**
  * Test if the browser is safari.
+ *
  * @private
  *
  * @returns {Array} Whether or not the browser is safari.
@@ -65,6 +71,9 @@ const isSafari = function() {
 	return userAgent.match(/version\/(\d+).+?safari/);
 };
 
+/**
+ * Browser detection.
+ */
 module.exports = {
 
 	/**

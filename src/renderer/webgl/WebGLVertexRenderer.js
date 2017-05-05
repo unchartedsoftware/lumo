@@ -68,6 +68,8 @@ class WebGLVertexRenderer extends WebGLRenderer {
 	 * event handlers to add and remove data from the atlas accordingly.
 	 *
 	 * @param {Object} pointers - The vertex attribute pointers.
+	 *
+	 * @returns {VertexAtlas} The vertex atlas object.
 	 */
 	createVertexAtlas(pointers) {
 		// create vertex atlas
@@ -97,6 +99,8 @@ class WebGLVertexRenderer extends WebGLRenderer {
 	/**
 	 * Destroys a vertex atlas object and removes all event handlers used to add
 	 * and remove data from the atlas.
+	 *
+	 * @param {VertexAtlas} atlas - The vertex atlas to destroy.
 	 */
 	destroyVertexAtlas(atlas) {
 		// detach handlers

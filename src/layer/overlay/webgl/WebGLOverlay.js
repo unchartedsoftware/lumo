@@ -9,6 +9,7 @@ const Overlay = require('../Overlay');
 
 /**
  * Cell update event handler symbol.
+ * @private
  * @constant {Symbol}
  */
 const CELL_UPDATE = Symbol();
@@ -20,6 +21,11 @@ class WebGLOverlay extends Overlay {
 
 	/**
 	 * Instantiates a new WebGLOverlay object.
+	 *
+	 * @param {Object} options - The layer options.
+	 * @param {Renderer} options.renderer - The layer renderer.
+	 * @param {number} options.opacity - The layer opacity.
+	 * @param {number} options.zIndex - The layer z-index.
 	 */
 	constructor(options = {}) {
 		super(options);
@@ -68,8 +74,6 @@ class WebGLOverlay extends Overlay {
 	/**
 	 * Check if the render cell needs to be refreshed, if so, refresh it.
 	 *
-	 * @param {boolean} force - Force the refresh.
-	 *
 	 * @returns {WebGLOverlay} The overlay object, for chaining.
 	 */
 	refreshBuffers() {
@@ -90,17 +94,19 @@ class WebGLOverlay extends Overlay {
 	 *
 	 * @returns {Array} The array of VertexBuffer objects.
 	 */
-	createBuffers() {
+	/* eslint-disable no-unused-vars */
+	createBuffers(cell) {
 		throw '`createBuffers` must be overridden';
 	}
 
 	/**
 	 * Instantiate and return a new Shader object using the overlays internal
 	 * WebGLRenderingContext.
-	 * @param {Object} params - The shader param object.
-	 * @param {String} params.common - Common glsl to be shared by both vertex and fragment shaders.
-	 * @param {String} params.vert - The vertex shader glsl.
-	 * @param {String} params.frag - The fragment shader glsl.
+	 *
+	 * @param {Object} source - The shader param object.
+	 * @param {string} source.common - Common glsl to be shared by both vertex and fragment shaders.
+	 * @param {string} source.vert - The vertex shader glsl.
+	 * @param {string} source.frag - The fragment shader glsl.
 	 *
 	 * @returns {Shader} The shader object.
 	 */
@@ -111,7 +117,7 @@ class WebGLOverlay extends Overlay {
 	/**
 	 * Returns the orthographic projection matrix for the viewport.
 	 *
-	 * @return {Float32Array} The orthographic projection matrix.
+	 * @returns {Float32Array} The orthographic projection matrix.
 	 */
 	getOrthoMatrix() {
 		return this.plot.getOrthoMatrix();

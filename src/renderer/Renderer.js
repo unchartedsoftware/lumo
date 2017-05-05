@@ -50,12 +50,12 @@ class Renderer extends EventEmitter {
 	 * Executed when an event occurs on the plot. Return any interpretted events
 	 * relating to the renderer.
 	 *
-	 * @param {Event} type - Th event type to process.
-	 * @param {Event} event - The plot-level event to process.
+	 * @param {Object} pos - The plot position to pick at.
 	 *
 	 * @returns {Event} The renderer-level event.
 	 */
-	pick() {
+	/* eslint-disable no-unused-vars */
+	pick(pos) {
 		return null;
 	}
 
@@ -71,11 +71,12 @@ class Renderer extends EventEmitter {
 	/**
 	 * The draw function that is executed per frame.
 	 *
-	 * @param {Number} timestamp - The frame timestamp.
+	 * @param {number} timestamp - The frame timestamp.
 	 *
 	 * @returns {Renderer} The renderer object, for chaining.
 	 */
-	draw() {
+	/* eslint-disable no-unused-vars */
+	draw(timestamp) {
 		return this;
 	}
 

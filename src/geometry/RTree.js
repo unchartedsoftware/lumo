@@ -45,8 +45,8 @@ class RTree {
 	/**
 	 * Searchs the r-tree using a point.
 	 *
-	 * @param {Number} x - The x component.
-	 * @param {Number} y - The y component.
+	 * @param {number} x - The x component.
+	 * @param {number} y - The y component.
 	 *
 	 * @returns {Object} The collision object.
 	 */
@@ -84,11 +84,10 @@ class RTree {
 	/**
 	 * Searchs the r-tree using a rectangle.
 	 *
-	 * @param {Number} minX - The minimum x component.
-	 * @param {Number} maxX - The maximum x component.
-	 * @param {Number} minY - The minimum x component.
-	 * @param {Number} maxY - The maximum x component.
-	 * @param {Number} y - The y component.
+	 * @param {number} minX - The minimum x component.
+	 * @param {number} maxX - The maximum x component.
+	 * @param {number} minY - The minimum y component.
+	 * @param {number} maxY - The maximum y component.
 	 *
 	 * @returns {Object} The collision object.
 	 */

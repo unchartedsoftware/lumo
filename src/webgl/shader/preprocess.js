@@ -280,9 +280,10 @@ const replaceDefines = function(lines) {
  *         #version
  *         #line
  *
- * @param {String} glsl - The glsl source code.
+ * @private
+ * @param {string} glsl - The glsl source code.
  *
- * @return {String} The processed glsl source code.
+ * @returns {string} The processed glsl source code.
  */
 module.exports = function(glsl) {
 	// split lines

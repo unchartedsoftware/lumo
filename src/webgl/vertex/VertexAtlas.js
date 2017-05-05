@@ -70,10 +70,10 @@ class VertexAtlas {
 	 * NOTE: Assumes interleaved vertex format.
 	 *
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
-	 * @param {Number} tileSize - The size of a tile, in pixels.
+	 * @param {Object} pointers - The vertex attribute pointers.
 	 * @param {Object} options - The vertex atlas options.
-	 * @param {Number} options.chunkSize - The size of a single chunk, in vertices.
-	 * @param {Number} options.numChunks - The size of the atlas, in tiles.
+	 * @param {number} options.chunkSize - The size of a single chunk, in vertices.
+	 * @param {number} options.numChunks - The size of the atlas, in tiles.
 	 */
 	constructor(gl, pointers, options = {}) {
 		// get context
@@ -128,7 +128,7 @@ class VertexAtlas {
 	/**
 	 * Test whether or not a key is held in the atlas.
 	 *
-	 * @param {String} key - The key to test.
+	 * @param {string} key - The key to test.
 	 *
 	 * @returns {boolean} Whether or not the coord exists in the pyramid.
 	 */
@@ -140,7 +140,7 @@ class VertexAtlas {
 	 * Returns the chunk matching the provided key. If the chunk does not
 	 * exist, returns undefined.
 	 *
-	 * @param {String} key - The key of the chunk to return.
+	 * @param {string} key - The key of the chunk to return.
 	 *
 	 * @returns {Object} The chunk object.
 	 */
@@ -151,9 +151,9 @@ class VertexAtlas {
 	/**
 	 * Set the vertex data for the provided key.
 	 *
-	 * @param {String} key - The key of the vertex data.
-	 * @param {Number} count - The count of vertices added.
+	 * @param {string} key - The key of the vertex data.
 	 * @param {ArrayBuffer} data - The vertex data.
+	 * @param {number} count - The count of vertices added.
 	 */
 	set(key, data, count) {
 		if (this.has(key)) {
@@ -180,7 +180,7 @@ class VertexAtlas {
 	/**
 	 * Flags the chunk matching the provided key as unused in the atlas.
 	 *
-	 * @param {String} key - The key of the chunk to free.
+	 * @param {string} key - The key of the chunk to free.
 	 *
 	 * @returns {VertexAtlas} The VertexAtlas object, for chaining.
 	 */
@@ -281,12 +281,12 @@ class VertexAtlas {
 	 * Execute the draw command at the correct offset and count within the
 	 * atlas.
 	 *
-	 * @param {String} key - The key of the chunk to draw.
-	 * @param {String} mode - The primitive drawing mode to use.
-	 * @param {Number} offset - The offset into the chunk. Optional.
-	 * @param {Number} count - The count of primitives to render. Optional.
+	 * @param {string} key - The key of the chunk to draw.
+	 * @param {string} mode - The primitive drawing mode to use.
+	 * @param {number} offset - The offset into the chunk. Optional.
+	 * @param {number} count - The count of primitives to render. Optional.
 	 *
-	 * @return {VertexBuffer} The vertex buffer object, for chaining.
+	 * @returns {VertexBuffer} The vertex buffer object, for chaining.
 	 */
 	draw(key, mode, offset = 0, count = 0) {
 		if (!this.has(key)) {
@@ -305,11 +305,11 @@ class VertexAtlas {
 	 * Execute the instanced draw command at the correct offset and count within
 	 * the atlas.
 	 *
-	 * @param {String} key - The key of the chunk to draw.
-	 * @param {String} mode - The primitive drawing mode to use.
-	 * @param {Number} count - The count of primitives to render. Optional.
+	 * @param {string} key - The key of the chunk to draw.
+	 * @param {string} mode - The primitive drawing mode to use.
+	 * @param {number} count - The count of primitives to render. Optional.
 	 *
-	 * @return {VertexBuffer} The vertex buffer object, for chaining.
+	 * @returns {VertexBuffer} The vertex buffer object, for chaining.
 	 */
 	drawInstanced(key, mode, count) {
 		if (!this.has(key)) {

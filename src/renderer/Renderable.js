@@ -21,7 +21,7 @@ class Renderable {
 	 * Instantiates a new Renderable object.
 	 *
 	 * @param {Tile} tile - The tile data to be rendered.
-	 * @param {Number} scale - The scale to render the tile at.
+	 * @param {number} scale - The scale to render the tile at.
 	 * @param {Object} tileOffset - The tile pixel offset relative to the viewport.
 	 * @param {Array} uvOffset - The texture coordinate offset describing the portion of the tile to render.
 	 */
@@ -38,9 +38,11 @@ class Renderable {
 	 *
 	 * @param {Tile} tile - The tile data to be rendered.
 	 * @param {TileCoord} coord - The unnormalized tile coordinate of the tile.
-	 * @param {Number} scale - The scale to render the tile at.
-	 * @param {Number} tileSize - The size of the tile in pixels.
-	 * @param {Number} viewportOffset - The offset of the viewport in pixels.
+	 * @param {number} scale - The scale to render the tile at.
+	 * @param {number} tileSize - The size of the tile in pixels.
+	 * @param {number} viewportOffset - The offset of the viewport in pixels.
+	 *
+	 * @returns {Renderable} The renderable object.
 	 */
 	static fromTile(tile, coord, scale, tileSize, viewportOffset) {
 		const scaledTileSize = scale * tileSize;
@@ -60,11 +62,13 @@ class Renderable {
 	 *
 	 * @param {Tile} tile - The tile data to be rendered.
 	 * @param {TileCoord} coord - The unnormalized tile coordinate of the tile.
-	 * @param {Number} scale - The scale to render the tile at.
-	 * @param {Number} tileSize - The size of the tile in pixels.
-	 * @param {Number} viewportOffset - The offset of the viewport in pixels.
+	 * @param {number} scale - The scale to render the tile at.
+	 * @param {number} tileSize - The size of the tile in pixels.
+	 * @param {number} viewportOffset - The offset of the viewport in pixels.
 	 * @param {TileCoord} wanted - The coordinate the tile will substitue for.
 	 * @param {TileCoord} descendant - The direct descendant of the substituted tile.
+	 *
+	 * @returns {Renderable} The renderable object.
 	 */
 	static fromAncestor(tile, coord, scale, tileSize, viewportOffset, wanted, descendant) {
 		const scaledTileSize = scale * tileSize;
@@ -96,10 +100,12 @@ class Renderable {
 	 *
 	 * @param {Tile} tile - The tile data to be rendered.
 	 * @param {TileCoord} coord - The unnormalized tile coordinate of the tile.
-	 * @param {Number} scale - The scale to render the tile at.
-	 * @param {Number} tileSize - The size of the tile in pixels.
-	 * @param {Number} viewportOffset - The offset of the viewport in pixels.
+	 * @param {number} scale - The scale to render the tile at.
+	 * @param {number} tileSize - The size of the tile in pixels.
+	 * @param {number} viewportOffset - The offset of the viewport in pixels.
 	 * @param {TileCoord} wanted - The coordinate the tile will substitue for.
+	 *
+	 * @returns {Renderable} The renderable object.
 	 */
 	static fromDescendant(tile, coord, scale, tileSize, viewportOffset, wanted) {
 		const scaledTileSize = scale * tileSize;
@@ -122,9 +128,11 @@ class Renderable {
 	 *
 	 * @param {TilePartial} partial - The tile partial to be rendered.
 	 * @param {TileCoord} coord - The unnormalized tile coordinate of the tile.
-	 * @param {Number} scale - The scale to render the tile at.
-	 * @param {Number} tileSize - The size of the tile in pixels.
-	 * @param {Number} viewportOffset - The offset of the viewport in pixels.
+	 * @param {number} scale - The scale to render the tile at.
+	 * @param {number} tileSize - The size of the tile in pixels.
+	 * @param {number} viewportOffset - The offset of the viewport in pixels.
+	 *
+	 * @returns {Renderable} The renderable object.
 	 */
 	static fromAncestorPartial(partial, coord, scale, tileSize, viewportOffset) {
 		const tile = partial.tile; // tile we have
@@ -159,9 +167,11 @@ class Renderable {
 	 *
 	 * @param {TilePartial} partial - The tile partial to be rendered.
 	 * @param {TileCoord} coord - The unnormalized tile coordinate of the tile.
-	 * @param {Number} scale - The scale to render the tile at.
-	 * @param {Number} tileSize - The size of the tile in pixels.
-	 * @param {Number} viewportOffset - The offset of the viewport in pixels.
+	 * @param {number} scale - The scale to render the tile at.
+	 * @param {number} tileSize - The size of the tile in pixels.
+	 * @param {number} viewportOffset - The offset of the viewport in pixels.
+	 *
+	 * @returns {Renderable} The renderable object.
 	 */
 	static fromDescendantPartial(partial, coord, scale, tileSize, viewportOffset) {
 		const tile = partial.tile; // tile we have

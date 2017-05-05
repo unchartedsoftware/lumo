@@ -9,8 +9,8 @@ class Animation {
 	 * Instantiates a new Animation object.
 	 *
 	 * @param {Object} params - The parameters of the animation.
-	 * @param {Number} params.plot - The plot target of the animation.
-	 * @param {Number} params.duration - The duration of the animation.
+	 * @param {number} params.plot - The plot target of the animation.
+	 * @param {number} params.duration - The duration of the animation.
 	 */
 	constructor(params) {
 		this.timestamp = Date.now();
@@ -21,9 +21,9 @@ class Animation {
 	/**
 	 * Returns the t-value of the animation based on the provided timestamp.
 	 *
-	 * @param {Number} timestamp - The frame timestamp.
+	 * @param {number} timestamp - The frame timestamp.
 	 *
-	 * @returns {Number} The t-value for the corresponding timestamp.
+	 * @returns {number} The t-value for the corresponding timestamp.
 	 */
 	getT(timestamp) {
 		if (this.duration > 0) {
@@ -36,11 +36,12 @@ class Animation {
 	 * Updates the the plot based on the current state of the
 	 * animation.
 	 *
-	 * @param {Number} timestamp - The frame timestamp.
+	 * @param {number} timestamp - The frame timestamp.
 	 *
 	 * @returns {boolean} Whether or not the animation has finished.
 	 */
-	update() {
+	/* eslint-disable no-unused-vars */
+	update(timestamp) {
 		return true;
 	}
 

@@ -11,7 +11,7 @@ const DOMHandler = require('./DOMHandler');
 /**
  * Time in milliseconds before a pan point expires.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const PAN_EXPIRY_MS = 50;
 
@@ -25,21 +25,21 @@ const PAN_INTERTIA = true;
 /**
  * Pan inertia easing.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const PAN_INTERTIA_EASING = 0.2;
 
 /**
  * Pan inertia deceleration.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const PAN_INTERTIA_DECELERATION = 3400;
 
 /**
  * Pan to animation duration
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const PAN_TO_DURATION = 800;
 
@@ -69,9 +69,9 @@ class PanHandler extends DOMHandler {
 	 *
 	 * @param {Plot} plot - The plot to attach the handler to.
 	 * @param {Object} options - The parameters of the animation.
-	 * @param {Number} options.inertia - Whether or not pan inertia is enabled.
-	 * @param {Number} options.inertiaEasing - The inertia easing factor.
-	 * @param {Number} options.inertiaDeceleration - The inertia deceleration factor.
+	 * @param {number} options.inertia - Whether or not pan inertia is enabled.
+	 * @param {number} options.inertiaEasing - The inertia easing factor.
+	 * @param {number} options.inertiaDeceleration - The inertia deceleration factor.
 	 */
 	constructor(plot, options = {}) {
 		super(plot);
@@ -254,7 +254,7 @@ class PanHandler extends DOMHandler {
 	/**
 	 * Pans to the target plot coordinate.
 	 *
-	 * @param {Number} pos - The target plot position.
+	 * @param {number} pos - The target plot position.
 	 * @param {boolean} animate - Whether or not to animate the pan. Defaults to `true`.
 	 */
 	panTo(pos, animate = true) {

@@ -120,10 +120,10 @@ class Bounds {
 	/**
 	 * Instantiates a new Bounds object.
 	 *
-	 * @param {Number} left - The left bound.
-	 * @param {Number} right - The right bound.
-	 * @param {Number} bottom - The bottom bound.
-	 * @param {Number} top - The top bound.
+	 * @param {number} left - The left bound.
+	 * @param {number} right - The right bound.
+	 * @param {number} bottom - The bottom bound.
+	 * @param {number} top - The top bound.
 	 */
 	constructor(left, right, bottom, top) {
 		this.left = left;
@@ -135,7 +135,7 @@ class Bounds {
 	/**
 	 * Get the width of the bounds.
 	 *
-	 * @returns {Number} The width of the bounds.
+	 * @returns {number} The width of the bounds.
 	 */
 	getWidth() {
 		return this.right - this.left;
@@ -144,7 +144,7 @@ class Bounds {
 	/**
 	 * Get the height of the bounds.
 	 *
-	 * @returns {Number} The height of the bounds.
+	 * @returns {number} The height of the bounds.
 	 */
 	getHeight() {
 		return this.top - this.bottom;
@@ -155,7 +155,7 @@ class Bounds {
 	 *
 	 * @param {Object|Bounds} arg - The point or bounds to extend the bounds by.
 	 *
-	 * @returns {Bounds} - The bounds object, for chaining.
+	 * @returns {Bounds} The bounds object, for chaining.
 	 */
 	extend(arg) {
 		if (arg.left !== undefined &&

@@ -163,9 +163,9 @@ class Shader {
 	 *
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
 	 * @param {Object} params - The shader params object.
-	 * @param {String} params.common - Common glsl to be shared by both vertex and fragment shaders.
-	 * @param {String} params.vert - The vertex shader glsl.
-	 * @param {String} params.frag - The fragment shader glsl.
+	 * @param {string} params.common - Common glsl to be shared by both vertex and fragment shaders.
+	 * @param {string} params.vert - The vertex shader glsl.
+	 * @param {string} params.frag - The fragment shader glsl.
 	 * @param {Object} params.define - Any #define directives to include in the glsl.
 	 */
 	constructor(gl, params = {}) {
@@ -187,7 +187,7 @@ class Shader {
 	/**
 	 * Binds the shader program for use.
 	 *
-	 * @return {Shader} The shader object, for chaining.
+	 * @returns {Shader} The shader object, for chaining.
 	 */
 	use() {
 		// use the shader
@@ -198,10 +198,10 @@ class Shader {
 	/**
 	 * Buffer a uniform value by name.
 	 *
-	 * @param {String} name - The uniform name in the shader source.
+	 * @param {string} name - The uniform name in the shader source.
 	 * @param {*} value - The uniform value to buffer.
 	 *
-	 * @return {Shader} - The shader object, for chaining.
+	 * @returns {Shader} The shader object, for chaining.
 	 */
 	setUniform(name, value) {
 		const uniform = this.uniforms.get(name);

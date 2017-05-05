@@ -73,10 +73,10 @@ class Viewport {
 	/**
 	 * Instantiates a new Viewport object.
 	 *
-	 * @param {Number} x - The x coordinate of the viewport.
-	 * @param {Number} y - The y coordinate of the viewport.
-	 * @param {Number} width - The width of the viewport.
-	 * @param {Number} height - The height of the viewport.
+	 * @param {number} x - The x coordinate of the viewport.
+	 * @param {number} y - The y coordinate of the viewport.
+	 * @param {number} width - The width of the viewport.
+	 * @param {number} height - The height of the viewport.
 	 */
 	constructor(x, y, width, height) {
 		this.x = x;
@@ -87,9 +87,9 @@ class Viewport {
 
 	/**
 	 * Returns the tile bounds of the viewport. Bounds edges are inclusive.
-	 * NOTE: this includes wraparound coordinates
+	 * NOTE: this includes wraparound coordinates.
 	 *
-	 * @param {Number} tileZoom - The zoom of the tiles within the viewport.
+	 * @param {number} tileZoom - The zoom of the tiles within the viewport.
 	 *
 	 * @returns {Bounds} The tile bounds of the viewport.
 	 */
@@ -107,7 +107,7 @@ class Viewport {
 	/**
 	 * Returns the coordinates that are visible in the viewport.
 	 *
-	 * @param {Number} tileZoom - The zoom of the tiles within the viewport. Optional.
+	 * @param {number} tileZoom - The zoom of the tiles within the viewport. Optional.
 	 * @param {boolean} wraparound - The if the horizontal axis should wraparound. Optional.
 	 *
 	 * @returns {Array} The array of visible tile coords.
@@ -135,7 +135,7 @@ class Viewport {
 	 * @param {TileCoord} coord - The coord.
 	 * @param {boolean} wraparound - The if the horizontal axis should wraparound. Optional.
 	 *
-	 * @return {boolean} Whether or not the coord is in view.
+	 * @returns {boolean} Whether or not the coord is in view.
 	 */
 	isInView(coord, wraparound = false) {
 		// get the bounds for what tiles are in view
@@ -152,8 +152,8 @@ class Viewport {
 	/**
 	 * Returns a viewport that has been zoomed around a provided position.
 	 *
-	 * @param {Number} zoom - The current zoom of the viewport.
-	 * @param {Number} targetZoom - The target zoom of the viewport.
+	 * @param {number} zoom - The current zoom of the viewport.
+	 * @param {number} targetZoom - The target zoom of the viewport.
 	 * @param {Object} targetPos - The target position to zoom around.
 	 *
 	 * @returns {Viewport} The new viewport object.
@@ -201,8 +201,8 @@ class Viewport {
 	/**
 	 * Returns the viewports size in pixels.
 	 *
-	 * @param {Number} zoom - The zoom of the plot.
-	 * @param {Number} tileSize - The size of a tile in pixels.
+	 * @param {number} zoom - The zoom of the plot.
+	 * @param {number} tileSize - The size of a tile in pixels.
 	 *
 	 * @returns {Object} The view size in pixels.
 	 */
@@ -217,8 +217,8 @@ class Viewport {
 	/**
 	 * Returns the viewports offset in pixels.
 	 *
-	 * @param {Number} zoom - The zoom of the plot.
-	 * @param {Number} tileSize - The size of a tile in pixels.
+	 * @param {number} zoom - The zoom of the plot.
+	 * @param {number} tileSize - The size of a tile in pixels.
 	 *
 	 * @returns {Object} The view offset in pixels.
 	 */

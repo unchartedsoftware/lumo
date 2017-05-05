@@ -3,7 +3,7 @@
 /**
  * Issues a XHR and loads an ArrayBuffer.
  *
- * @param {String} url - The url.
+ * @param {string} url - The url.
  * @param {Function} done - The callback.
  */
 module.exports = function(url, done) {

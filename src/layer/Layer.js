@@ -13,8 +13,8 @@ class Layer extends EventEmitter {
 	 * Instantiates a new Layer object.
 	 *
 	 * @param {Object} options - The options.
-	 * @param {Number} options.opacity - The layer opacity.
-	 * @param {Number} options.zIndex - The layer z-index.
+	 * @param {number} options.opacity - The layer opacity.
+	 * @param {number} options.zIndex - The layer z-index.
 	 * @param {boolean} options.hidden - Whether or not the layer is visible.
 	 */
 	constructor(options = {}) {
@@ -67,7 +67,7 @@ class Layer extends EventEmitter {
 	/**
 	 * Set the opacity of the layer.
 	 *
-	 * @param {Number} opacity - The opacity to set.
+	 * @param {number} opacity - The opacity to set.
 	 *
 	 * @returns {Layer} The layer object, for chaining.
 	 */
@@ -85,7 +85,7 @@ class Layer extends EventEmitter {
 	/**
 	 * Get the opacity of the layer.
 	 *
-	 * @returns {Number} The opacity of the layer object,.
+	 * @returns {number} The opacity of the layer object,.
 	 */
 	getOpacity() {
 		return this.opacity;
@@ -94,7 +94,7 @@ class Layer extends EventEmitter {
 	/**
 	 * Set the z-index of the layer.
 	 *
-	 * @param {Number} zIndex - The z-index to set.
+	 * @param {number} zIndex - The z-index to set.
 	 *
 	 * @returns {Layer} The layer object, for chaining.
 	 */
@@ -111,7 +111,7 @@ class Layer extends EventEmitter {
 	/**
 	 * Get the z-index of the layer.
 	 *
-	 * @returns {Number} The zIndex of the layer object,.
+	 * @returns {number} The zIndex of the layer object,.
 	 */
 	getZIndex() {
 		return this.zIndex;
@@ -160,11 +160,12 @@ class Layer extends EventEmitter {
 	/**
 	 * The draw function that is executed per frame.
 	 *
-	 * @param {Number} timestamp - The frame timestamp.
+	 * @param {number} timestamp - The frame timestamp.
 	 *
 	 * @returns {Layer} The layer object, for chaining.
 	 */
-	draw() {
+	/* eslint-disable no-unused-vars */
+	draw(timestamp) {
 		return this;
 	}
 
@@ -175,7 +176,8 @@ class Layer extends EventEmitter {
 	 *
 	 * @returns {Object} The collision, or null.
 	 */
-	pick() {
+	/* eslint-disable no-unused-vars */
+	pick(pos) {
 		return null;
 	}
 
@@ -223,7 +225,7 @@ class Layer extends EventEmitter {
 	/**
 	 * Returns true if the provided argument is highlighted.
 	 *
-	 * @returns {Object} The data to test.
+	 * @param {Object} data - The data to test.
 	 *
 	 * @returns {boolean} Whether or not there is highlighted data.
 	 */
@@ -300,7 +302,7 @@ class Layer extends EventEmitter {
 	/**
 	 * Returns any selected data.
 	 *
-	 * @returns {Object} The selected data.
+	 * @returns {Array} The selected data.
 	 */
 	getSelected() {
 		return this.selected;
@@ -309,9 +311,9 @@ class Layer extends EventEmitter {
 	/**
 	 * Returns true if the provided argument is selected.
 	 *
-	 * @returns {Object} The data to test.
+	 * @param {Object} data - The data to test.
 	 *
-	 * @returns {boolean} Whether or not there is highlighted data.
+	 * @returns {boolean} Whether or not the data is selected.
 	 */
 	isSelected(data) {
 		return this.selected.indexOf(data) !== -1;

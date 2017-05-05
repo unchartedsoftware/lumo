@@ -115,8 +115,8 @@ class RenderBuffer {
 	 * Instantiates a RenderBuffer object.
 	 *
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
-	 * @param {Number} width - The width of the renderbuffer.
-	 * @param {Number} height - The height of the renderbuffer.
+	 * @param {number} width - The width of the renderbuffer.
+	 * @param {number} height - The height of the renderbuffer.
 	 */
 	 constructor(gl, width, height) {
 		this.gl = gl;
@@ -139,7 +139,7 @@ class RenderBuffer {
 	/**
 	 * Binds the renderbuffer for writing.
 	 *
-	 * @return {RenderBuffer} The renderbuffer object, for chaining.
+	 * @returns {RenderBuffer} The renderbuffer object, for chaining.
 	 */
 	bind() {
 		const gl = this.gl;
@@ -150,7 +150,7 @@ class RenderBuffer {
 	/**
 	 * Unbinds the renderbuffer for writing.
 	 *
-	 * @return {RenderBuffer} The renderbuffer object, for chaining.
+	 * @returns {RenderBuffer} The renderbuffer object, for chaining.
 	 */
 	unbind() {
 		const gl = this.gl;
@@ -161,12 +161,12 @@ class RenderBuffer {
 	/**
 	 * Clears the renderbuffer buffer color bits.
 	 *
-	 * @param {Number} r - The red clear color. (Optional)
-	 * @param {Number} g - The green clear color. (Optional)
-	 * @param {Number} b - The blue clear color. (Optional)
-	 * @param {Number} a - The alpha clear color. (Optional)
+	 * @param {number} r - The red clear color. (Optional)
+	 * @param {number} g - The green clear color. (Optional)
+	 * @param {number} b - The blue clear color. (Optional)
+	 * @param {number} a - The alpha clear color. (Optional)
 	 *
-	 * @return {RenderBuffer} The renderbuffer object, for chaining.
+	 * @returns {RenderBuffer} The renderbuffer object, for chaining.
 	 */
 	clear(r, g, b, a) {
 		if (r !== undefined &&
@@ -183,9 +183,9 @@ class RenderBuffer {
 	/**
 	 * Blits the renderbuffer texture to the screen.
 	 *
-	 * @param {Number} opacity - The opacity to blit at.
+	 * @param {number} opacity - The opacity to blit at.
 	 *
-	 * @return {RenderBuffer} The renderbuffer object, for chaining.
+	 * @returns {RenderBuffer} The renderbuffer object, for chaining.
 	 */
 	blitToScreen(opacity) {
 		renderToScreen(
@@ -200,10 +200,10 @@ class RenderBuffer {
 	/**
 	 * Resizes the renderbuffer to the provided height and width.
 	 *
-	 * @param {Number} width - The new width of the renderbuffer.
-	 * @param {Number} height - The new height of the renderbuffer.
+	 * @param {number} width - The new width of the renderbuffer.
+	 * @param {number} height - The new height of the renderbuffer.
 	 *
-	 * @return {RenderBuffer} The renderbuffer object, for chaining.
+	 * @returns {RenderBuffer} The renderbuffer object, for chaining.
 	 */
 	resize(width, height) {
 		this.texture.resize(width, height);

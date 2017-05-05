@@ -72,12 +72,12 @@ class VertexBuffer {
 	 * Instantiates an VertexBuffer object.
 	 *
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
-	 * @param {WebGLBuffer|ArrayBuffer|Number} arg - The buffer or length of the buffer.
+	 * @param {WebGLBuffer|ArrayBuffer|number} arg - The buffer or length of the buffer.
 	 * @param {Object} pointers - The array pointer map.
 	 * @param {Object} options - The vertex buffer options.
-	 * @param {String} options.mode - The draw mode / primitive type.
-	 * @param {String} options.indexOffset - The index offset into the drawn buffer.
-	 * @param {String} options.count - The number of indices to draw.
+	 * @param {string} options.mode - The draw mode / primitive type.
+	 * @param {string} options.indexOffset - The index offset into the drawn buffer.
+	 * @param {string} options.count - The number of indices to draw.
 	 */
 	constructor(gl, arg, pointers = {}, options = {}) {
 		this.gl = gl;
@@ -103,9 +103,9 @@ class VertexBuffer {
 	/**
 	 * Upload vertex data to the GPU.
 	 *
-	 * @param {ArrayBuffer|Number} arg - The array of data to buffer, or size of the buffer in bytes.
+	 * @param {ArrayBuffer|number} arg - The array of data to buffer, or size of the buffer in bytes.
 	 *
-	 * @return {VertexBuffer} The vertex buffer object, for chaining.
+	 * @returns {VertexBuffer} The vertex buffer object, for chaining.
 	 */
 	bufferData(arg) {
 		const gl = this.gl;
@@ -117,9 +117,9 @@ class VertexBuffer {
 	 * Upload partial vertex data to the GPU.
 	 *
 	 * @param {ArrayBuffer} array - The array of data to buffer.
-	 * @param {Number} byteOffset - The byte offset at which to buffer.
+	 * @param {number} byteOffset - The byte offset at which to buffer.
 	 *
-	 * @return {VertexBuffer} The vertex buffer object, for chaining.
+	 * @returns {VertexBuffer} The vertex buffer object, for chaining.
 	 */
 	bufferSubData(array, byteOffset = 0) {
 		const gl = this.gl;
@@ -131,7 +131,7 @@ class VertexBuffer {
 	/**
 	 * Binds the vertex buffer object.
 	 *
-	 * @return {VertexBuffer} - Returns the vertex buffer object for chaining.
+	 * @returns {VertexBuffer} The vertex buffer object, for chaining.
 	 */
 	bind() {
 		const gl = this.gl;
@@ -156,7 +156,7 @@ class VertexBuffer {
 	/**
 	 * Unbinds the vertex buffer object.
 	 *
-	 * @return {VertexBuffer} The vertex buffer object, for chaining.
+	 * @returns {VertexBuffer} The vertex buffer object, for chaining.
 	 */
 	unbind() {
 		const gl = this.gl;
@@ -170,7 +170,7 @@ class VertexBuffer {
 	/**
 	 * Execute the draw command for the bound buffer.
 	 *
-	 * @return {VertexBuffer} The vertex buffer object, for chaining.
+	 * @returns {VertexBuffer} The vertex buffer object, for chaining.
 	 */
 	draw() {
 		const gl = this.gl;

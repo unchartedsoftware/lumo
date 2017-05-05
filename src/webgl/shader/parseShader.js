@@ -131,19 +131,21 @@ const filterDuplicatesByName = function(declarations) {
  *
  * Ex, when provided a 'uniform' qualifier, the declaration:
  *
- *	 'uniform highp vec3 uSpecularColor;'
+ *    'uniform highp vec3 uSpecularColor;'
  *
  * Would be parsed to:
- *	 {
- *		 qualifier: 'uniform',
- *		 type: 'vec3'
- *		 name: 'uSpecularColor',
- *		 count: 1
- *	 }
+ *    {
+ *        qualifier: 'uniform',
+ *        type: 'vec3'
+ *        name: 'uSpecularColor',
+ *        count: 1
+ *    }
+ *
+ * @private
  * @param {Array} sources - The shader glsl sources.
  * @param {Array} qualifiers - The qualifiers to extract.
  *
- * @return {Array} The array of qualifier declaration statements.
+ * @returns {Array} The array of qualifier declaration statements.
  */
 module.exports = function(sources = [], qualifiers = []) {
 	// if no sources or qualifiers are provided, return empty array

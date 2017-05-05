@@ -14,28 +14,28 @@ const DOMHandler = require('./DOMHandler');
 /**
  * Amount of scroll pixels per zoom level.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const ZOOM_WHEEL_DELTA = 300;
 
 /**
  * Length of zoom animation in milliseconds.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const ZOOM_ANIMATION_MS = 250;
 
 /**
  * Maximum concurrent discrete zooms in a single batch.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const MAX_CONCURRENT_ZOOMS = 4;
 
 /**
  * Zoom debounce delay in miliseconds.
  * @private
- * @constant {Number}
+ * @constant {number}
  */
 const ZOOM_DEBOUNCE_MS = 100;
 
@@ -133,7 +133,7 @@ const zoom = function(plot, targetPos, zoomDelta, duration) {
 				targetZoom: targetZoom,
 				prevViewport: new Viewport(
 					plot.viewport.x,
-					plot.viewport.y, 
+					plot.viewport.y,
 					plot.viewport.width,
 					plot.viewport.height),
 				targetViewport: targetViewport,
@@ -201,11 +201,11 @@ class ZoomHandler extends DOMHandler {
 	 *
 	 * @param {Plot} plot - The plot to attach the handler to.
 	 * @param {Object} options - The parameters of the animation.
-	 * @param {Number} options.continuousZoom - Whether or not continuous zoom is enabled.
-	 * @param {Number} options.zoomDuration - The duration of the zoom animation.
-	 * @param {Number} options.maxConcurrentZooms - The maximum concurrent zooms in a single batch.
-	 * @param {Number} options.deltaPerZoom - The scroll delta required per zoom level.
-	 * @param {Number} options.zoomDebounce - The debounce duration of the zoom in ms.
+	 * @param {number} options.continuousZoom - Whether or not continuous zoom is enabled.
+	 * @param {number} options.zoomDuration - The duration of the zoom animation.
+	 * @param {number} options.maxConcurrentZooms - The maximum concurrent zooms in a single batch.
+	 * @param {number} options.deltaPerZoom - The scroll delta required per zoom level.
+	 * @param {number} options.zoomDebounce - The debounce duration of the zoom in ms.
 	 */
 	constructor(plot, options = {}) {
 		super(plot);
@@ -309,7 +309,7 @@ class ZoomHandler extends DOMHandler {
 	 * Zooms in to the target zoom level. This is bounded by the plot objects
 	 * minZoom and maxZoom attributes.
 	 *
-	 * @param {Number} level - The target zoom level.
+	 * @param {number} level - The target zoom level.
 	 * @param {boolean} animate - Whether or not to animate the zoom. Defaults to `true`.
 	 */
 	zoomTo(level, animate = true) {

@@ -1,140 +1,143 @@
 'use strict';
 
+/**
+ * Event type string constants.
+ */
 module.exports = {
 
 	/**
 	 * Emitted when the plot is clicked.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	CLICK: 'click',
 
 	/**
 	 * Emitted when the plot is double clicked.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	DBL_CLICK: 'dblclick',
 
 	/**
 	 * Emitted when a mouse button is pressed.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	MOUSE_DOWN: 'mousedown',
 
 	/**
 	 * Emitted when a mouse button is released.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	MOUSE_UP: 'mouseup',
 
 	/**
 	 * Emitted when the mouse is moved on the target.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	MOUSE_MOVE: 'mousemove',
 
 	/**
 	 * Emitted when the mouse is moved onto the target.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	MOUSE_OVER: 'mouseover',
 
 	/**
 	 * Emitted when the mouse is moved out of the target.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	MOUSE_OUT: 'mouseout',
 
 	/**
 	 * Emitted when a new pan event is handled.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	PAN_START: 'panstart',
 
 	/**
 	 * Emitted during each frame of a pan animation.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	PAN: 'pan',
 
 	/**
 	 * Emitted on the final frame of a pan animation.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	PAN_END: 'panend',
 
 	/**
 	 * Emitted when a new zoom event is handled.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	ZOOM_START: 'zoomstart',
 
 	/**
 	 * Emitted during each frame of a zoom animation.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	ZOOM: 'zoom',
 
 	/**
 	 * Emitted on the final frame of a zoom animation.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	ZOOM_END: 'zoomend',
 
 	/**
 	 * Emitted before processing a new frame.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	FRAME: 'frame',
 
 	/**
 	 * Emitted when processing a resize event.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	RESIZE: 'resize',
 
 	/**
 	 * Emitted when the viewing cell of the plot is updated.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	CELL_UPDATE: 'cellupdate',
 
 	/**
 	 * Emitted when an initial request for a tile is made, the tile is not
 	 * yet part of the layer and has not yet been requested.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	TILE_REQUEST: 'tilerequest',
 
 	/**
 	 * Emitted when a tile request completes unsuccessfully. The tile is not
 	 * added to the layer.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	TILE_FAILURE: 'tilefailure',
 
 	/**
 	 * Emitted when a tile request completes successfully. The tile is added
 	 * to the layer.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	TILE_ADD: 'tileadd',
 
 	/**
 	 * Emitted when a tile request completes successfully but the tile is no
 	 * longer in view. The tile is not added to the layer.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	TILE_DISCARD: 'tilediscard',
 
 	/**
 	 * Emitted when a tile is evicted from the internal LRU cache.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	TILE_REMOVE: 'tileremove',
 
 	/**
 	 * Emitted when all visible tiles have been loaded for a layer.
-	 * @constant {String}
+	 * @constant {string}
 	 */
 	LOAD: 'load'
 };

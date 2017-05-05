@@ -45,9 +45,9 @@ class TextureArray {
 	 * using an atlas.
 	 *
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
-	 * @param {Number} tileSize - The size of a tile, in pixels.
+	 * @param {number} tileSize - The size of a tile, in pixels.
 	 * @param {Object} options - The texture array options.
-	 * @param {Number} options.numChunks - The size of the array, in tiles.
+	 * @param {number} options.numChunks - The size of the array, in tiles.
 	 */
 	constructor(gl, tileSize = 256, options = {}) {
 		this.gl = gl;
@@ -80,7 +80,7 @@ class TextureArray {
 	/**
 	 * Test whether or not a key is held in the array.
 	 *
-	 * @param {String} key - The key to test.
+	 * @param {string} key - The key to test.
 	 *
 	 * @returns {boolean} Whether or not the coord exists in the pyramid.
 	 */
@@ -92,7 +92,7 @@ class TextureArray {
 	 * Returns the chunk matching the provided key. If the chunk does not
 	 * exist, returns undefined.
 	 *
-	 * @param {String} key - The key of the chunk to return.
+	 * @param {string} key - The key of the chunk to return.
 	 *
 	 * @returns {Object} The chunk object.
 	 */
@@ -103,7 +103,7 @@ class TextureArray {
 	/**
 	 * Set the texture data for the provided key.
 	 *
-	 * @param {String} key - The key of the texture data.
+	 * @param {string} key - The key of the texture data.
 	 * @param {ArrayBuffer|HTMLCanvasElement|HTMLImageElement} data - The texture data.
 	 */
 	set(key, data) {
@@ -149,7 +149,7 @@ class TextureArray {
 	/**
 	 * Flags the chunk matching the provided key as unused in the array.
 	 *
-	 * @param {String} key - The key of the chunk to free.
+	 * @param {string} key - The key of the chunk to free.
 	 *
 	 * @returns {TextureArray} The TextureArray object, for chaining.
 	 */
@@ -169,8 +169,8 @@ class TextureArray {
 	/**
 	 * Binds the texture array to the provided texture unit.
 	 *
-	 * @param {String} key - The key of the chunk to bind.
-	 * @param {String} location - The texture unit to activate. Optional.
+	 * @param {string} key - The key of the chunk to bind.
+	 * @param {string} location - The texture unit to activate. Optional.
 	 *
 	 * @returns {TextureArray} The TextureArray object, for chaining.
 	 */

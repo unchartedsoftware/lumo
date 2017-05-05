@@ -13,11 +13,11 @@ class PanAnimation extends Animation {
 	 * Instantiates a new PanAnimation object.
 	 *
 	 * @param {Object} params - The parameters of the animation.
-	 * @param {Number} params.plot - The plot target of the animation.
-	 * @param {Number} params.duration - The duration of the animation.
-	 * @param {Number} params.start - The start timestamp of the animation.
-	 * @param {Number} params.delta - The positional delta of the animation.
-	 * @param {Number} params.easing - The easing factor of the animation.
+	 * @param {number} params.plot - The plot target of the animation.
+	 * @param {number} params.duration - The duration of the animation.
+	 * @param {number} params.start - The start timestamp of the animation.
+	 * @param {number} params.delta - The positional delta of the animation.
+	 * @param {number} params.easing - The easing factor of the animation.
 	 */
 	constructor(params = {}) {
 		super(params);
@@ -34,7 +34,9 @@ class PanAnimation extends Animation {
 	 * Updates the position of the plot based on the current state of the
 	 * animation.
 	 *
-	 * @param {Number} timestamp - The frame timestamp.
+	 * @param {number} timestamp - The frame timestamp.
+	 *
+	 * @returns {boolean} Whether or not the animation has finished.
 	 */
 	update(timestamp) {
 		const t = this.getT(timestamp);

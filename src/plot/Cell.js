@@ -4,22 +4,31 @@ const Bounds = require('../geometry/Bounds');
 
 /**
  * The size of the cell, in pixels.
- * @constant {Number}
+ * @private
+ * @constant {number}
  */
 const CELL_SIZE = Math.pow(2, 16);
 
 /**
  * The half size of the cell, in pixels.
- * @constant {Number}
+ * @private
+ * @constant {number}
  */
 const CELL_HALF_SIZE = CELL_SIZE / 2;
+
 /**
  * Class representing a cell for clipping a rendering space.
+ * @private
  */
 class Cell {
 
 	/**
 	 * Instantiates a new Cell object.
+	 *
+	 * @param {number} zoom - The zoom the the cells is generated for.
+	 * @param {Object} center - The plot position of the center of the cell.
+	 * @param {number} extent - The pixel extent of the plot at the time of generation.
+	 *
 	 */
 	constructor(zoom, center, extent) {
 		const halfSize = CELL_HALF_SIZE / extent;
@@ -43,7 +52,7 @@ class Cell {
 	 * Project a normalized plot coordinate to the pixel space of the cell.
 	 *
 	 * @param {Object} pos - The normalized plot coordinate.
-	 * @param {Number} zoom - The zoom of the plot pixel space to project to. Optional.
+	 * @param {number} zoom - The zoom of the plot pixel space to project to. Optional.
 	 *
 	 * @returns {Object} The coordinate in cell pixel space.
 	 */
@@ -60,7 +69,7 @@ class Cell {
 	 * plot coordinate.
 	 *
 	 * @param {Object} px - The plot pixel coordinate.
-	 * @param {Number} zoom - The zoom of the plot pixel space to unproject from. Optional.
+	 * @param {number} zoom - The zoom of the plot pixel space to unproject from. Optional.
 	 *
 	 * @returns {Object} The normalized plot coordinate.
 	 */
