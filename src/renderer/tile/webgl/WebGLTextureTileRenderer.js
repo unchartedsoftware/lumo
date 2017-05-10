@@ -1,9 +1,9 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const EventType = require('../../event/EventType');
-const TextureArray = require('../../webgl/texture/TextureArray');
-const WebGLRenderer = require('./WebGLRenderer');
+const EventType = require('../../../event/EventType');
+const TextureArray = require('../../../webgl/texture/TextureArray');
+const WebGLTileRenderer = require('./WebGLTileRenderer');
 
 // Constants
 
@@ -22,12 +22,12 @@ const TILE_ADD = Symbol();
 const TILE_REMOVE = Symbol();
 
 /**
- * Class representing a texture based webgl renderer.
+ * Class representing a texture based webgl tile renderer.
  */
-class WebGLTextureRenderer extends WebGLRenderer {
+class WebGLTextureTileRenderer extends WebGLTileRenderer {
 
 	/**
-	 * Instantiates a new WebGLTextureRenderer object.
+	 * Instantiates a new WebGLTextureTileRenderer object.
 	 *
 	 * @param {Object} options - The options object.
 	 */
@@ -117,4 +117,4 @@ class WebGLTextureRenderer extends WebGLRenderer {
 	}
 }
 
-module.exports = WebGLTextureRenderer;
+module.exports = WebGLTextureTileRenderer;

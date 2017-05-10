@@ -2,7 +2,6 @@
 
 const rbush = require('rbush');
 const defaultTo = require('lodash/defaultTo');
-const CollisionType = require('./CollisionType');
 
 /**
  * Class representing an r-tree.
@@ -13,11 +12,9 @@ class RTree {
 	 * Instantiates a new RTree object.
 	 *
 	 * @param {Object} options - The options object.
-	 * @param {boolean} options.collisionType - The collision type of the collidables.
 	 * @param {boolean} options.nodeCapacity - The node capacity of the r-tree.
 	 */
 	constructor(options) {
-		this.collisionType = defaultTo(options.collisionType, CollisionType.CIRCLE);
 		this.tree = rbush(defaultTo(options.nodeCapacity, 32));
 	}
 
@@ -60,21 +57,10 @@ class RTree {
 		if (collisions.length === 0) {
 			return null;
 		}
-		if (this.collisionType === CollisionType.RECTANGLE) {
-			// rectangle, return result as is
-			return collisions[0];
-		}
-		// do a circle - point check
+		// inner shape test
 		for (let i=0; i<collisions.length; i++) {
 			const collision = collisions[i];
-			// distance to center of square
-			const cx = (collision.minX + collision.maxX) * 0.5;
-			const cy = (collision.minY + collision.maxY) * 0.5;
-			const dx = cx - x;
-			const dy = cy - y;
-			// assume the boxes are squares
-			const radius = (collision.maxX - collision.minX) / 2;
-			if ((dx * dx + dy * dy) <= (radius * radius)) {
+			if (collision.testPoint(x, y)) {
 				return collision;
 			}
 		}
@@ -101,37 +87,10 @@ class RTree {
 		if (collisions.length === 0) {
 			return null;
 		}
-		if (this.collisionType === CollisionType.RECTANGLE) {
-			// rectangle, return result as is
-			return collisions[0];
-		}
-
-		// get rect half width / height
-		const halfWidth = (minX + maxX) * 0.5;
-		const halfHeight = (minY + maxY) * 0.5;
-
-		// do a circle - rectangle check
+		// inner shape test
 		for (let i=0; i<collisions.length; i++) {
 			const collision = collisions[i];
-			// circle position
-			const circleX = (collision.minX + collision.maxX) * 0.5;
-			const circleY = (collision.minY + collision.maxY) * 0.5;
-			// distance from rectangle bottom-left
-			const dx = Math.abs(circleX - minX);
-			const dy = Math.abs(circleY - minY);
-			// assume the boxes are squares
-			const radius = (collision.maxX - collision.minX) / 2;
-			if ((dx > (halfWidth + radius)) ||
-				(dy > (halfHeight + radius))) {
-				return false;
-			}
-			if ((dx <= (halfWidth)) || (dy <= (halfHeight))) {
-				return collision;
-			}
-			const cornerDist =
-				Math.pow(2, dx - halfWidth) +
-				Math.pow(2, dy - halfHeight);
-			if (cornerDist <= (radius * radius)) {
+			if (collision.testRectangle(minX, maxX, minY, maxY)) {
 				return collision;
 			}
 		}

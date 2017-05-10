@@ -1,7 +1,7 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const WebGLVertexRenderer = require('./WebGLVertexRenderer');
+const WebGLVertexTileRenderer = require('./WebGLVertexTileRenderer');
 
 // Constants
 
@@ -51,9 +51,9 @@ const SHADER_GLSL = {
 };
 
 /**
- * Class representing a point renderer.
+ * Class representing a webgl point tile renderer.
  */
-class PointRenderer extends WebGLVertexRenderer {
+class PointRenderer extends WebGLVertexTileRenderer {
 
 	/**
 	 * Instantiates a new PointRenderer object.

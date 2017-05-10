@@ -3,6 +3,8 @@
 const clamp = require('lodash/clamp');
 const defaultTo = require('lodash/defaultTo');
 const EventEmitter = require('events');
+const Event = require('../event/Event');
+const EventType = require('../event/EventType');
 
 /**
  * Class representing a layer component.
@@ -22,6 +24,7 @@ class Layer extends EventEmitter {
 		this.opacity = defaultTo(options.opacity, 1.0);
 		this.hidden = defaultTo(options.hidden, false);
 		this.zIndex = defaultTo(options.zIndex, 0);
+		this.renderer = defaultTo(options.renderer, null);
 		this.highlighted = null;
 		this.selected = [];
 		this.plot = null;
@@ -42,6 +45,10 @@ class Layer extends EventEmitter {
 		this.plot = plot;
 		// flag as dirty
 		this.plot.setDirty();
+		// execute renderer hook
+		if (this.renderer) {
+			this.renderer.onAdd(this);
+		}
 		return this;
 	}
 
@@ -56,6 +63,10 @@ class Layer extends EventEmitter {
 		if (!plot) {
 			throw 'No plot argument provided';
 		}
+		// execute renderer hook
+		if (this.renderer) {
+			this.renderer.onRemove(this);
+		}
 		// clear state
 		this.clear();
 		// flag as dirty
@@ -64,6 +75,53 @@ class Layer extends EventEmitter {
 		this.plot = null;
 		return this;
 	}
+
+	/**
+	 * Add a renderer to the layer.
+	 *
+	 * @param {Renderer} renderer - The renderer to add to the layer.
+	 *
+	 * @returns {Layer} The layer object, for chaining.
+	 */
+	setRenderer(renderer) {
+		if (!renderer) {
+			throw 'No renderer argument provided';
+		}
+		if (this.renderer && this.plot) {
+			this.renderer.onRemove(this);
+		}
+		this.renderer = renderer;
+		if (this.plot) {
+			this.renderer.onAdd(this);
+		}
+		return this;
+	}
+
+	/**
+	 * Remove the renderer from the layer.
+	 *
+	 * @returns {Layer} The layer object, for chaining.
+	 */
+	removeRenderer() {
+		if (!this.renderer) {
+			throw 'No renderer is currently attached to the layer';
+		}
+		if (this.plot) {
+			this.renderer.onRemove(this);
+		}
+		this.renderer = null;
+		return this;
+	}
+
+	/**
+	 * Returns the renderer of the layer.
+	 *
+	 * @returns {Renderer} The renderer object.
+	 */
+	getRenderer() {
+		return this.renderer;
+	}
+
 	/**
 	 * Set the opacity of the layer.
 	 *
@@ -140,7 +198,9 @@ class Layer extends EventEmitter {
 	hide() {
 		if (!this.hidden) {
 			this.hidden = true;
-			this.clear();
+			if (this.renderer) {
+				this.renderer.clear();
+			}
 			if (this.plot) {
 				this.plot.setDirty();
 			}
@@ -158,26 +218,16 @@ class Layer extends EventEmitter {
 	}
 
 	/**
-	 * The draw function that is executed per frame.
-	 *
-	 * @param {number} timestamp - The frame timestamp.
-	 *
-	 * @returns {Layer} The layer object, for chaining.
-	 */
-	/* eslint-disable no-unused-vars */
-	draw(timestamp) {
-		return this;
-	}
-
-	/**
 	 * Pick a position of the layer for a collision with any rendered objects.
 	 *
 	 * @param {Object} pos - The plot position to pick at.
 	 *
 	 * @returns {Object} The collision, or null.
 	 */
-	/* eslint-disable no-unused-vars */
 	pick(pos) {
+		if (this.renderer) {
+			return this.renderer.pick(pos);
+		}
 		return null;
 	}
 
@@ -320,6 +370,20 @@ class Layer extends EventEmitter {
 	}
 
 	/**
+	 * Draw the layer for the frame.
+	 *
+	 * @param {number} timestamp - The frame timestamp.
+	 *
+	 * @returns {Layer} The layer object, for chaining.
+	 */
+	draw(timestamp) {
+		if (this.renderer) {
+			this.renderer.draw(timestamp);
+		}
+		return this;
+	}
+
+	/**
 	 * Clears any persisted state in the layer.
 	 *
 	 * @returns {Layer} The layer object, for chaining.
@@ -329,10 +393,29 @@ class Layer extends EventEmitter {
 		if (this.highlighted || this.selected.length > 0) {
 			this.highlighted = null;
 			this.selected = [];
-			if (this.plot) {
-				this.plot.setDirty();
-			}
 		}
+		// clear renderer state
+		if (this.renderer) {
+			this.renderer.clear();
+		}
+		// flag as dirty
+		if (this.plot) {
+			this.plot.setDirty();
+		}
+		return this;
+	}
+
+	/**
+	 * Clears any persisted state in the layer and refreshes the underlying
+	 * data.
+	 *
+	 * @returns {Layer} The layer object, for chaining.
+	 */
+	refresh() {
+		// clear the layer state
+		this.clear();
+		// emit refresh event
+		this.emit(EventType.REFRESH, new Event(this));
 		return this;
 	}
 }

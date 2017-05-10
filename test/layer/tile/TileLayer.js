@@ -55,93 +55,6 @@ describe('TileLayer', () => {
 		});
 	});
 
-	describe('#setRenderer()', () => {
-		it('should set the renderer property of the layer', () => {
-			const layer = new TileLayer();
-			layer.setRenderer(renderer);
-			assert(layer.renderer === renderer);
-		});
-		it('should replace a previously existing renderer', () => {
-			const layer = new TileLayer();
-			const rendererA = {};
-			const rendererB = {};
-			layer.setRenderer(rendererA);
-			layer.setRenderer(rendererB);
-			assert(layer.renderer === rendererB);
-		});
-		it('should call `onAdd` on the renderer if the layer is attached to a plot', () => {
-			const layer = new TileLayer();
-			sinon.stub(layer, 'refresh').callsFake(noop);
-			layer.onAdd(plot);
-			const onAdd = sinon.stub(renderer, 'onAdd').callsFake(noop);
-			layer.setRenderer(renderer);
-			assert(onAdd.calledOnce);
-		});
-		it('should call `onRemove` on the previous renderer if the layer is attached to a plot', () => {
-			const layer = new TileLayer();
-			sinon.stub(layer, 'refresh').callsFake(noop);
-			layer.onAdd(plot);
-			const onRemove = sinon.stub(renderer, 'onRemove').callsFake(noop);
-			layer.setRenderer(renderer);
-			layer.setRenderer(new Renderer());
-			assert(onRemove.calledOnce);
-		});
-		it('should throw an exception if no renderer is provided', () => {
-			let threw = false;
-			try {
-				const layer = new TileLayer();
-				layer.setRenderer();
-			} catch (e) {
-				threw = true;
-			}
-			assert(threw);
-		});
-	});
-
-	describe('#removeRenderer()', () => {
-		it('should remove the attached renderer', () => {
-			const layer = new TileLayer();
-			layer.setRenderer(renderer);
-			layer.removeRenderer();
-			assert(layer.renderer === null);
-		});
-		it('should call `onRemove` on the attached renderer if the layer is attached to a plot', () => {
-			const layer = new TileLayer();
-			sinon.stub(layer, 'refresh').callsFake(noop);
-			layer.onAdd(plot);
-			const onRemove = sinon.stub(renderer, 'onRemove').callsFake(noop);
-			layer.setRenderer(renderer);
-			layer.removeRenderer();
-			assert(onRemove.calledOnce);
-		});
-		it('should throw an exception if there is no renderer attached', () => {
-			let threw = false;
-			try {
-				const layer = new TileLayer();
-				layer.removeRenderer();
-			} catch (e) {
-				threw = true;
-			}
-			assert(threw);
-		});
-	});
-
-	describe('#draw()', () => {
-		it('should do nothing if there is no attached renderer', () => {
-			const layer = new TileLayer();
-			layer.draw();
-			layer.hide();
-			layer.draw();
-		});
-		it('should call `draw` on the attached renderer', () => {
-			const layer = new TileLayer();
-			layer.setRenderer(renderer);
-			const draw = sinon.stub(renderer, 'draw').callsFake(noop);
-			layer.draw();
-			assert(draw.calledOnce);
-		});
-	});
-
 	describe('#refresh()', () => {
 		it('should call `clear` on the layer\'s tile pyramid', () => {
 			const layer = new TileLayer();
@@ -299,21 +212,6 @@ describe('TileLayer', () => {
 			const requestTiles = sinon.stub(layer.pyramid, 'requestTiles').callsFake(noop);
 			layer.requestTiles([]);
 			assert(requestTiles.calledOnce);
-		});
-	});
-
-	describe('#pick()', () => {
-		it('should call `pick` on the attached renderer', () => {
-			const layer = new TileLayer();
-			layer.setRenderer(renderer);
-			const pick = sinon.stub(layer.getRenderer(), 'pick').callsFake(noop);
-			layer.pick();
-			assert(pick.calledOnce);
-		});
-		it('should return null if no renderer is attached', () => {
-			const layer = new TileLayer();
-			const res = layer.pick();
-			assert(res === null);
 		});
 	});
 

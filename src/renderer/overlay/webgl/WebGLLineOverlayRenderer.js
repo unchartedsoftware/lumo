@@ -2,7 +2,7 @@
 
 const defaultTo = require('lodash/defaultTo');
 const VertexBuffer = require('../../../webgl/vertex/VertexBuffer');
-const WebGLOverlay = require('./WebGLOverlay');
+const WebGLOverlayRenderer = require('./WebGLOverlayRenderer');
 
 // Constants
 
@@ -455,49 +455,15 @@ const createVertexBuffer = function(overlay, points) {
 		});
 };
 
-const clipPolylines = function(cell, polylines) {
-	const clipped = [];
-	polylines.forEach(polyline => {
-		let current = [];
-		for (let i=1; i<polyline.length; i++) {
-			const a = polyline[i-1];
-			const b = polyline[i];
-			// clip the line
-			const line = cell.bounds.clipLine(a, b);
-			// no line in bounds
-			if (!line) {
-				continue;
-			}
-			// add src point
-			current.push(cell.project(line.a));
-			if (line.b.clipped || i === polyline.length - 1) {
-				// only add destination point if it was clipped, or is last point
-				current.push(cell.project(line.b));
-				// then break the polyline
-				clipped.push(current);
-				current = [];
-			}
-		}
-		if (current.length > 0) {
-			// add last polyline
-			clipped.push(current);
-		}
-	});
-	return clipped;
-};
-
 /**
- * Class representing a webgl polyline overlay.
+ * Class representing a webgl polyline overlay renderer.
  */
-class WebGLLineOverlay extends WebGLOverlay {
+class WebGLLineOverlayRenderer extends WebGLOverlayRenderer {
 
 	/**
-	 * Instantiates a new WebGLLineOverlay object.
+	 * Instantiates a new WebGLLineOverlayRenderer object.
 	 *
-	 * @param {Object} options - The layer options.
-	 * @param {Renderer} options.renderer - The layer renderer.
-	 * @param {number} options.opacity - The layer opacity.
-	 * @param {number} options.zIndex - The layer z-index.
+	 * @param {Object} options - The overlay options.
 	 * @param {Array} options.lineColor - The color of the line.
 	 * @param {number} options.lineWidth - The pixel width of the line.
 	 */
@@ -505,8 +471,8 @@ class WebGLLineOverlay extends WebGLOverlay {
 		super(options);
 		this.lineColor = defaultTo(options.lineColor, [ 1.0, 0.4, 0.1, 0.8 ]);
 		this.lineWidth = defaultTo(options.lineWidth, 2);
-		this.polylines = new Map();
 		this.shader = null;
+		this.lines = null;
 	}
 
 	/**
@@ -514,7 +480,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 	 *
 	 * @param {Plot} plot - The plot to attach the overlay to.
 	 *
-	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
+	 * @returns {WebGLLineOverlayRenderer} The overlay object, for chaining.
 	 */
 	onAdd(plot) {
 		super.onAdd(plot);
@@ -527,7 +493,7 @@ class WebGLLineOverlay extends WebGLOverlay {
 	 *
 	 * @param {Plot} plot - The plot to remove the overlay from.
 	 *
-	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
+	 * @returns {WebGLLineOverlayRenderer} The overlay object, for chaining.
 	 */
 	onRemove(plot) {
 		super.onRemove(plot);
@@ -536,77 +502,40 @@ class WebGLLineOverlay extends WebGLOverlay {
 	}
 
 	/**
-	 * Create and return an array of VertexBuffers.
+	 * Generate any underlying buffers.
 	 *
-	 * @param {Cell} cell - The rendering cell.
-	 *
-	 * @returns {Array} The array of VertexBuffer objects.
+	 * @returns {WebGLLineOverlayRenderer} The overlay object, for chaining.
 	 */
-	createBuffers(cell) {
-		// trim polylines to only those that intersect the cell
-		return clipPolylines(cell, this.polylines).map(points => {
-			// generate the buffer
-			return createVertexBuffer(this, points);
-		});
-	}
-
-	/**
-	 * Add a set of points to render as a single polyline.
-	 *
-	 * @param {string} id - The id to store the polyline under.
-	 * @param {Array} points - The polyline points.
-	 *
-	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
-	 */
-	addPolyline(id, points) {
-		this.polylines.set(id, points);
-		if (this.plot) {
-			this.refreshBuffers();
+	refreshBuffers() {
+		const clipped = this.overlay.getClippedGeometry();
+		if (clipped) {
+			this.lines = clipped.map(points => {
+				// generate the buffer
+				return createVertexBuffer(this, points);
+			});
+		} else {
+			this.lines = null;
 		}
-		return this;
-	}
-
-	/**
-	 * Remove a polyline by id from the overlay.
-	 *
-	 * @param {string} id - The id to store the polyline under.
-	 *
-	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
-	 */
-	removePolyline(id) {
-		this.polylines.delete(id);
-		if (this.plot) {
-			this.refreshBuffers();
-		}
-		return this;
-	}
-
-	/**
-	 * Remove all polylines from the layer.
-	 *
-	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
-	 */
-	clearPolylines() {
-		this.polylines = new Map();
-		if (this.plot) {
-			this.buffers = [];
-		}
-		return this;
 	}
 
 	/**
 	 * The draw function that is executed per frame.
 	 *
-	 * @returns {WebGLLineOverlay} The overlay object, for chaining.
+	 * @returns {WebGLLineOverlayRenderer} The overlay object, for chaining.
 	 */
 	draw() {
+		if (!this.lines) {
+			return this;
+		}
+
 		const gl = this.gl;
 		const shader = this.shader;
-		const buffers = this.buffers;
-		const plot = this.plot;
+		const lines = this.lines;
+		const plot = this.overlay.plot;
 		const cell = plot.cell;
 		const proj = this.getOrthoMatrix();
 		const scale = Math.pow(2, plot.zoom - cell.zoom);
+		const opacity = this.overlay.opacity;
 
 		// get view offset in cell space
 		const offset = cell.project(plot.viewport, plot.zoom);
@@ -624,10 +553,10 @@ class WebGLLineOverlay extends WebGLOverlay {
 		shader.setUniform('uScale', scale);
 		shader.setUniform('uLineWidth', this.lineWidth / 2);
 		shader.setUniform('uLineColor', this.lineColor);
-		shader.setUniform('uOpacity', this.opacity);
+		shader.setUniform('uOpacity', opacity);
 
 		// for each polyline buffer
-		buffers.forEach(buffer => {
+		lines.forEach(buffer => {
 			// draw the points
 			buffer.bind();
 			buffer.draw();
@@ -637,4 +566,4 @@ class WebGLLineOverlay extends WebGLOverlay {
 	}
 }
 
-module.exports = WebGLLineOverlay;
+module.exports = WebGLLineOverlayRenderer;

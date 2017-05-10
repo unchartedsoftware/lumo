@@ -1,15 +1,15 @@
 'use strict';
 
-const Shader = require('../../webgl/shader/Shader');
-const Renderer = require('../Renderer');
+const Shader = require('../../../webgl/shader/Shader');
+const TileRenderer = require('../TileRenderer');
 
 /**
- * Class representing a webgl renderer.
+ * Class representing a webgl tile renderer.
  */
-class WebGLRenderer extends Renderer {
+class WebGLTileRenderer extends TileRenderer {
 
 	/**
-	 * Instantiates a new WebGLRenderer object.
+	 * Instantiates a new WebGLTileRenderer object.
 	 *
 	 * @param {Object} options - The options object.
 	 */
@@ -23,11 +23,11 @@ class WebGLRenderer extends Renderer {
 	 *
 	 * @param {Layer} layer - The layer to attach the renderer to.
 	 *
-	 * @returns {WebGLRenderer} The renderer object, for chaining.
+	 * @returns {WebGLTileRenderer} The renderer object, for chaining.
 	 */
 	onAdd(layer) {
 		super.onAdd(layer);
-		this.gl = this.layer.plot.gl;
+		this.gl = this.layer.plot.getRenderingContext();
 		return this;
 	}
 
@@ -69,4 +69,4 @@ class WebGLRenderer extends Renderer {
 	}
 }
 
-module.exports = WebGLRenderer;
+module.exports = WebGLTileRenderer;

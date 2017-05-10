@@ -1,8 +1,8 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const VertexBuffer = require('../../webgl/vertex/VertexBuffer');
-const WebGLVertexRenderer = require('./WebGLVertexRenderer');
+const VertexBuffer = require('../../../webgl/vertex/VertexBuffer');
+const WebGLVertexTileRenderer = require('./WebGLVertexTileRenderer');
 
 // Constants
 
@@ -95,9 +95,9 @@ const createStar = function(gl) {
 };
 
 /**
- * Class representing a shape renderer.
+ * Class representing a webgl shape tile renderer.
  */
-class ShapeRenderer extends WebGLVertexRenderer {
+class ShapeRenderer extends WebGLVertexTileRenderer {
 
 	/**
 	 * Instantiates a new ShapeRenderer object.

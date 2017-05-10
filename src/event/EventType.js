@@ -102,6 +102,12 @@ module.exports = {
 	CELL_UPDATE: 'cellupdate',
 
 	/**
+	 * Emitted when the layer is refreshed.
+	 * @constant {string}
+	 */
+	REFRESH: 'refresh',
+
+	/**
 	 * Emitted when an initial request for a tile is made, the tile is not
 	 * yet part of the layer and has not yet been requested.
 	 * @constant {string}

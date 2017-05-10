@@ -162,6 +162,9 @@ class VertexAtlas {
 		if (this.available.length === 0) {
 			throw 'No available vertex chunks in atlas';
 		}
+		if (count > this.chunkSize) {
+			throw `Data count of ${count} is greater that allocated size of ${this.chunkSize}`;
+		}
 		// get an available chunk
 		const chunk = this.available.pop();
 		// update chunk count

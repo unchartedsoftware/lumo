@@ -1,9 +1,10 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const EventType = require('../../event/EventType');
-const VertexAtlas = require('../../webgl/vertex/VertexAtlas');
-const WebGLRenderer = require('./WebGLRenderer');
+const EventType = require('../../../event/EventType');
+const RTreePyramid = require('../../../geometry/RTreePyramid');
+const VertexAtlas = require('../../../webgl/vertex/VertexAtlas');
+const WebGLTileRenderer = require('./WebGLTileRenderer');
 
 // Constants
 
@@ -22,12 +23,12 @@ const TILE_ADD = Symbol();
 const TILE_REMOVE = Symbol();
 
 /**
- * Class representing a vertex based webgl renderer.
+ * Class representing a vertex based webgl tile renderer.
  */
-class WebGLVertexRenderer extends WebGLRenderer {
+class WebGLVertexTileRenderer extends WebGLTileRenderer {
 
 	/**
-	 * Instantiates a new WebGLVertexRenderer object.
+	 * Instantiates a new WebGLVertexTileRenderer object.
 	 *
 	 * @param {Object} options - The options object.
 	 * @param {Array} options.maxVertices - The max number of vertices per tile.
@@ -60,6 +61,69 @@ class WebGLVertexRenderer extends WebGLRenderer {
 	 */
 	removeTile(atlas, tile) {
 		atlas.delete(tile.coord.hash);
+	}
+
+	/**
+	 * Given a tile, returns an array of collidable objects. A collidable object
+	 * is any object that contains `minX`, `minY`, `maxX`, and `maxY` properties.
+	 *
+	 * @param {Tile} tile - The tile of data.
+	 * @param {number} xOffset - The pixel x offset of the tile.
+	 * @param {number} yOffset - The pixel y offset of the tile.
+	 */
+	/* eslint-disable no-unused-vars */
+	createCollidables(tile, xOffset, yOffset) {
+		throw '`createCollidables` must be overridden';
+	}
+
+	/**
+	 * Creates an rtree pyramid object. Creates and attaches the necessary
+	 * event handlers to add and remove data from the rtree accordingly.
+	 *
+	 * @param {number} nodeCapacity - The node capacity of the rtree.
+	 *
+	 * @returns {VertexAtlas} The vertex atlas object.
+	 */
+	createRTreePyramid(nodeCapacity) {
+		// create rtree pyramid
+		const pyramid = new RTreePyramid({
+			nodeCapacity: nodeCapacity
+		});
+		// create handlers
+		const index = event => {
+			const tile = event.tile;
+			const coord = tile.coord;
+			const tileSize = this.layer.plot.tileSize;
+			const xOffset = coord.x * tileSize;
+			const yOffset = coord.y * tileSize;
+			const collidables = this.createCollidables(tile, xOffset, yOffset);
+			pyramid.insert(coord, collidables);
+		};
+		const unindex = event => {
+			pyramid.remove(event.tile.coord);
+		};
+		// attach handlers
+		this.layer.on(EventType.TILE_ADD, index);
+		this.layer.on(EventType.TILE_REMOVE, unindex);
+		// store the handlers under the atlas
+		this[TILE_ADD].set(pyramid, index);
+		this[TILE_REMOVE].set(pyramid, unindex);
+		return pyramid;
+	}
+
+	/**
+	 * Destroys a vertex atlas object and removes all event handlers used to add
+	 * and remove data from the atlas.
+	 *
+	 * @param {RTreePyramid} pyramid - The vertex atlas to destroy.
+	 */
+	destroyRTreePyramid(pyramid) {
+		// detach handlers
+		this.layer.removeListener(EventType.TILE_ADD, this[TILE_ADD].get(pyramid));
+		this.layer.removeListener(EventType.TILE_REMOVE, this[TILE_REMOVE].get(pyramid));
+		// remove handlers
+		this[TILE_ADD].delete(pyramid);
+		this[TILE_REMOVE].delete(pyramid);
 	}
 
 	/**
@@ -112,4 +176,4 @@ class WebGLVertexRenderer extends WebGLRenderer {
 	}
 }
 
-module.exports = WebGLVertexRenderer;
+module.exports = WebGLVertexTileRenderer;
