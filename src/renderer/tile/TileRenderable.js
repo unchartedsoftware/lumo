@@ -190,6 +190,26 @@ class TileRenderable {
 			tileOffset,
 			[ 0, 0, 1, 1 ]);
 	}
+
+	/**
+	 * Converts the `uvOffset` and `tileOffset` parameters to the canvas
+	 * coordinate system, with [0, 0] being the top-left corner. The conversion
+	 * is done in-place.
+	 *
+	 * @param {Object} viewport - The pixel dimensions of the viewport.
+	 * @param {number} tileSize - The size of each tile in pixels.
+	 *
+	 * @returns {TileRenderable} The renderable object.
+	 */
+	toCanvas(viewport, tileSize) {
+		// flip y component of uv offset
+		const uvOffset = this.uvOffset;
+		uvOffset[1] = (1 - uvOffset[2] - uvOffset[1]);
+		// flip y component of tile offset
+		const tileOffset = this.tileOffset;
+		tileOffset[1] = viewport.height - tileOffset[1] - (tileSize * this.scale);
+		return this;
+	}
 }
 
 module.exports = TileRenderable;

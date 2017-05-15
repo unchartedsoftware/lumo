@@ -1,8 +1,8 @@
 'use strict';
 
-const Texture = require('./Texture');
-const Shader = require('../shader/Shader');
-const VertexBuffer = require('../vertex/VertexBuffer');
+const Texture = require('./texture/Texture');
+const Shader = require('./shader/Shader');
+const VertexBuffer = require('./vertex/VertexBuffer');
 
 // Constants
 
@@ -107,12 +107,12 @@ const renderToScreen = function(gl, texture, shader, quad, opacity) {
 };
 
 /**
- * Class representing a renderbuffer.
+ * Class representing a webgl renderbuffer.
  */
-class RenderBuffer {
+class WebGLRenderBuffer {
 
 	/**
-	 * Instantiates a RenderBuffer object.
+	 * Instantiates a WebGLRenderBuffer object.
 	 *
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
 	 * @param {number} width - The width of the renderbuffer.
@@ -127,7 +127,8 @@ class RenderBuffer {
 			width: width,
 			height: height,
 			filter: 'NEAREST',
-			invertY: false
+			invertY: false,
+			premultiplyAlpha: false
 		});
 		setColorTarget(
 			this.gl,
@@ -139,7 +140,7 @@ class RenderBuffer {
 	/**
 	 * Binds the renderbuffer for writing.
 	 *
-	 * @returns {RenderBuffer} The renderbuffer object, for chaining.
+	 * @returns {WebGLRenderBuffer} The renderbuffer object, for chaining.
 	 */
 	bind() {
 		const gl = this.gl;
@@ -150,7 +151,7 @@ class RenderBuffer {
 	/**
 	 * Unbinds the renderbuffer for writing.
 	 *
-	 * @returns {RenderBuffer} The renderbuffer object, for chaining.
+	 * @returns {WebGLRenderBuffer} The renderbuffer object, for chaining.
 	 */
 	unbind() {
 		const gl = this.gl;
@@ -161,21 +162,9 @@ class RenderBuffer {
 	/**
 	 * Clears the renderbuffer buffer color bits.
 	 *
-	 * @param {number} r - The red clear color. (Optional)
-	 * @param {number} g - The green clear color. (Optional)
-	 * @param {number} b - The blue clear color. (Optional)
-	 * @param {number} a - The alpha clear color. (Optional)
-	 *
-	 * @returns {RenderBuffer} The renderbuffer object, for chaining.
+	 * @returns {WebGLRenderBuffer} The renderbuffer object, for chaining.
 	 */
-	clear(r, g, b, a) {
-		if (r !== undefined &&
-			g !== undefined &&
-			b !== undefined &&
-			a !== undefined) {
-			this.gl.clearColor(r, g, b, a);
-		}
-		// clear render target
+	clear() {
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 		return this;
 	}
@@ -185,7 +174,7 @@ class RenderBuffer {
 	 *
 	 * @param {number} opacity - The opacity to blit at.
 	 *
-	 * @returns {RenderBuffer} The renderbuffer object, for chaining.
+	 * @returns {WebGLRenderBuffer} The renderbuffer object, for chaining.
 	 */
 	blitToScreen(opacity) {
 		renderToScreen(
@@ -203,7 +192,7 @@ class RenderBuffer {
 	 * @param {number} width - The new width of the renderbuffer.
 	 * @param {number} height - The new height of the renderbuffer.
 	 *
-	 * @returns {RenderBuffer} The renderbuffer object, for chaining.
+	 * @returns {WebGLRenderBuffer} The renderbuffer object, for chaining.
 	 */
 	resize(width, height) {
 		this.texture.resize(width, height);
@@ -211,4 +200,4 @@ class RenderBuffer {
 	}
 }
 
-module.exports = RenderBuffer;
+module.exports = WebGLRenderBuffer;

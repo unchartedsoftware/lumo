@@ -1,10 +1,10 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const EventType = require('../../../event/EventType');
-const CircleCollidable = require('../../../geometry/CircleCollidable');
-const VertexBuffer = require('../../../webgl/vertex/VertexBuffer');
-const WebGLVertexTileRenderer = require('./WebGLVertexTileRenderer');
+const EventType = require('../../../../event/EventType');
+const CircleCollidable = require('../../../../geometry/CircleCollidable');
+const VertexBuffer = require('../../../../webgl/vertex/VertexBuffer');
+const WebGLVertexTileRenderer = require('../WebGLVertexTileRenderer');
 
 // Constants
 
@@ -70,7 +70,7 @@ const SHADER_GLSL = {
 					discard;
 				}
 			#endif
-			gl_FragColor = vec4(uColor.rgb, uColor.a * alpha);
+			gl_FragColor = vec4(uColor.rgb * alpha, uColor.a * alpha);
 		}
 		`
 };
@@ -125,8 +125,8 @@ const renderPoint = function(point, shader, plot, target, color, radius) {
 	const scale = Math.pow(2, plot.zoom - coord.z);
 	const viewport = plot.getViewportPixelOffset();
 	const tileOffset = [
-		(coord.x * scale * plot.tileSize) + (scale * target.x) - viewport.x,
-		(coord.y * scale * plot.tileSize) + (scale * target.y) - viewport.y
+		(((coord.x * plot.tileSize) + target.x) * scale) - viewport.x,
+		(((coord.y * plot.tileSize) + target.y) * scale) - viewport.y
 	];
 	// set uniforms
 	shader.setUniform('uTileOffset', tileOffset);
@@ -144,10 +144,10 @@ const renderPoint = function(point, shader, plot, target, color, radius) {
 /**
  * Class representing a webgl interactive point tile renderer.
  */
-class InteractiveRenderer extends WebGLVertexTileRenderer {
+class WebGLInteractiveTileRenderer extends WebGLVertexTileRenderer {
 
 	/**
-	 * Instantiates a new InteractiveRenderer object.
+	 * Instantiates a new WebGLInteractiveTileRenderer object.
 	 *
 	 * @param {Object} options - The options object.
 	 * @param {Array} options.color - The color of the points.
@@ -251,6 +251,9 @@ class InteractiveRenderer extends WebGLVertexTileRenderer {
 	 * @returns {Object} The collision, if any.
 	 */
 	pick(pos) {
+		if (this.layer.plot.isZooming()) {
+			return null;
+		}
 		return this.tree.searchPoint(
 			pos.x,
 			pos.y,
@@ -277,7 +280,8 @@ class InteractiveRenderer extends WebGLVertexTileRenderer {
 
 		// set blending func
 		gl.enable(gl.BLEND);
-		gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+		gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+		//gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
 		// use shader
 		shader.use();
@@ -325,4 +329,4 @@ class InteractiveRenderer extends WebGLVertexTileRenderer {
 	}
 }
 
-module.exports = InteractiveRenderer;
+module.exports = WebGLInteractiveTileRenderer;

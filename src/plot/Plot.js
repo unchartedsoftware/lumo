@@ -9,13 +9,15 @@ const EventBroadcaster = require('../event/EventBroadcaster');
 const EventDelegator = require('../event/EventDelegator');
 const Event = require('../event/Event');
 const ResizeEvent = require('../event/ResizeEvent');
-const RenderBuffer = require('../webgl/texture/RenderBuffer');
-const Viewport = require('./Viewport');
-const Cell = require('./Cell');
+const CanvasRenderBuffer = require('../canvas/CanvasRenderBuffer');
+const WebGLRenderBuffer = require('../webgl/WebGLRenderBuffer');
 const ClickHandler = require('./handler/ClickHandler');
 const MouseHandler = require('./handler/MouseHandler');
 const PanHandler = require('./handler/PanHandler');
 const ZoomHandler = require('./handler/ZoomHandler');
+const Cell = require('./Cell');
+const ContextType = require('./ContextType');
+const Viewport = require('./Viewport');
 
 // Constants
 
@@ -143,7 +145,7 @@ const resize = function(plot) {
 		plot.canvas.style.height = current.height + 'px';
 		plot.canvas.width = current.width * plot.pixelRatio;
 		plot.canvas.height = current.height * plot.pixelRatio;
-		// resize render target
+		// resize renderbuffer
 		plot.renderBuffer.resize(
 			current.width * plot.pixelRatio,
 			current.height * plot.pixelRatio);
@@ -222,6 +224,29 @@ const reset = function(plot) {
 	}
 };
 
+const setupWebGLFrame = function(plot) {
+	const gl = plot.getRenderingContext();
+	// clear the backbuffer
+	gl.clearColor(0, 0, 0, 0);
+	gl.clear(gl.COLOR_BUFFER_BIT);
+	// set the viewport
+	const size = plot.getViewportPixelSize();
+	gl.viewport(
+		0, 0,
+		size.width * plot.pixelRatio,
+		size.height * plot.pixelRatio);
+};
+
+const setupCanvasFrame = function(plot) {
+	const ctx = plot.getRenderingContext();
+	// clear the canvas
+	const size = plot.getViewportPixelSize();
+	ctx.clearRect(
+		0, 0,
+		size.width * plot.pixelRatio,
+		size.height * plot.pixelRatio);
+};
+
 const frame = function(plot) {
 
 	// get frame timestamp
@@ -261,19 +286,12 @@ const frame = function(plot) {
 		// update cell
 		updateCell(plot);
 
-		// context shorthand
-		const gl = plot.gl;
-
-		// clear the backbuffer
-		gl.clearColor(0, 0, 0, 0);
-		gl.clear(gl.COLOR_BUFFER_BIT);
-
-		// set the viewport
-		const size = plot.getViewportPixelSize();
-		gl.viewport(
-			0, 0,
-			size.width * plot.pixelRatio,
-			size.height * plot.pixelRatio);
+		// setup frame based on context
+		if (plot.ctxType === ContextType.WEBGL) {
+			setupWebGLFrame(plot);
+		} else {
+			setupCanvasFrame(plot);
+		}
 
 		// sort layers by z-index
 		const layers = plot.getSortedLayers();
@@ -292,6 +310,30 @@ const frame = function(plot) {
 	});
 };
 
+const getContext = function(type, canvas, contextAttributes = {}) {
+	let ctx = null;
+	switch (type) {
+		case ContextType.CANVAS:
+			// get Canvas2D context
+			ctx = canvas.getContext('2d', contextAttributes);
+			if (!ctx) {
+				throw 'Unable to create a CanvasRenderingContext2D, please ensure your browser supports Canvas';
+			}
+			break;
+		case ContextType.WEBGL:
+			// get WebGL context
+			ctx = canvas.getContext('webgl', contextAttributes);
+			if (!ctx) {
+				throw 'Unable to create a WebGLRenderingContext, please ensure your browser supports WebGL';
+			}
+			break;
+		default:
+			// invalid context type
+			throw 'Unrecognized context symbol, please choose either `lumo.WEBGL` or `lumo.CANVAS`.';
+	}
+	return ctx;
+};
+
 /**
  * Class representing a plot.
  */
@@ -308,6 +350,8 @@ class Plot extends EventEmitter {
 	 * @param {number} options.maxZoom - The maximum zoom of the plot.
 	 * @param {Object} options.center - The center of the plot, in plot pixels.
 	 * @param {boolean} options.wraparound - Whether or not the plot wraps around.
+	 * @param {boolean} options.context - The rendering context type, defaults to `webgl`.
+	 * @param {boolean} options.contextAttributes - The rendering context attribtues argument. Optional.
 	 * @param {boolean} options.dirtyChecking - Whether or not the plot uses dirty checking or renders every frame.
 	 *
 	 * @param {number} options.panThrottle - Pan request throttle timeout in ms.
@@ -331,28 +375,33 @@ class Plot extends EventEmitter {
 			throw `Element could not be found for selector ${selector}`;
 		}
 
-		// create canvas element
-		this.canvas = document.createElement('canvas');
-		this.canvas.style.width = this.container.offsetWidth + 'px';
-		this.canvas.style.height = this.container.offsetHeight + 'px';
-		this.canvas.width = this.container.offsetWidth * window.devicePixelRatio;
-		this.canvas.height = this.container.offsetHeight * window.devicePixelRatio;
-		this.container.appendChild(this.canvas);
-
-		// get WebGL context
-		this.gl = this.canvas.getContext('webgl', options);
-		if (!this.gl) {
-			throw 'Unable to create a WebGLRenderingContext, please ensure your browser supports WebGL';
-		}
-
-		// create renderbuffer
-		this.renderBuffer = new RenderBuffer(
-			this.gl,
-			this.canvas.width,
-			this.canvas.height);
-
 		// set pixel ratio
 		this.pixelRatio = window.devicePixelRatio;
+
+		// create canvas element
+		this.canvas = document.createElement('canvas');
+		this.canvas.style.width = `${this.container.offsetWidth}px`;
+		this.canvas.style.height = `${this.container.offsetHeight}px`;
+		this.canvas.width = this.container.offsetWidth * this.pixelRatio;
+		this.canvas.height = this.container.offsetHeight * this.pixelRatio;
+		this.container.appendChild(this.canvas);
+
+		// get rendering context
+		this.ctxType = defaultTo(options.context, ContextType.WEBGL);
+		this.ctx = getContext(this.ctxType, this.canvas, options.contextAttributes);
+
+		// create renderbuffer
+		if (this.ctxType === ContextType.WEBGL) {
+			this.renderBuffer = new WebGLRenderBuffer(
+				this.ctx,
+				this.canvas.width,
+				this.canvas.height);
+		} else {
+			this.renderBuffer = new CanvasRenderBuffer(
+				this.ctx,
+				this.canvas.width,
+				this.canvas.height);
+		}
 
 		// tile size in pixels
 		this.tileSize = defaultTo(options.tileSize, 256);
@@ -460,7 +509,7 @@ class Plot extends EventEmitter {
 			this.remove(layer);
 		});
 		// destroy context
-		this.gl = null;
+		this.ctx = null;
 		// remove canvas
 		this.container.removeChild(this.canvas);
 		this.canvas = null;
@@ -532,6 +581,24 @@ class Plot extends EventEmitter {
 		layer.onRemove(this);
 		this.setDirty();
 		return this;
+	}
+
+	/**
+	 * Returns the rendering context of the plot.
+	 *
+	 * @returns {WebGLRenderingContext|CanvasRenderingContext2D} The context object.
+	 */
+	getRenderingContext() {
+		return this.ctx;
+	}
+
+	/**
+	 * Returns the rendering context of the plot.
+	 *
+	 * @returns {WebGLRenderingContext|CanvasRenderingContext2D} The context object.
+	 */
+	getRenderingContext() {
+		return this.ctx;
 	}
 
 	/**

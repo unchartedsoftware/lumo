@@ -1,6 +1,7 @@
 'use strict';
 
 const EventType = require('./event/EventType');
+const ContextType = require('./plot/ContextType');
 
 module.exports = {
 	// events
@@ -39,6 +40,9 @@ module.exports = {
 	RectangleCollidable: require('./geometry/RectangleCollidable'),
 	// plot
 	Plot: require('./plot/Plot'),
+	// context type
+	CANVAS: ContextType.CANVAS,
+	WEBGL: ContextType.WEBGL,
 	// layer
 	Layer: require('./layer/Layer'),
 	// tile layer
@@ -51,19 +55,33 @@ module.exports = {
 	Renderer: require('./renderer/Renderer'),
 	// tile renderer
 	TileRenderer: require('./renderer/tile/TileRenderer'),
+	// webgl tile renderer
 	WebGLTileRenderer: require('./renderer/tile/webgl/WebGLTileRenderer'),
 	WebGLTextureTileRenderer: require('./renderer/tile/webgl/WebGLTextureTileRenderer'),
 	WebGLVertexTileRenderer: require('./renderer/tile/webgl/WebGLVertexTileRenderer'),
 	WebGLImageTileRenderer: require('./renderer/tile/webgl/WebGLImageTileRenderer'),
-	// sample renderers
-	InteractiveRenderer: require('./renderer/tile/webgl/InteractiveRenderer'),
-	PointRenderer: require('./renderer/tile/webgl/PointRenderer'),
-	ShapeRenderer: require('./renderer/tile/webgl/ShapeRenderer'),
+	// webgl sample renderer
+	WebGLInteractiveTileRenderer: require('./renderer/tile/webgl/sample/WebGLInteractiveTileRenderer'),
+	WebGLPointTileRenderer: require('./renderer/tile/webgl/sample/WebGLPointTileRenderer'),
+	WebGLShapeTileRenderer: require('./renderer/tile/webgl/sample/WebGLShapeTileRenderer'),
+	// canvas tile renderer
+	CanvasTileRenderer: require('./renderer/tile/canvas/CanvasTileRenderer'),
+	CanvasTextureTileRenderer: require('./renderer/tile/canvas/CanvasTextureTileRenderer'),
+	CanvasVertexTileRenderer: require('./renderer/tile/canvas/CanvasVertexTileRenderer'),
+	CanvasImageTileRenderer: require('./renderer/tile/canvas/CanvasImageTileRenderer'),
+	// canvas sample renderer
+	CanvasInteractiveTileRenderer: require('./renderer/tile/canvas/sample/CanvasInteractiveTileRenderer'),
+	CanvasPointTileRenderer: require('./renderer/tile/canvas/sample/CanvasPointTileRenderer'),
 	// overlay renderer
 	OverlayRenderer: require('./renderer/overlay/OverlayRenderer'),
+	// webgl overlay renderer
 	WebGLOverlayRenderer: require('./renderer/overlay/webgl/WebGLOverlayRenderer'),
 	WebGLPointOverlayRenderer: require('./renderer/overlay/webgl/WebGLPointOverlayRenderer'),
 	WebGLLineOverlayRenderer: require('./renderer/overlay/webgl/WebGLLineOverlayRenderer'),
+	// canvas overlay renderer
+	CanvasOverlayRenderer: require('./renderer/overlay/canvas/CanvasOverlayRenderer'),
+	CanvasPointOverlayRenderer: require('./renderer/overlay/canvas/CanvasPointOverlayRenderer'),
+	CanvasLineOverlayRenderer: require('./renderer/overlay/canvas/CanvasLineOverlayRenderer'),
 	// webgl shader
 	Shader: require('./webgl/shader/Shader'),
 	// webgl texture
