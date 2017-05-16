@@ -7,21 +7,6 @@ const CanvasTileRenderer = require('./CanvasTileRenderer');
 // Constants
 
 /**
- * Tile add handler symbol.
- * @private
- * @constant {Symbol}
- */
-const TILE_ADD = Symbol();
-
-/**
- * Tile remove handler symbol.
- * @private
- * @constant {Symbol}
- */
-const TILE_REMOVE = Symbol();
-
-
-/**
  * Tile index handler symbol.
  * @private
  * @constant {Symbol}
@@ -35,6 +20,7 @@ const TILE_INDEX = Symbol();
  */
 const TILE_UNINDEX = Symbol();
 
+
 /**
  * Class representing a canvas vertex based tile renderer.
  */
@@ -47,72 +33,8 @@ class CanvasVertexTileRenderer extends CanvasTileRenderer {
 	 */
 	constructor(options = {}) {
 		super(options);
-		this[TILE_ADD] = null;
-		this[TILE_REMOVE] = null;
 		this[TILE_INDEX] = new Map();
 		this[TILE_UNINDEX] = new Map();
-	}
-
-	/**
-	 * Executed when the layer is attached to a plot.
-	 *
-	 * @param {Layer} layer - The layer to attach the renderer to.
-	 *
-	 * @returns {CanvasTextureTileRenderer} The renderer object, for chaining.
-	 */
-	onAdd(layer) {
-		super.onAdd(layer);
-		this.textures = new Map();
-		// create handlers
-		this[TILE_ADD] = event => {
-			this.addTile(this.textures, event.tile);
-		};
-		this[TILE_REMOVE] = event => {
-			this.removeTile(this.textures, event.tile);
-		};
-		// attach handlers
-		this.layer.on(EventType.TILE_ADD, this[TILE_ADD]);
-		this.layer.on(EventType.TILE_REMOVE, this[TILE_REMOVE]);
-		return this;
-	}
-
-	/**
-	 * Executed when the layer is removed from a plot.
-	 *
-	 * @param {Layer} layer - The layer to remove the renderer from.
-	 *
-	 * @returns {CanvasTextureTileRenderer} The renderer object, for chaining.
-	 */
-	onRemove(layer) {
-		this.layer.removeListener(EventType.TILE_ADD, this[TILE_ADD]);
-		this.layer.removeListener(EventType.TILE_REMOVE, this[TILE_REMOVE]);
-		// delete the handlers
-		this[TILE_ADD] = null;
-		this[TILE_REMOVE] = null;
-		this.textures = null;
-		super.onRemove(layer);
-		return this;
-	}
-
-	/**
-	 * Executed when a tile is added to the layer pyramid.
-	 *
-	 * @param {Map} textures - The texture map.
-	 * @param {Tile} tile - The new tile object containing data.
-	 */
-	/* eslint-disable no-unused-vars */
-	addTile(textures, tile) {
-		throw '`addTile` must be overridden';
-	}
-
-	/**
-	 * Executed when a tile is removed from the layer pyramid.
-	 *
-	 * @param {Map} textures - The texture map.
-	 * @param {Tile} tile - The new tile object containing data.
-	 */
-	removeTile(textures, tile) {
-		textures.delete(tile.coord.hash);
 	}
 
 	/**

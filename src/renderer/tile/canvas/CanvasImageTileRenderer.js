@@ -14,6 +14,34 @@ class CanvasImageTileRenderer extends CanvasTextureTileRenderer {
 	 */
 	constructor(options = {}) {
 		super(options);
+		this.array = null;
+	}
+
+	/**
+	 * Executed when the layer is attached to a plot.
+	 *
+	 * @param {Layer} layer - The layer to attach the renderer to.
+	 *
+	 * @returns {CanvasImageTileRenderer} The renderer object, for chaining.
+	 */
+	onAdd(layer) {
+		super.onAdd(layer);
+		this.array = this.createCanvasArray(layer.plot.tileSize);
+		return this;
+	}
+
+	/**
+	 * Executed when the layer is removed from a plot.
+	 *
+	 * @param {Layer} layer - The layer to remove the renderer from.
+	 *
+	 * @returns {CanvasImageTileRenderer} The renderer object, for chaining.
+	 */
+	onRemove(layer) {
+		this.destroyCanvasArray(this.array);
+		this.array = null;
+		super.onRemove(layer);
+		return this;
 	}
 
 	/**
@@ -22,43 +50,8 @@ class CanvasImageTileRenderer extends CanvasTextureTileRenderer {
 	 * @returns {CanvasImageTileRenderer} The renderer object, for chaining.
 	 */
 	draw() {
-		const ctx = this.ctx;
-		const layer = this.layer;
-		const plot = layer.plot;
-		const tileSize = plot.tileSize;
-		const renderables = this.getRenderablesLOD();
-		const viewport = plot.getViewportPixelSize();
-		const pixelRatio = plot.pixelRatio;
-		const textures = this.textures;
-
-		ctx.globalAlpha = layer.opacity;
-
-		for (let i=0; i<renderables.length; i++) {
-			const renderable = renderables[i].toCanvas(viewport, tileSize);
-			const scale = renderable.scale;
-			const offset = renderable.tileOffset;
-			const uvOffset = renderable.uvOffset;
-			const texture = textures.get(renderable.hash);
-			const srcX = uvOffset[0] * tileSize;
-			const srcY = uvOffset[1] * tileSize;
-			const srcSize = uvOffset[2] * tileSize;
-			const dstX = offset[0] * pixelRatio;
-			const dstY = offset[1] * pixelRatio;
-			const dstSize = texture.width * scale * pixelRatio;
-			ctx.drawImage(
-				texture,
-				srcX,
-				srcY,
-				srcSize,
-				srcSize,
-				dstX,
-				dstY,
-				dstSize,
-				dstSize);
-		}
-
-		ctx.globalAlpha = 1.0;
-
+		// draw the pre-rendered images
+		this.drawCanvasRenderablesLOD(this.array, false);
 		return this;
 	}
 }

@@ -70,6 +70,7 @@ class CanvasInteractiveTileRenderer extends CanvasVertexTileRenderer {
 		super(options);
 		this.color = defaultTo(options.color, [ 1.0, 0.4, 0.1, 0.8 ]);
 		this.maxRadius = defaultTo(options.maxRadius, 24);
+		this.array = null;
 		this.tree = null;
 	}
 
@@ -78,10 +79,13 @@ class CanvasInteractiveTileRenderer extends CanvasVertexTileRenderer {
 	 *
 	 * @param {Layer} layer - The layer to attach the renderer to.
 	 *
-	 * @returns {Renderer} The renderer object, for chaining.
+	 * @returns {CanvasPointTileRenderer} The renderer object, for chaining.
 	 */
 	onAdd(layer) {
 		super.onAdd(layer);
+		const maxRadius = this.maxRadius;
+		const tileSize = layer.plot.tileSize;
+		this.array = this.createCanvasArray(tileSize + maxRadius*2, true);
 		this.tree = this.createRTreePyramid(32);
 		// create handler
 		this[ZOOM_START] = () => {
@@ -94,56 +98,11 @@ class CanvasInteractiveTileRenderer extends CanvasVertexTileRenderer {
 	}
 
 	/**
- 	 * Executed when a tile is added to the layer pyramid.
- 	 *
- 	 * @param {Map} textures - The texture map.
- 	 * @param {Tile} tile - The new tile object containing data.
- 	 */
- 	addTile(textures, tile) {
- 		const layer = this.layer;
- 		const maxRadius = this.maxRadius;
- 		const plot = layer.plot;
- 		const pixelRatio = plot.pixelRatio;
- 		const tileSize = plot.tileSize;
- 		const canvasSize = (tileSize + maxRadius*2);
- 		const canvas = document.createElement('canvas');
- 		canvas.width = canvasSize * pixelRatio;
- 		canvas.height = canvasSize * pixelRatio;
- 		const ctx = canvas.getContext('2d');
- 		const color = this.color;
- 		const points = tile.data;
- 		const radians = Math.PI * 2.0;
-
- 		// set drawing styles
- 		ctx.globalCompositeOperation = 'lighter';
- 		ctx.fillStyle = `rgba(
- 			${Math.floor(color[0]*255)},
- 			${Math.floor(color[1]*255)},
- 			${Math.floor(color[2]*255)},
- 			${color[3]})`;
-
- 		for (let j=0; j<points.length; j+=3) {
- 			const x = points[j] + maxRadius;
- 			const y = points[j+1] + maxRadius;
- 			const radius = points[j+2];
- 			const sx = x * pixelRatio;
- 			const sy = (canvasSize - y) * pixelRatio;
- 			const sradius = radius * pixelRatio;
- 			ctx.beginPath();
- 			ctx.moveTo(sx, sy);
- 			ctx.arc(sx, sy, sradius, 0, radians);
- 			ctx.fill();
- 		}
- 		textures.set(tile.coord.hash, canvas);
- 	}
-
-
-	/**
 	 * Executed when the layer is removed from a plot.
 	 *
 	 * @param {Layer} layer - The layer to remove the renderer from.
 	 *
-	 * @returns {Renderer} The renderer object, for chaining.
+	 * @returns {CanvasPointTileRenderer} The renderer object, for chaining.
 	 */
 	onRemove(layer) {
 		// detach handler
@@ -151,9 +110,48 @@ class CanvasInteractiveTileRenderer extends CanvasVertexTileRenderer {
 		// destroy handler
 		this[ZOOM_START] = null;
 		this.destroyRTreePyramid(this.tree);
+		this.destroyCanvasArray(this.array);
+		this.array = null;
 		this.tree = null;
 		super.onRemove(layer);
 		return this;
+	}
+
+	/**
+	 * Executed when a tile is added to the layer pyramid.
+	 *
+	 * @param {CanvasArray} array - The image array object.
+	 * @param {Tile} tile - The new tile object containing data.
+	 */
+	addTile(array, tile) {
+		const maxRadius = this.maxRadius;
+		const pixelRatio = this.layer.plot.pixelRatio;
+		const chunk = array.allocate(tile.coord.hash);
+		const canvas = chunk.canvas;
+		const ctx = chunk.ctx;
+		const color = this.color;
+		const points = tile.data;
+		const radians = Math.PI * 2.0;
+		// set drawing styles
+		ctx.globalCompositeOperation = 'lighter';
+		ctx.fillStyle = `rgba(
+			${Math.floor(color[0]*255)},
+			${Math.floor(color[1]*255)},
+			${Math.floor(color[2]*255)},
+			${color[3]})`;
+		// draw points
+		for (let j=0; j<points.length; j+=3) {
+			const x = points[j] + maxRadius;
+			const y = points[j+1] + maxRadius;
+			const radius = points[j+2];
+			const sx = x * pixelRatio;
+			const sy = canvas.height - (y * pixelRatio);
+			const sradius = radius * pixelRatio;
+			ctx.beginPath();
+			ctx.moveTo(sx, sy);
+			ctx.arc(sx, sy, sradius, 0, radians);
+			ctx.fill();
+		}
 	}
 
 	/**
@@ -205,33 +203,15 @@ class CanvasInteractiveTileRenderer extends CanvasVertexTileRenderer {
 	 */
 	draw() {
 		const ctx = this.ctx;
-		const maxRadius = this.maxRadius;
 		const layer = this.layer;
 		const plot = layer.plot;
-		const tileSize = plot.tileSize;
-		const renderables = this.getRenderables();
-		const viewport = plot.getViewportPixelSize();
-		const pixelRatio = plot.pixelRatio;
-		const textures = this.textures;
 		const color = this.color;
 
-		ctx.globalAlpha = layer.opacity;
+		// draw the pre-rendered images
+		this.drawCanvasRenderables(this.array, true);
 
-		for (let i=0; i<renderables.length; i++) {
-			const renderable = renderables[i].toCanvas(viewport, tileSize);
-			const scale = renderable.scale;
-			const offset = renderable.tileOffset;
-			const texture = textures.get(renderable.hash);
-			const dstX = (offset[0] - (maxRadius * scale)) * pixelRatio;
-			const dstY = (offset[1] - (maxRadius * scale)) * pixelRatio;
-			const dstSize = texture.width * scale;
-			ctx.drawImage(
-				texture,
-				dstX,
-				dstY,
-				dstSize,
-				dstSize);
-		}
+		// set opacity
+		ctx.globalAlpha = layer.opacity;
 
 		// render selected
 		layer.getSelected().forEach(selected => {
@@ -244,6 +224,7 @@ class CanvasInteractiveTileRenderer extends CanvasVertexTileRenderer {
 			drawPoint(ctx, plot, highlighted, color, HIGHLIGHTED_RADIUS_OFFSET);
 		}
 
+		// clear opacity
 		ctx.globalAlpha = 1.0;
 
 		return this;

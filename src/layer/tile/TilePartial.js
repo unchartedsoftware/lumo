@@ -12,7 +12,7 @@ class TilePartial {
 	 * the closest available level-of-detail. There are three cases of
 	 * instantiation.
 	 *
-	 * A) Closest available level of detail is an ancestor tile.
+	 * A) Closest available level-of-detail is an ancestor tile.
 	 *    - The "target" tile is completely covered by a portion of the "found"
 	 *      tile.
 	 *    - There is no positional offset nor scaling of the "found" tile, it
@@ -20,13 +20,13 @@ class TilePartial {
 	 *    - There is a uv offset to render the relevant portion of the "found"
 	 *      tile.
 	 *
-	 * B) Closest available level of detail is a descendant tile.
+	 * B) Closest available level-of-detail is a descendant tile.
 	 *    - The "target" tile is partially covered by the "found" tile.
 	 *    - There is a positional offset and scale of the "found" tile relative
 	 *      to the "target" tile.
 	 *    - There is no uv offset, the "found" tile is rendered in its entirety.
 	 *
-	 * C) Closest available level of detail is an ancestor of the "target", but
+	 * C) Closest available level-of-detail is an ancestor of the "target", but
 	 *    is used to cover a missing descendant. This occurs when one or more
 	 *    descendant tiles cover a portion of the "target" tile, but an ancestor
 	 *    is required to fill in a missing descendant.
