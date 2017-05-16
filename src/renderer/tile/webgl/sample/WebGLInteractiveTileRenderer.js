@@ -231,7 +231,7 @@ class WebGLInteractiveTileRenderer extends WebGLVertexTileRenderer {
 		const data = tile.data;
 		const collidables = new Array(data.length / 3);
 		for (let i=0; i<data.length; i+=3) {
-			// add to points
+			// add collidable
 			collidables[i/3] = new CircleCollidable(
 				data[i], // x
 				data[i+1], // y
@@ -280,8 +280,7 @@ class WebGLInteractiveTileRenderer extends WebGLVertexTileRenderer {
 
 		// set blending func
 		gl.enable(gl.BLEND);
-		gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-		//gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+		gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
 		// use shader
 		shader.use();

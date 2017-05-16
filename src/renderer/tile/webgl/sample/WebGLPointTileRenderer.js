@@ -45,7 +45,7 @@ const SHADER_GLSL = {
 					discard;
 				}
 			#endif
-			gl_FragColor = vec4(uColor.rgb * alpha, uColor.a * alpha);
+			gl_FragColor = vec4(uColor.rgb, uColor.a * alpha);
 		}
 		`
 };
@@ -131,8 +131,7 @@ class WebGLPointTileRenderer extends WebGLVertexTileRenderer {
 
 		// set blending func
 		gl.enable(gl.BLEND);
-		//gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-		gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+		gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
 		// bind shader
 		shader.use();
