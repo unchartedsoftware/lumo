@@ -14,9 +14,9 @@ class CircleCollidable {
 	 * @param {number} xOffset - The tile x offset in pixels.
 	 * @param {number} yOffset - The tile y offset in pixels.
 	 * @param {Tile} tile - The tile object.
-	 * @param {Object} data - Any arbitrary user data. Optional.
+	 * @param {Object} data - Any arbitrary user data.
 	 */
-	constructor(x, y, radius, xOffset, yOffset, tile, data = null) {
+	constructor(x, y, radius, xOffset, yOffset, tile, data) {
 		this.x = x;
 		this.y = y;
 		this.radius = radius;
@@ -72,7 +72,7 @@ class CircleCollidable {
 			(dy > (halfHeight + this.radius))) {
 			return false;
 		}
-		if ((dx <= (halfWidth)) || (dy <= (halfHeight))) {
+		if ((dx <= halfWidth) || (dy <= halfHeight)) {
 			return true;
 		}
 		const cornerDist =

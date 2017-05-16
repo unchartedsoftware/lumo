@@ -8,24 +8,20 @@ class RectangleCollidable {
 	/**
 	 * Instantiates a new RectangleCollidable object.
 	 *
-	 * @param {number} x - The center x pixel coordinate.
-	 * @param {number} y - The center y pixel coordinate.
-	 * @param {number} width - The width in pixels.
-	 * @param {number} height - The height in pixels.
+	 * @param {number} minX - The left bound in pixels.
+	 * @param {number} maxX - The right bound in pixels.
+	 * @param {number} minY - The bottom bound in pixels.
+	 * @param {number} maxY - The top bound in pixels.
 	 * @param {number} xOffset - The tile x offset in pixels.
 	 * @param {number} yOffset - The tile y offset in pixels.
 	 * @param {Tile} tile - The tile object.
-	 * @param {Object} data - Any arbitrary user data. Optional.
+	 * @param {Object} data - Any arbitrary user data.
 	 */
-	constructor(x, y, width, height, xOffset, yOffset, tile, data = null) {
-		this.x = x;
-		this.y = y;
-		this.width = width;
-		this.height = height;
-		this.minX = x + xOffset - (width * 0.5);
-		this.maxX = x + xOffset + (width * 0.5);
-		this.minY = y + yOffset - (height * 0.5);
-		this.maxY = y + yOffset + (height * 0.5);
+	constructor(minX, maxX, minY, maxY, xOffset, yOffset, tile, data) {
+		this.minX = minX + xOffset;
+		this.maxX = maxX + xOffset;
+		this.minY = minY + yOffset;
+		this.maxY = maxY + yOffset;
 		this.tile = tile;
 		this.data = data;
 	}
