@@ -243,6 +243,16 @@ class TilePyramid {
 	}
 
 	/**
+	 * Iterates over and executes the provided function for all tiles.
+	 *
+	 * @param {Function} fn - The function to execute on each tile.
+	 */
+	forEach(fn) {
+		this.persistents.forEach(fn);
+		this.tiles.forEach(fn);
+	}
+
+	/**
 	 * Test whether or not a coord is currently pending.
 	 *
 	 * @param {TileCoord} ncoord - The normalized coord to test.
