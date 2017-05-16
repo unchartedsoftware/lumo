@@ -209,8 +209,8 @@ class Viewport {
 	getPixelSize(zoom, tileSize) {
 		const extent = Math.pow(2, zoom) * tileSize;
 		return {
-			width: this.width * extent,
-			height: this.height * extent
+			width: Math.round(this.width * extent),
+			height: Math.round(this.height * extent)
 		};
 	}
 
