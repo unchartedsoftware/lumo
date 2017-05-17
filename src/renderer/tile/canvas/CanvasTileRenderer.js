@@ -169,8 +169,18 @@ class CanvasTileRenderer extends TileRenderer {
 		const renderables = this.getRenderables();
 		const viewport = plot.getViewportPixelSize();
 		const pixelRatio = plot.pixelRatio;
-		const scaledTileSize = prescaled ? tileSize * pixelRatio : tileSize;
-
+		let srcCanvasPadding = 0;
+		let dstCanvasSize = 0;
+		let dstCanvasPadding = 0;
+		if (!prescaled) {
+			srcCanvasPadding = (array.pixelSize - tileSize) * 0.5;
+			dstCanvasSize = array.pixelSize * pixelRatio;
+			dstCanvasPadding = srcCanvasPadding * pixelRatio;
+		} else {
+			srcCanvasPadding = (array.pixelSize - (tileSize * pixelRatio)) * 0.5;
+			dstCanvasSize = array.pixelSize;
+			dstCanvasPadding = srcCanvasPadding;
+		}
 		// set layer opacity
 		ctx.globalAlpha = layer.opacity;
 		// draw images
@@ -179,10 +189,10 @@ class CanvasTileRenderer extends TileRenderer {
 			const scale = renderable.scale;
 			const offset = renderable.tileOffset;
 			const image = array.get(renderable.hash).canvas;
-			const buffer = (image.width - scaledTileSize) * scale * 0.5;
-			const dstX = (offset[0] * pixelRatio) - buffer;
-			const dstY = (offset[1] * pixelRatio) - buffer;
-			const dstSize = prescaled ? image.width * scale : image.width * scale * pixelRatio;
+			const dstPadding = dstCanvasPadding * scale;
+			const dstX = (offset[0] * pixelRatio) - dstPadding;
+			const dstY = (offset[1] * pixelRatio) - dstPadding;
+			const dstSize = dstCanvasSize * scale;
 			ctx.drawImage(
 				image,
 				dstX,
@@ -209,7 +219,21 @@ class CanvasTileRenderer extends TileRenderer {
 		const renderables = this.getRenderablesLOD();
 		const viewport = plot.getViewportPixelSize();
 		const pixelRatio = plot.pixelRatio;
-		const scaledTileSize = prescaled ? tileSize * pixelRatio : tileSize;
+		let srcCanvasSize = 0;
+		let srcCanvasPadding = 0;
+		let dstCanvasSize = 0;
+		let dstCanvasPadding = 0;
+		if (!prescaled) {
+			srcCanvasSize = array.pixelSize;
+			srcCanvasPadding = (array.pixelSize - tileSize) * 0.5;
+			dstCanvasSize = array.pixelSize * pixelRatio;
+			dstCanvasPadding = srcCanvasPadding * pixelRatio;
+		} else {
+			srcCanvasSize = array.pixelSize;
+			srcCanvasPadding = (array.pixelSize - (tileSize * pixelRatio)) * 0.5;
+			dstCanvasSize = array.pixelSize;
+			dstCanvasPadding = srcCanvasPadding;
+		}
 		// set layer opacity
 		ctx.globalAlpha = layer.opacity;
 		// draw images
@@ -219,13 +243,13 @@ class CanvasTileRenderer extends TileRenderer {
 			const offset = renderable.tileOffset;
 			const uvOffset = renderable.uvOffset;
 			const image = array.get(renderable.hash).canvas;
-			const buffer = (image.width - scaledTileSize) * scale * 0.5;
-			const srcX = uvOffset[0] * scaledTileSize;
-			const srcY = uvOffset[1] * scaledTileSize;
-			const srcSize = uvOffset[2] * scaledTileSize;
-			const dstX = (offset[0] * pixelRatio) - buffer;
-			const dstY = (offset[1] * pixelRatio) - buffer;
-			const dstSize = prescaled ? image.width * scale : image.width * scale * pixelRatio;
+			const srcX = uvOffset[0] * srcCanvasSize;
+			const srcY = uvOffset[1] * srcCanvasSize;
+			const srcSize = uvOffset[2] * srcCanvasSize;
+			const dstPadding = dstCanvasPadding * scale;
+			const dstX = (offset[0] * pixelRatio) - dstPadding;
+			const dstY = (offset[1] * pixelRatio) - dstPadding;
+			const dstSize = dstCanvasSize * scale;
 			ctx.drawImage(
 				image,
 				srcX,

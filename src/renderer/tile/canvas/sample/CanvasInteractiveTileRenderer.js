@@ -85,7 +85,7 @@ class CanvasInteractiveTileRenderer extends CanvasVertexTileRenderer {
 		super.onAdd(layer);
 		const maxRadius = this.maxRadius;
 		const tileSize = layer.plot.tileSize;
-		this.array = this.createCanvasArray(tileSize + maxRadius*2, true);
+		this.array = this.createCanvasArray(tileSize + (maxRadius * 2), true);
 		this.tree = this.createRTreePyramid(32);
 		// create handler
 		this[ZOOM_START] = () => {
@@ -140,10 +140,10 @@ class CanvasInteractiveTileRenderer extends CanvasVertexTileRenderer {
 			${Math.floor(color[2]*255)},
 			${color[3]})`;
 		// draw points
-		for (let j=0; j<points.length; j+=3) {
-			const x = points[j] + maxRadius;
-			const y = points[j+1] + maxRadius;
-			const radius = points[j+2];
+		for (let i=0; i<points.length; i+=3) {
+			const x = points[i] + maxRadius;
+			const y = points[i+1] + maxRadius;
+			const radius = points[i+2];
 			const sx = x * pixelRatio;
 			const sy = canvas.height - (y * pixelRatio);
 			const sradius = radius * pixelRatio;
