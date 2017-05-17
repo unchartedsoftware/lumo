@@ -2,7 +2,6 @@
 
 const EventType = require('./EventType');
 const MouseEvent = require('./MouseEvent');
-const Keyboard = require('../util/Keyboard');
 
 const setCursor = function(plot) {
 	plot.getContainer().style.cursor = 'pointer';
@@ -107,7 +106,7 @@ const delegateMouseDown = function(delegator, child, event, collision) {
 
 const delegateClick = function(delegator, child, event, collision) {
 	// check if multi-select is enabled
-	const multiSelect = Keyboard.poll('ctrl') || Keyboard.poll('meta');
+	const multiSelect = event.originalEvent.ctrlKey || event.originalEvent.metaKey;
 	if (collision) {
 
 		// select
