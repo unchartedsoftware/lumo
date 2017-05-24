@@ -274,7 +274,7 @@ class PanHandler extends DOMHandler {
 			plot.emit(EventType.PAN_START, new Event(plot));
 			plot.panAnimation = new PanAnimation({
 				plot: plot,
-				start: plot.getVertexPosition(),
+				start: plot.getViewportPosition(),
 				delta: delta,
 				easing: this.inertiaEasing,
 				duration: PAN_TO_DURATION
