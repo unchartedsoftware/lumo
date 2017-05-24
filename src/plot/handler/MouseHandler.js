@@ -69,12 +69,18 @@ class MouseHandler extends DOMHandler {
 			plot.emit(EventType.MOUSE_OUT, createEvent(this, plot, event));
 		};
 
+		this.wheel = (event) => {
+			plot.setDirty();
+			event.preventDefault();
+		};
+
 		const container = plot.getContainer();
 		container.addEventListener('mousedown', this.mousedown);
 		container.addEventListener('mouseup', this.mouseup);
 		container.addEventListener('mousemove', this.mousemove);
 		container.addEventListener('mouseover', this.mouseover);
 		container.addEventListener('mouseout', this.mouseout);
+		container.addEventListener('wheel', this.wheel);
 	}
 
 	/**
@@ -91,11 +97,13 @@ class MouseHandler extends DOMHandler {
 		container.removeEventListener('mousemove', this.mousemove);
 		container.removeEventListener('mouseover', this.mouseover);
 		container.removeEventListener('mouseout', this.mouseout);
+		container.removeEventListener('wheel', this.wheel);
 		this.mousedown = null;
 		this.mouseup = null;
 		this.mousemove = null;
 		this.mouseover = null;
 		this.mouseout = null;
+		this.wheel = null;
 	}
 }
 
