@@ -38,27 +38,18 @@ class CanvasVertexTileRenderer extends CanvasTileRenderer {
 	}
 
 	/**
-	 * Given a tile, returns an array of collidable objects. A collidable object
-	 * is any object that contains `minX`, `minY`, `maxX`, and `maxY` properties.
-	 *
-	 * @param {Tile} tile - The tile of data.
-	 * @param {number} xOffset - The pixel x offset of the tile.
-	 * @param {number} yOffset - The pixel y offset of the tile.
-	 */
-	/* eslint-disable no-unused-vars */
-	createCollidables(tile, xOffset, yOffset) {
-		throw '`createCollidables` must be overridden';
-	}
-
-	/**
 	 * Creates an rtree pyramid object. Creates and attaches the necessary
 	 * event handlers to add and remove data from the rtree accordingly.
 	 *
 	 * @param {number} nodeCapacity - The node capacity of the rtree.
+	 * @param {Function} createCollidables - The function to create collidables from a tile.
 	 *
-	 * @returns {VertexAtlas} The vertex atlas object.
+	 * @returns {RTreePyramid} The r-tree pyramid object object.
 	 */
-	createRTreePyramid(nodeCapacity) {
+	createRTreePyramid(nodeCapacity, createCollidables) {
+		if (!createCollidables) {
+			throw '`createCollidables` function is missing';
+		}
 		// create rtree pyramid
 		const pyramid = new RTreePyramid({
 			nodeCapacity: nodeCapacity
@@ -70,7 +61,7 @@ class CanvasVertexTileRenderer extends CanvasTileRenderer {
 			const tileSize = this.layer.plot.tileSize;
 			const xOffset = coord.x * tileSize;
 			const yOffset = coord.y * tileSize;
-			const collidables = this.createCollidables(tile, xOffset, yOffset);
+			const collidables = createCollidables(tile, xOffset, yOffset);
 			pyramid.insert(coord, collidables);
 		};
 		const unindex = event => {

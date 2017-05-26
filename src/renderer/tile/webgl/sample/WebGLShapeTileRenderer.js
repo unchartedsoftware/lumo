@@ -107,10 +107,10 @@ class WebGLShapeTileRenderer extends WebGLVertexTileRenderer {
 	 */
 	constructor(options = {}) {
 		super(options);
+		this.color = defaultTo(options.color, [ 1.0, 0.4, 0.1, 0.8 ]);
 		this.shape = null;
 		this.shader = null;
 		this.atlas = null;
-		this.color = defaultTo(options.color, [ 1.0, 0.4, 0.1, 0.8 ]);
 	}
 
 	/**

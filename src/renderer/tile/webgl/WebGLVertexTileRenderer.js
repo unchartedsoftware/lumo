@@ -22,6 +22,19 @@ const TILE_ADD = Symbol();
  */
 const TILE_REMOVE = Symbol();
 
+// Private Methods
+
+const addTile = function(atlas, tile) {
+	atlas.set(
+		tile.coord.hash,
+		tile.data,
+		tile.data.length / atlas.stride);
+};
+
+const removeTile = function(atlas, tile) {
+	atlas.delete(tile.coord.hash);
+};
+
 /**
  * Class representing a vertex based webgl tile renderer.
  */
@@ -41,50 +54,18 @@ class WebGLVertexTileRenderer extends WebGLTileRenderer {
 	}
 
 	/**
-	 * Executed when a tile is added to the layer pyramid.
-	 *
-	 * @param {VertexAtlas} atlas - The vertex atlas object.
-	 * @param {Tile} tile - The new tile object containing data.
-	 */
-	addTile(atlas, tile) {
-		atlas.set(
-			tile.coord.hash,
-			tile.data,
-			tile.data.length / atlas.stride);
-	}
-
-	/**
-	 * Executed when a tile is removed from the layer pyramid.
-	 *
-	 * @param {VertexAtlas} atlas - The vertex atlas object.
-	 * @param {Tile} tile - The new tile object containing data.
-	 */
-	removeTile(atlas, tile) {
-		atlas.delete(tile.coord.hash);
-	}
-
-	/**
-	 * Given a tile, returns an array of collidable objects. A collidable object
-	 * is any object that contains `minX`, `minY`, `maxX`, and `maxY` properties.
-	 *
-	 * @param {Tile} tile - The tile of data.
-	 * @param {number} xOffset - The pixel x offset of the tile.
-	 * @param {number} yOffset - The pixel y offset of the tile.
-	 */
-	/* eslint-disable no-unused-vars */
-	createCollidables(tile, xOffset, yOffset) {
-		throw '`createCollidables` must be overridden';
-	}
-
-	/**
 	 * Creates an rtree pyramid object. Creates and attaches the necessary
 	 * event handlers to add and remove data from the rtree accordingly.
 	 *
 	 * @param {number} nodeCapacity - The node capacity of the rtree.
+	 * @param {Function} createCollidables - The function to create collidables from a tile.
 	 *
-	 * @returns {VertexAtlas} The vertex atlas object.
+	 * @returns {RTreePyramid} The r-tree pyramid object object.
 	 */
-	createRTreePyramid(nodeCapacity) {
+	createRTreePyramid(nodeCapacity, createCollidables) {
+		if (!createCollidables) {
+			throw '`createCollidables` function is missing';
+		}
 		// create rtree pyramid
 		const pyramid = new RTreePyramid({
 			nodeCapacity: nodeCapacity
@@ -96,7 +77,7 @@ class WebGLVertexTileRenderer extends WebGLTileRenderer {
 			const tileSize = this.layer.plot.tileSize;
 			const xOffset = coord.x * tileSize;
 			const yOffset = coord.y * tileSize;
-			const collidables = this.createCollidables(tile, xOffset, yOffset);
+			const collidables = createCollidables(tile, xOffset, yOffset);
 			pyramid.insert(coord, collidables);
 		};
 		const unindex = event => {
@@ -132,10 +113,18 @@ class WebGLVertexTileRenderer extends WebGLTileRenderer {
 	 * event handlers to add and remove data from the atlas accordingly.
 	 *
 	 * @param {Object} pointers - The vertex attribute pointers.
+	 * @param {Function} onAdd - The function executed when a tile is added.
+	 * @param {Function} onRemove - The function executed when a tile is removed.
 	 *
 	 * @returns {VertexAtlas} The vertex atlas object.
 	 */
-	createVertexAtlas(pointers) {
+	createVertexAtlas(pointers, onAdd = addTile, onRemove = removeTile) {
+		if (!onAdd) {
+			throw '`onAdd` function is missing';
+		}
+		if (!onRemove) {
+			throw '`onRemove` function is missing';
+		}
 		// create vertex atlas
 		const atlas = new VertexAtlas(
 			this.gl,
@@ -146,10 +135,10 @@ class WebGLVertexTileRenderer extends WebGLTileRenderer {
 			});
 		// create handlers
 		const add = event => {
-			this.addTile(atlas, event.tile);
+			onAdd(atlas, event.tile);
 		};
 		const remove = event => {
-			this.removeTile(atlas, event.tile);
+			onRemove(atlas, event.tile);
 		};
 		// attach handlers
 		this.layer.on(EventType.TILE_ADD, add);

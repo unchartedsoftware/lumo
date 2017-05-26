@@ -1,19 +1,11 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const EventType = require('../../../../event/EventType');
 const CircleCollidable = require('../../../../geometry/CircleCollidable');
 const VertexBuffer = require('../../../../webgl/vertex/VertexBuffer');
 const WebGLVertexTileRenderer = require('../WebGLVertexTileRenderer');
 
 // Constants
-
-/**
- * Zoom start event handler symbol.
- * @private
- * @constant {Symbol}
- */
-const ZOOM_START = Symbol();
 
 /**
  * Highlighted point radius increase.
@@ -28,6 +20,13 @@ const HIGHLIGHTED_RADIUS_OFFSET = 2;
  * @constant {number}
  */
 const SELECTED_RADIUS_OFFSET = 4;
+
+/**
+ * R-Tree node capacity.
+ * @private
+ * @constant {number}
+ */
+const NODE_CAPACITY = 32;
 
 /**
  * Shader GLSL source.
@@ -70,7 +69,7 @@ const SHADER_GLSL = {
 					discard;
 				}
 			#endif
-			gl_FragColor = vec4(uColor.rgb * alpha, uColor.a * alpha);
+			gl_FragColor = vec4(uColor.rgb, uColor.a * alpha);
 		}
 		`
 };
@@ -95,6 +94,22 @@ const createPoint = function(gl) {
 			mode: 'POINTS',
 			count: 1
 		});
+};
+
+const createCollidables = function(tile, xOffset, yOffset) {
+	const data = tile.data;
+	const collidables = new Array(data.length / 3);
+	for (let i=0; i<data.length; i+=3) {
+		// add collidable
+		collidables[i/3] = new CircleCollidable(
+			data[i], // x
+			data[i+1], // y
+			data[i+2], // radius
+			xOffset,
+			yOffset,
+			tile);
+	}
+	return collidables;
 };
 
 const renderTiles = function(atlas, shader, renderables, color) {
@@ -159,6 +174,7 @@ class WebGLInteractiveTileRenderer extends WebGLVertexTileRenderer {
 		this.point = null;
 		this.tree = null;
 		this.atlas = null;
+		this.ext = null;
 	}
 
 	/**
@@ -174,7 +190,7 @@ class WebGLInteractiveTileRenderer extends WebGLVertexTileRenderer {
 		this.ext = this.gl.getExtension('OES_standard_derivatives');
 		this.point = createPoint(this.gl);
 		this.shader = this.createShader(SHADER_GLSL);
-		this.tree = this.createRTreePyramid(32);
+		this.tree = this.createRTreePyramid(NODE_CAPACITY, createCollidables);
 		this.atlas = this.createVertexAtlas({
 			// position
 			0: {
@@ -187,13 +203,6 @@ class WebGLInteractiveTileRenderer extends WebGLVertexTileRenderer {
 				type: 'FLOAT'
 			}
 		});
-		// create handler
-		this[ZOOM_START] = () => {
-			// clear on zoom since we won't be able to match the same data
-			this.layer.clear();
-		};
-		// attach handler
-		layer.plot.on(EventType.ZOOM_START, this[ZOOM_START]);
 		return this;
 	}
 
@@ -205,42 +214,15 @@ class WebGLInteractiveTileRenderer extends WebGLVertexTileRenderer {
 	 * @returns {Renderer} The renderer object, for chaining.
 	 */
 	onRemove(layer) {
-		// detach handler
-		this.layer.plot.removeListener(EventType.ZOOM_START, this[ZOOM_START]);
-		// destroy handler
-		this[ZOOM_START] = null;
 		this.destroyVertexAtlas(this.atlas);
 		this.destroyRTreePyramid(this.tree);
 		this.atlas = null;
 		this.shader = null;
 		this.point = null;
 		this.tree = null;
+		this.ext = null;
 		super.onRemove(layer);
 		return this;
-	}
-
-	/**
-	 * Given a tile, returns an array of collidable objects. A collidable object
-	 * is any object that contains `minX`, `minY`, `maxX`, and `maxY` properties.
-	 *
-	 * @param {Tile} tile - The tile of data.
-	 * @param {number} xOffset - The pixel x offset of the tile.
-	 * @param {number} yOffset - The pixel y offset of the tile.
-	 */
-	createCollidables(tile, xOffset, yOffset) {
-		const data = tile.data;
-		const collidables = new Array(data.length / 3);
-		for (let i=0; i<data.length; i+=3) {
-			// add collidable
-			collidables[i/3] = new CircleCollidable(
-				data[i], // x
-				data[i+1], // y
-				data[i+2], // radius
-				xOffset,
-				yOffset,
-				tile);
-		}
-		return collidables;
 	}
 
 	/**

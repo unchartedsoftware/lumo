@@ -21,6 +21,16 @@ const TILE_ADD = Symbol();
  */
 const TILE_REMOVE = Symbol();
 
+// Private Methods
+
+const addTile = function(array, tile) {
+	array.set(tile.coord.hash, tile.data);
+};
+
+const removeTile = function(array, tile) {
+	array.delete(tile.coord.hash);
+};
+
 /**
  * Class representing a texture based webgl tile renderer.
  */
@@ -43,35 +53,17 @@ class WebGLTextureTileRenderer extends WebGLTileRenderer {
 	}
 
 	/**
-	 * Executed when a tile is added to the layer pyramid.
-	 *
-	 * @param {TextureArray} array - The texture array object.
-	 * @param {Tile} tile - The new tile object containing data.
-	 */
-	addTile(array, tile) {
-		array.set(tile.coord.hash, tile.data);
-	}
-
-	/**
-	 * Executed when a tile is removed from the layer pyramid.
-	 *
-	 * @param {TextureArray} array - The texture array object.
-	 * @param {Tile} tile - The new tile object containing data.
-	 */
-	removeTile(array, tile) {
-		array.delete(tile.coord.hash);
-	}
-
-	/**
 	 * Creates a texture array of appropriate size for the layer pyramid using
 	 * the provided texture size. Creates and attaches the necessary event
 	 * handlers to add and remove data from the array accordingly.
 	 *
 	 * @param {number} textureSize - The resolution of the tile texture.
+	 * @param {Function} onAdd - The function executed when a tile is added.
+	 * @param {Function} onRemove - The function executed when a tile is removed.
 	 *
 	 * @returns {TextureArray} The texture array object.
 	 */
-	createTextureArray(textureSize) {
+	createTextureArray(textureSize, onAdd = addTile, onRemove = removeTile) {
 		// create texture array
 		const array = new TextureArray(
 			this.gl,
@@ -87,10 +79,10 @@ class WebGLTextureTileRenderer extends WebGLTileRenderer {
 			});
 		// create handlers
 		const add = event => {
-			this.addTile(array, event.tile);
+			onAdd(array, event.tile);
 		};
 		const remove = event => {
-			this.removeTile(array, event.tile);
+			onRemove(array, event.tile);
 		};
 		// attach handlers
 		this.layer.on(EventType.TILE_ADD, add);

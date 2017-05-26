@@ -27,6 +27,27 @@ const TILE_REMOVE = Symbol();
  */
 const RESIZE = Symbol();
 
+// Private Methods
+
+const addTile = function(array, tile) {
+	const data = tile.data;
+	const chunk = array.allocate(tile.coord.hash);
+	if (data.width !== undefined && data.height !== undefined) {
+		// image
+		chunk.ctx.drawImage(data, 0, 0);
+	} else {
+		// buffer
+		const resolution = Math.sqrt(data.length / 4);
+		const imageData = chunk.ctx.getImageData(0, 0, resolution, resolution);
+		imageData.data.set(new Uint8ClampedArray(data));
+		chunk.ctx.putImageData(imageData, 0, 0);
+	}
+};
+
+const removeTile = function(array, tile) {
+	array.delete(tile.coord.hash);
+};
+
 /**
  * Class representing a canvas tile renderer.
  */
@@ -72,37 +93,24 @@ class CanvasTileRenderer extends TileRenderer {
 	}
 
 	/**
-	 * Executed when a tile is added to the layer pyramid.
-	 *
-	 * @param {CanvasArray} array - The canvas array object.
-	 * @param {Tile} tile - The new tile object containing data.
-	 */
-	/* eslint-disable no-unused-vars */
-	addTile(array, tile) {
-		throw '`addTile` must be overridden';
-	}
-
-	/**
-	 * Executed when a tile is removed from the layer pyramid.
-	 *
-	 * @param {CanvasArray} array - The canvas array object.
-	 * @param {Tile} tile - The new tile object containing data.
-	 */
-	removeTile(array, tile) {
-		array.delete(tile.coord.hash);
-	}
-
-	/**
 	 * Creates an image of appropriate size for the layer pyramid using
 	 * the provided image size. Creates and attaches the necessary event
 	 * handlers to add and remove data from the array accordingly.
 	 *
 	 * @param {number} pixelSize - The resolution of the images.
-	 * @param {bool} scaled - Whether or not the pixel size should be scaled by the pixel ratio.
+	 * @param {bool} scaled - Whether or not the pixel size will be scaled by the pixel ratio.
+	 * @param {Function} onAdd - The function executed when a tile is added.
+	 * @param {Function} onRemove - The function executed when a tile is removed.
 	 *
 	 * @returns {CanvasArray} The image array object.
 	 */
-	createCanvasArray(pixelSize, scaled) {
+	createCanvasArray(pixelSize, scaled, onAdd = addTile, onRemove = removeTile) {
+		if (!onAdd) {
+			throw '`onAdd` function is missing';
+		}
+		if (!onRemove) {
+			throw '`onRemove` function is missing';
+		}
 		// create image array
 		const array = new CanvasArray(
 			scaled ? pixelSize * this.layer.plot.pixelRatio : pixelSize,
@@ -112,10 +120,10 @@ class CanvasTileRenderer extends TileRenderer {
 			});
 		// create handlers
 		const add = event => {
-			this.addTile(array, event.tile);
+			onAdd(array, event.tile);
 		};
 		const remove = event => {
-			this.removeTile(array, event.tile);
+			onRemove(array, event.tile);
 		};
 		const resize = () => {
 			const pixelRatio = this.layer.plot.pixelRatio;
@@ -123,7 +131,7 @@ class CanvasTileRenderer extends TileRenderer {
 			if (this.array.pixelSize !== newPixelSize) {
 				this.array.resize(newPixelSize);
 				this.layer.pyramid.forEach(tile => {
-					this.addTile(array, tile);
+					onAdd(array, tile);
 				});
 			}
 		};

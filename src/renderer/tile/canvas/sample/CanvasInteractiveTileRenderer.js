@@ -1,18 +1,10 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const EventType = require('../../../../event/EventType');
 const CircleCollidable = require('../../../../geometry/CircleCollidable');
 const CanvasVertexTileRenderer = require('../CanvasVertexTileRenderer');
 
 // Constants
-
-/**
- * Zoom start event handler symbol.
- * @private
- * @constant {Symbol}
- */
-const ZOOM_START = Symbol();
 
 /**
  * Highlighted point radius increase.
@@ -28,7 +20,30 @@ const HIGHLIGHTED_RADIUS_OFFSET = 2;
  */
 const SELECTED_RADIUS_OFFSET = 4;
 
+/**
+ * R-Tree node capacity.
+ * @private
+ * @constant {number}
+ */
+const NODE_CAPACITY = 32;
+
 // Private Methods
+
+const createCollidables = function(tile, xOffset, yOffset) {
+	const data = tile.data;
+	const collidables = new Array(data.length / 3);
+	for (let i=0; i<data.length; i+=3) {
+		// add to points
+		collidables[i/3] = new CircleCollidable(
+			data[i], // x
+			data[i+1], // y
+			data[i+2], // radius
+			xOffset,
+			yOffset,
+			tile);
+	}
+	return collidables;
+};
 
 const drawPoint = function(ctx, plot, target, color, radiusOffset) {
 	const coord = target.tile.coord;
@@ -85,15 +100,37 @@ class CanvasInteractiveTileRenderer extends CanvasVertexTileRenderer {
 		super.onAdd(layer);
 		const maxRadius = this.maxRadius;
 		const tileSize = layer.plot.tileSize;
-		this.array = this.createCanvasArray(tileSize + (maxRadius * 2), true);
-		this.tree = this.createRTreePyramid(32);
-		// create handler
-		this[ZOOM_START] = () => {
-			// clear on zoom since we won't be able to match the same data
-			this.layer.clear();
-		};
-		// attach handler
-		layer.plot.on(EventType.ZOOM_START, this[ZOOM_START]);
+		const pixelRatio = layer.plot.pixelRatio;
+		const pixelSize = tileSize + (maxRadius * 2);
+		const color = this.color;
+		this.array = this.createCanvasArray(pixelSize, true, (array, tile) => {
+			const chunk = array.allocate(tile.coord.hash);
+			const canvas = chunk.canvas;
+			const ctx = chunk.ctx;
+			const points = tile.data;
+			const radians = Math.PI * 2.0;
+			// set drawing styles
+			ctx.globalCompositeOperation = 'lighter';
+			ctx.fillStyle = `rgba(
+				${Math.floor(color[0]*255)},
+				${Math.floor(color[1]*255)},
+				${Math.floor(color[2]*255)},
+				${color[3]})`;
+			// draw points
+			for (let i=0; i<points.length; i+=3) {
+				const x = points[i] + maxRadius;
+				const y = points[i+1] + maxRadius;
+				const radius = points[i+2];
+				const sx = x * pixelRatio;
+				const sy = canvas.height - (y * pixelRatio);
+				const sradius = radius * pixelRatio;
+				ctx.beginPath();
+				ctx.moveTo(sx, sy);
+				ctx.arc(sx, sy, sradius, 0, radians);
+				ctx.fill();
+			}
+		});
+		this.tree = this.createRTreePyramid(NODE_CAPACITY, createCollidables);
 		return this;
 	}
 
@@ -105,77 +142,12 @@ class CanvasInteractiveTileRenderer extends CanvasVertexTileRenderer {
 	 * @returns {CanvasPointTileRenderer} The renderer object, for chaining.
 	 */
 	onRemove(layer) {
-		// detach handler
-		this.layer.plot.removeListener(EventType.ZOOM_START, this[ZOOM_START]);
-		// destroy handler
-		this[ZOOM_START] = null;
 		this.destroyRTreePyramid(this.tree);
 		this.destroyCanvasArray(this.array);
 		this.array = null;
 		this.tree = null;
 		super.onRemove(layer);
 		return this;
-	}
-
-	/**
-	 * Executed when a tile is added to the layer pyramid.
-	 *
-	 * @param {CanvasArray} array - The image array object.
-	 * @param {Tile} tile - The new tile object containing data.
-	 */
-	addTile(array, tile) {
-		const maxRadius = this.maxRadius;
-		const pixelRatio = this.layer.plot.pixelRatio;
-		const chunk = array.allocate(tile.coord.hash);
-		const canvas = chunk.canvas;
-		const ctx = chunk.ctx;
-		const color = this.color;
-		const points = tile.data;
-		const radians = Math.PI * 2.0;
-		// set drawing styles
-		ctx.globalCompositeOperation = 'lighter';
-		ctx.fillStyle = `rgba(
-			${Math.floor(color[0]*255)},
-			${Math.floor(color[1]*255)},
-			${Math.floor(color[2]*255)},
-			${color[3]})`;
-		// draw points
-		for (let i=0; i<points.length; i+=3) {
-			const x = points[i] + maxRadius;
-			const y = points[i+1] + maxRadius;
-			const radius = points[i+2];
-			const sx = x * pixelRatio;
-			const sy = canvas.height - (y * pixelRatio);
-			const sradius = radius * pixelRatio;
-			ctx.beginPath();
-			ctx.moveTo(sx, sy);
-			ctx.arc(sx, sy, sradius, 0, radians);
-			ctx.fill();
-		}
-	}
-
-	/**
-	 * Given a tile, returns an array of collidable objects. A collidable object
-	 * is any object that contains `minX`, `minY`, `maxX`, and `maxY` properties.
-	 *
-	 * @param {Tile} tile - The tile of data.
-	 * @param {number} xOffset - The pixel x offset of the tile.
-	 * @param {number} yOffset - The pixel y offset of the tile.
-	 */
-	createCollidables(tile, xOffset, yOffset) {
-		const data = tile.data;
-		const collidables = new Array(data.length / 3);
-		for (let i=0; i<data.length; i+=3) {
-			// add to points
-			collidables[i/3] = new CircleCollidable(
-				data[i], // x
-				data[i+1], // y
-				data[i+2], // radius
-				xOffset,
-				yOffset,
-				tile);
-		}
-		return collidables;
 	}
 
 	/**

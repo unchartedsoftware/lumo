@@ -1,7 +1,7 @@
 'use strict';
 
-const VertexBuffer = require('../../../webgl/vertex/VertexBuffer');
-const WebGLTextureTileRenderer = require('./WebGLTextureTileRenderer');
+const VertexBuffer = require('../../../../webgl/vertex/VertexBuffer');
+const WebGLTextureTileRenderer = require('../WebGLTextureTileRenderer');
 
 // Constants
 

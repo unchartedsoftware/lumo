@@ -107,6 +107,7 @@ class WebGLPointTileRenderer extends WebGLVertexTileRenderer {
 		this.destroyVertexAtlas(this.atlas);
 		this.atlas = null;
 		this.shader = null;
+		this.ext = null;
 		super.onRemove(layer);
 		return this;
 	}

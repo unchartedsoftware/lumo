@@ -1,6 +1,6 @@
 'use strict';
 
-const CanvasTextureTileRenderer = require('./CanvasTextureTileRenderer');
+const CanvasTextureTileRenderer = require('../CanvasTextureTileRenderer');
 
 /**
  * Class representing a canvas image tile renderer.

@@ -33,7 +33,36 @@ class CanvasPointTileRenderer extends CanvasVertexTileRenderer {
 		super.onAdd(layer);
 		const maxRadius = this.maxRadius;
 		const tileSize = layer.plot.tileSize;
-		this.array = this.createCanvasArray(tileSize + (maxRadius * 2), true);
+		const pixelRatio = layer.plot.pixelRatio;
+		const pixelSize = tileSize + (maxRadius * 2);
+		const color = this.color;
+		this.array = this.createCanvasArray(pixelSize, true, (array, tile) => {
+			const chunk = array.allocate(tile.coord.hash);
+			const canvas = chunk.canvas;
+			const ctx = chunk.ctx;
+			const points = tile.data;
+			const radians = Math.PI * 2.0;
+			// set drawing styles
+			ctx.globalCompositeOperation = 'lighter';
+			ctx.fillStyle = `rgba(
+				${Math.floor(color[0]*255)},
+				${Math.floor(color[1]*255)},
+				${Math.floor(color[2]*255)},
+				${color[3]})`;
+			// draw points
+			for (let i=0; i<points.length; i+=3) {
+				const x = points[i] + maxRadius;
+				const y = points[i+1] + maxRadius;
+				const radius = points[i+2];
+				const sx = x * pixelRatio;
+				const sy = canvas.height - (y * pixelRatio);
+				const sradius = radius * pixelRatio;
+				ctx.beginPath();
+				ctx.moveTo(sx, sy);
+				ctx.arc(sx, sy, sradius, 0, radians);
+				ctx.fill();
+			}
+		});
 		return this;
 	}
 
@@ -49,43 +78,6 @@ class CanvasPointTileRenderer extends CanvasVertexTileRenderer {
 		this.array = null;
 		super.onRemove(layer);
 		return this;
-	}
-
-	/**
-	 * Executed when a tile is added to the layer pyramid.
-	 *
-	 * @param {CanvasArray} array - The image array object.
-	 * @param {Tile} tile - The new tile object containing data.
-	 */
-	addTile(array, tile) {
-		const maxRadius = this.maxRadius;
-		const pixelRatio = this.layer.plot.pixelRatio;
-		const chunk = array.allocate(tile.coord.hash);
-		const canvas = chunk.canvas;
-		const ctx = chunk.ctx;
-		const color = this.color;
-		const points = tile.data;
-		const radians = Math.PI * 2.0;
-		// set drawing styles
-		ctx.globalCompositeOperation = 'lighter';
-		ctx.fillStyle = `rgba(
-			${Math.floor(color[0]*255)},
-			${Math.floor(color[1]*255)},
-			${Math.floor(color[2]*255)},
-			${color[3]})`;
-		// draw points
-		for (let i=0; i<points.length; i+=3) {
-			const x = points[i] + maxRadius;
-			const y = points[i+1] + maxRadius;
-			const radius = points[i+2];
-			const sx = x * pixelRatio;
-			const sy = canvas.height - (y * pixelRatio);
-			const sradius = radius * pixelRatio;
-			ctx.beginPath();
-			ctx.moveTo(sx, sy);
-			ctx.arc(sx, sy, sradius, 0, radians);
-			ctx.fill();
-		}
 	}
 
 	/**

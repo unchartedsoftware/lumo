@@ -59,8 +59,8 @@ module.exports = {
 	WebGLTileRenderer: require('./renderer/tile/webgl/WebGLTileRenderer'),
 	WebGLTextureTileRenderer: require('./renderer/tile/webgl/WebGLTextureTileRenderer'),
 	WebGLVertexTileRenderer: require('./renderer/tile/webgl/WebGLVertexTileRenderer'),
-	WebGLImageTileRenderer: require('./renderer/tile/webgl/WebGLImageTileRenderer'),
 	// webgl sample renderer
+	WebGLImageTileRenderer: require('./renderer/tile/webgl/sample/WebGLImageTileRenderer'),
 	WebGLInteractiveTileRenderer: require('./renderer/tile/webgl/sample/WebGLInteractiveTileRenderer'),
 	WebGLPointTileRenderer: require('./renderer/tile/webgl/sample/WebGLPointTileRenderer'),
 	WebGLShapeTileRenderer: require('./renderer/tile/webgl/sample/WebGLShapeTileRenderer'),
@@ -68,8 +68,8 @@ module.exports = {
 	CanvasTileRenderer: require('./renderer/tile/canvas/CanvasTileRenderer'),
 	CanvasTextureTileRenderer: require('./renderer/tile/canvas/CanvasTextureTileRenderer'),
 	CanvasVertexTileRenderer: require('./renderer/tile/canvas/CanvasVertexTileRenderer'),
-	CanvasImageTileRenderer: require('./renderer/tile/canvas/CanvasImageTileRenderer'),
 	// canvas sample renderer
+	CanvasImageTileRenderer: require('./renderer/tile/canvas/sample/CanvasImageTileRenderer'),
 	CanvasInteractiveTileRenderer: require('./renderer/tile/canvas/sample/CanvasInteractiveTileRenderer'),
 	CanvasPointTileRenderer: require('./renderer/tile/canvas/sample/CanvasPointTileRenderer'),
 	// overlay renderer
