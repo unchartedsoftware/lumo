@@ -10,11 +10,9 @@ class WebGLTileRenderer extends TileRenderer {
 
 	/**
 	 * Instantiates a new WebGLTileRenderer object.
-	 *
-	 * @param {Object} options - The options object.
 	 */
-	constructor(options = {}) {
-		super(options);
+	constructor() {
+		super();
 		this.gl = null;
 	}
 

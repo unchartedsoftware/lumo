@@ -39,7 +39,7 @@ class WebGLOverlayRenderer extends Renderer {
 	onAdd(overlay) {
 		super.onAdd(overlay);
 		this.gl = this.overlay.plot.getRenderingContext();
-		// crete buffers
+		// create buffers
 		this.refreshBuffers();
 		// create refresh handler
 		this[REFRESH] = () => {

@@ -38,16 +38,9 @@ class WebGLTextureTileRenderer extends WebGLTileRenderer {
 
 	/**
 	 * Instantiates a new WebGLTextureTileRenderer object.
-	 *
-	 * @param {Object} options - The options object.
 	 */
-	constructor(options = {}) {
-		super(options);
-		this.format = defaultTo(options.format, 'RGBA');
-		this.type = defaultTo(options.type, 'UNSIGNED_BYTE');
-		this.filter = defaultTo(options.filter, 'LINEAR');
-		this.invertY = defaultTo(options.invertY, false);
-		this.premultiplyAlpha = defaultTo(options.premultiplyAlpha, false);
+	constructor() {
+		super();
 		this[TILE_ADD] = new Map();
 		this[TILE_REMOVE] = new Map();
 	}
@@ -57,27 +50,37 @@ class WebGLTextureTileRenderer extends WebGLTileRenderer {
 	 * the provided texture size. Creates and attaches the necessary event
 	 * handlers to add and remove data from the array accordingly.
 	 *
-	 * @param {number} textureSize - The resolution of the tile texture.
-	 * @param {Function} onAdd - The function executed when a tile is added.
-	 * @param {Function} onRemove - The function executed when a tile is removed.
+	 * @param {Object} options - The options for the texture array.
+	 * @param {number} options.chunkSize - The resolution of the tile texture.
+	 * @param {string} options.format - The texture pixel format.
+	 * @param {string} options.type - The texture pixel component type.
+	 * @param {string} options.filter - The min / mag filter used during scaling.
+	 * @param {string} options.wrap - The wrapping type over both S and T dimension.
+	 * @param {bool} options.invertY - Whether or not invert-y is enabled.
+	 * @param {bool} options.premultiplyAlpha - Whether or not alpha premultiplying is enabled.
+	 * @param {Function} options.onAdd - The function executed when a tile is added.
+	 * @param {Function} options.onRemove - The function executed when a tile is removed.
 	 *
 	 * @returns {TextureArray} The texture array object.
 	 */
-	createTextureArray(textureSize, onAdd = addTile, onRemove = removeTile) {
+	createTextureArray(options = {}) {
 		// create texture array
 		const array = new TextureArray(
 			this.gl,
-			textureSize,
 			{
 				// set num chunks to be able to fit the capacity of the pyramid
 				numChunks: this.layer.pyramid.getCapacity(),
+				chunkSize: options.chunkSize,
 				// set texture attributes
-				format: this.format,
-				filter: this.filter,
-				invertY: this.invertY,
-				premultiplyAlpha: this.premultiplyAlpha
+				format: options.format,
+				type: options.type,
+				filter: options.filter,
+				invertY: options.invertY,
+				premultiplyAlpha: options.premultiplyAlpha
 			});
 		// create handlers
+		const onAdd = defaultTo(options.onAdd, addTile);
+		const onRemove = defaultTo(options.onRemove, removeTile);
 		const add = event => {
 			onAdd(array, event.tile);
 		};

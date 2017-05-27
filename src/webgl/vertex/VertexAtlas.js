@@ -83,9 +83,13 @@ class VertexAtlas {
 		if (!this.ext) {
 			throw 'ANGLE_instanced_arrays WebGL extension is not supported';
 		}
-		this.numChunks = defaultTo(options.numChunks, 256);
+		// set atlas properties
 		this.chunkSize = defaultTo(options.chunkSize, 128 * 128);
+		this.numChunks = defaultTo(options.numChunks, 256);
 		// set the pointers of the atlas
+		if (!pointers) {
+			throw 'No attribute pointers provided';
+		}
 		this.pointers = parseAttributePointers(pointers);
 		// calc stride of the atlas
 		this.stride = calcStride(this.pointers);

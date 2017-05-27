@@ -8,6 +8,13 @@ const WebGLVertexTileRenderer = require('../WebGLVertexTileRenderer');
 // Constants
 
 /**
+ * Numver of vertices supported per chunk.
+ * @private
+ * @constant {number}
+ */
+const CHUNK_SIZE = 128 * 128;
+
+/**
  * Highlighted point radius increase.
  * @private
  * @constant {number}
@@ -168,7 +175,7 @@ class WebGLInteractiveTileRenderer extends WebGLVertexTileRenderer {
 	 * @param {Array} options.color - The color of the points.
 	 */
 	constructor(options = {}) {
-		super(options);
+		super();
 		this.color = defaultTo(options.color, [ 1.0, 0.4, 0.1, 0.8 ]);
 		this.shader = null;
 		this.point = null;
@@ -190,17 +197,23 @@ class WebGLInteractiveTileRenderer extends WebGLVertexTileRenderer {
 		this.ext = this.gl.getExtension('OES_standard_derivatives');
 		this.point = createPoint(this.gl);
 		this.shader = this.createShader(SHADER_GLSL);
-		this.tree = this.createRTreePyramid(NODE_CAPACITY, createCollidables);
+		this.tree = this.createRTreePyramid({
+			nodeCapacity: NODE_CAPACITY,
+			createCollidables: createCollidables
+		});
 		this.atlas = this.createVertexAtlas({
-			// position
-			0: {
-				size: 2,
-				type: 'FLOAT'
-			},
-			// radius
-			1: {
-				size: 1,
-				type: 'FLOAT'
+			chunkSize: CHUNK_SIZE,
+			attributePointers: {
+				// position
+				0: {
+					size: 2,
+					type: 'FLOAT'
+				},
+				// radius
+				1: {
+					size: 1,
+					type: 'FLOAT'
+				}
 			}
 		});
 		return this;

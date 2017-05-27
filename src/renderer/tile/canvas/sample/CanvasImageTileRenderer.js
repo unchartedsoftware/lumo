@@ -1,11 +1,11 @@
 'use strict';
 
-const CanvasTextureTileRenderer = require('../CanvasTextureTileRenderer');
+const CanvasTileRenderer = require('../CanvasTileRenderer');
 
 /**
  * Class representing a canvas image tile renderer.
  */
-class CanvasImageTileRenderer extends CanvasTextureTileRenderer {
+class CanvasImageTileRenderer extends CanvasTileRenderer {
 
 	/**
 	 * Instantiates a new CanvasImageTileRenderer object.
@@ -26,7 +26,9 @@ class CanvasImageTileRenderer extends CanvasTextureTileRenderer {
 	 */
 	onAdd(layer) {
 		super.onAdd(layer);
-		this.array = this.createCanvasArray(layer.plot.tileSize);
+		this.array = this.createCanvasArray({
+			chunkSize: layer.plot.tileSize
+		});
 		return this;
 	}
 

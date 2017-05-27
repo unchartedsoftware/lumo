@@ -15,12 +15,12 @@ class Texture {
 	 * @param {Object} options - The texture options.
 	 * @param {number} options.width - The width of the texture.
 	 * @param {number} options.height - The height of the texture.
-	 * @param {string} options.wrap - The wrapping type over both S and T dimension.
-	 * @param {string} options.filter - The min / mag filter used during scaling.
-	 * @param {bool} options.invertY - Whether or not invert-y is enabled.
-	 * @param {bool} options.premultiplyAlpha - Whether or not alpha premultiplying is enabled.
 	 * @param {string} options.format - The texture pixel format.
 	 * @param {string} options.type - The texture pixel component type.
+	 * @param {string} options.filter - The min / mag filter used during scaling.
+	 * @param {string} options.wrap - The wrapping type over both S and T dimension.
+	 * @param {bool} options.invertY - Whether or not invert-y is enabled.
+	 * @param {bool} options.premultiplyAlpha - Whether or not alpha premultiplying is enabled.
 	 */
 	constructor(gl, src = null, options = {}) {
 		this.gl = gl;

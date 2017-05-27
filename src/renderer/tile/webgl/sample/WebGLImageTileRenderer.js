@@ -98,11 +98,9 @@ class WebGLImageTileRenderer extends WebGLTextureTileRenderer {
 
 	/**
 	 * Instantiates a new WebGLImageTileRenderer object.
-	 *
-	 * @param {Object} options - The options object.
 	 */
-	constructor(options = {}) {
-		super(options);
+	constructor() {
+		super();
 		this.quad = null;
 		this.shader = null;
 		this.array = null;
@@ -119,7 +117,9 @@ class WebGLImageTileRenderer extends WebGLTextureTileRenderer {
 		super.onAdd(layer);
 		this.quad = createQuad(this.gl, 0, layer.plot.tileSize);
 		this.shader = this.createShader(SHADER_GLSL);
-		this.array = this.createTextureArray(layer.plot.tileSize);
+		this.array = this.createTextureArray({
+			chunkSize: layer.plot.tileSize
+		});
 		return this;
 	}
 

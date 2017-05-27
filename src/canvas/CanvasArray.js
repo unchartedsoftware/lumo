@@ -10,19 +10,20 @@ class CanvasArray {
 	/**
 	 * Instantiates a new CanvasArray object.
 	 *
-	 * @param {number} pixelSize - The size of a image, in pixels.
 	 * @param {Object} options - The image array options.
+	 * @param {number} options.chunkSize - The dimension of each canvas, in pixels.
 	 * @param {number} options.numChunks - The size of the array, in tiles.
+	 * @param {bool} options.scaled - Whether or not the chunkSize should be scaled by the pixel ratio.
 	 */
-	constructor(pixelSize = 256, options = {}) {
-		this.pixelSize = pixelSize;
+	constructor(options = {}) {
+		this.chunkSize = defaultTo(options.chunkSize, 256);
 		this.numChunks = defaultTo(options.numChunks, 256);
 		// create images
 		this.available = new Array(this.numChunks);
 		for (let i=0; i<this.numChunks; i++) {
 			const canvas = document.createElement('canvas');
-			canvas.width = pixelSize;
-			canvas.height = pixelSize;
+			canvas.width = this.chunkSize;
+			canvas.height = this.chunkSize;
 			this.available[i] = {
 				ctx: canvas.getContext('2d'),
 				canvas: canvas
@@ -74,7 +75,7 @@ class CanvasArray {
 		// add to used
 		this.used.set(key, chunk);
 		// clear the chunk
-		chunk.ctx.clearRect(0, 0, this.pixelSize, this.pixelSize);
+		chunk.ctx.clearRect(0, 0, this.chunkSize, this.chunkSize);
 		return chunk;
 	}
 
@@ -101,22 +102,22 @@ class CanvasArray {
 	/**
 	 * Clears the array and resizes all chunks.
 	 *
-	 * @param {number} pixelSize - The size of a image, in pixels.
+	 * @param {number} chunkSize - The size of a image, in pixels.
 	 *
 	 * @returns {CanvasArray} The CanvasArray object, for chaining.
 	 */
-	resize(pixelSize) {
-		if (this.pixelSize === pixelSize) {
+	resize(chunkSize) {
+		if (this.chunkSize === chunkSize) {
 			return;
 		}
 		this.clear();
 		const available = this.available;
 		for (let i=0; i<available.length; i++) {
 			const chunk = available[i];
-			chunk.canvas.width = pixelSize;
-			chunk.canvas.height = pixelSize;
+			chunk.canvas.width = chunkSize;
+			chunk.canvas.height = chunkSize;
 		}
-		this.pixelSize = pixelSize;
+		this.chunkSize = chunkSize;
 		return this;
 	}
 
