@@ -115,7 +115,7 @@ const zoom = function(plot, targetPos, zoomDelta, duration) {
 		plot.minZoom,
 		plot.maxZoom);
 	// check if we need to zoom
-	if (targetZoom !== plot.zoom) {
+	if (targetZoom !== plot.getTargetZoom()) {
 		// set target viewport
 		const targetViewport = plot.viewport.zoomToPos(
 			plot.zoom,
@@ -238,18 +238,14 @@ class ZoomHandler extends DOMHandler {
 		};
 
 		this.wheel = (event) => {
-
 			// get normalized delta
 			const delta = getWheelDelta(plot, event);
-
 			if (!this.continuousZoom && Math.abs(delta) < 4) {
 				// mitigate the hyper sensitivty of a trackpad
 				return;
 			}
-
 			// increment wheel delta
 			wheelDelta += delta;
-
 			// check zoom type
 			if (this.continuousZoom) {
 				// get target from mouse position
