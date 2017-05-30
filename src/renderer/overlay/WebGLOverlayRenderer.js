@@ -1,8 +1,8 @@
 'use strict';
 
-const Shader = require('../../../webgl/shader/Shader');
-const EventType = require('../../../event/EventType');
-const OverlayRenderer = require('../OverlayRenderer');
+const Shader = require('../../webgl/shader/Shader');
+const EventType = require('../../event/EventType');
+const OverlayRenderer = require('./OverlayRenderer');
 
 // Constants
 

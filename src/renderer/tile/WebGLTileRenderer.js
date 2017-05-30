@@ -1,11 +1,11 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const EventType = require('../../../event/EventType');
-const Shader = require('../../../webgl/shader/Shader');
-const TextureArray = require('../../../webgl/texture/TextureArray');
-const VertexAtlas = require('../../../webgl/vertex/VertexAtlas');
-const TileRenderer = require('../TileRenderer');
+const EventType = require('../../event/EventType');
+const Shader = require('../../webgl/shader/Shader');
+const TextureArray = require('../../webgl/texture/TextureArray');
+const VertexAtlas = require('../../webgl/vertex/VertexAtlas');
+const TileRenderer = require('./TileRenderer');
 
 // Constants
 
@@ -84,7 +84,7 @@ class WebGLTileRenderer extends TileRenderer {
 		super.onRemove(layer);
 		return this;
 	}
-	
+
 	/**
 	 * Returns the orthographic projection matrix for the viewport.
 	 *

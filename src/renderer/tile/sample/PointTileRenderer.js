@@ -60,10 +60,10 @@ const SHADER_GLSL = {
 /**
  * Class representing a webgl point tile renderer.
  */
-class WebGLPointTileRenderer extends WebGLTileRenderer {
+class PointTileRenderer extends WebGLTileRenderer {
 
 	/**
-	 * Instantiates a new WebGLPointTileRenderer object.
+	 * Instantiates a new PointTileRenderer object.
 	 *
 	 * @param {Object} options - The options object.
 	 * @param {Array} options.color - The color of the points.
@@ -178,4 +178,4 @@ class WebGLPointTileRenderer extends WebGLTileRenderer {
 	}
 }
 
-module.exports = WebGLPointTileRenderer;
+module.exports = PointTileRenderer;

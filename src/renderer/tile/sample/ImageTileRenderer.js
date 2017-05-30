@@ -1,6 +1,6 @@
 'use strict';
 
-const VertexBuffer = require('../../../../webgl/vertex/VertexBuffer');
+const VertexBuffer = require('../../../webgl/vertex/VertexBuffer');
 const WebGLTileRenderer = require('../WebGLTileRenderer');
 
 // Constants
@@ -94,10 +94,10 @@ const createQuad = function(gl, min, max) {
 /**
  * Class representing a webgl image tile renderer.
  */
-class WebGLImageTileRenderer extends WebGLTileRenderer {
+class ImageTileRenderer extends WebGLTileRenderer {
 
 	/**
-	 * Instantiates a new WebGLImageTileRenderer object.
+	 * Instantiates a new ImageTileRenderer object.
 	 */
 	constructor() {
 		super();
@@ -111,7 +111,7 @@ class WebGLImageTileRenderer extends WebGLTileRenderer {
 	 *
 	 * @param {Layer} layer - The layer to attach the renderer to.
 	 *
-	 * @returns {WebGLImageTileRenderer} The renderer object, for chaining.
+	 * @returns {ImageTileRenderer} The renderer object, for chaining.
 	 */
 	onAdd(layer) {
 		super.onAdd(layer);
@@ -128,7 +128,7 @@ class WebGLImageTileRenderer extends WebGLTileRenderer {
 	 *
 	 * @param {Layer} layer - The layer to remove the renderer from.
 	 *
-	 * @returns {WebGLImageTileRenderer} The renderer object, for chaining.
+	 * @returns {ImageTileRenderer} The renderer object, for chaining.
 	 */
 	onRemove(layer) {
 		this.destroyTextureArray(this.array);
@@ -142,7 +142,7 @@ class WebGLImageTileRenderer extends WebGLTileRenderer {
 	/**
 	 * The draw function that is executed per frame.
 	 *
-	 * @returns {WebGLImageTileRenderer} The renderer object, for chaining.
+	 * @returns {ImageTileRenderer} The renderer object, for chaining.
 	 */
 	draw() {
 		const gl = this.gl;
@@ -185,4 +185,4 @@ class WebGLImageTileRenderer extends WebGLTileRenderer {
 	}
 }
 
-module.exports = WebGLImageTileRenderer;
+module.exports = ImageTileRenderer;

@@ -1,7 +1,7 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const VertexBuffer = require('../../../../webgl/vertex/VertexBuffer');
+const VertexBuffer = require('../../../webgl/vertex/VertexBuffer');
 const WebGLTileRenderer = require('../WebGLTileRenderer');
 
 // Constants
@@ -104,10 +104,10 @@ const createStar = function(gl) {
 /**
  * Class representing a webgl instanced shape tile renderer.
  */
-class WebGLShapeTileRenderer extends WebGLTileRenderer {
+class InstancedTileRenderer extends WebGLTileRenderer {
 
 	/**
-	 * Instantiates a new WebGLShapeTileRenderer object.
+	 * Instantiates a new InstancedTileRenderer object.
 	 *
 	 * @param {Object} options - The options object.
 	 * @param {Array} options.color - The color of the points.
@@ -175,18 +175,12 @@ class WebGLShapeTileRenderer extends WebGLTileRenderer {
 		const shader = this.shader;
 		const atlas = this.atlas;
 		const shape = this.shape;
-		const plot = this.layer.plot;
 		const renderables = this.getRenderables();
 		const proj = this.getOrthoMatrix();
 
-		// bind render target
-		plot.renderBuffer.bind();
-		// clear render target
-		plot.renderBuffer.clear();
-
 		// set blending func
 		gl.enable(gl.BLEND);
-		gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
 		// bind shader
 		shader.use();
@@ -217,14 +211,8 @@ class WebGLShapeTileRenderer extends WebGLTileRenderer {
 		// unbind quad
 		shape.unbind();
 
-		// unbind render target
-		plot.renderBuffer.unbind();
-
-		// render framebuffer to the backbuffer
-		plot.renderBuffer.blitToScreen(this.layer.opacity);
-
 		return this;
 	}
 }
 
-module.exports = WebGLShapeTileRenderer;
+module.exports = InstancedTileRenderer;

@@ -2,7 +2,7 @@
 
 const defaultTo = require('lodash/defaultTo');
 const VertexBuffer = require('../../../webgl/vertex/VertexBuffer');
-const WebGLOverlayRenderer = require('./WebGLOverlayRenderer');
+const WebGLOverlayRenderer = require('../WebGLOverlayRenderer');
 
 // Constants
 
@@ -86,10 +86,10 @@ const createVertexBuffer = function(gl, points) {
 /**
  * Class representing a webgl point overlay renderer.
  */
-class WebGLPointOverlayRenderer extends WebGLOverlayRenderer {
+class PointOverlayRenderer extends WebGLOverlayRenderer {
 
 	/**
-	 * Instantiates a new WebGLPointOverlayRenderer object.
+	 * Instantiates a new PointOverlayRenderer object.
 	 *
 	 * @param {Object} options - The overlay options.
 	 * @param {Array} options.pointColor - The color of the points.
@@ -109,7 +109,7 @@ class WebGLPointOverlayRenderer extends WebGLOverlayRenderer {
 	 *
 	 * @param {Layer} overlay - The overlay to attach the renderer to.
 	 *
-	 * @returns {WebGLPointOverlayRenderer} The renderer object, for chaining.
+	 * @returns {PointOverlayRenderer} The renderer object, for chaining.
 	 */
 	onAdd(overlay) {
 		super.onAdd(overlay);
@@ -123,7 +123,7 @@ class WebGLPointOverlayRenderer extends WebGLOverlayRenderer {
 	 *
 	 * @param {Layer} overlay - The overlay to remove the renderer from.
 	 *
-	 * @returns {WebGLPointOverlayRenderer} The renderer object, for chaining.
+	 * @returns {PointOverlayRenderer} The renderer object, for chaining.
 	 */
 	onRemove(overlay) {
 		this.shader = null;
@@ -136,7 +136,7 @@ class WebGLPointOverlayRenderer extends WebGLOverlayRenderer {
 	/**
 	 * Generate any underlying buffers.
 	 *
-	 * @returns {WebGLPointOverlayRenderer} The overlay object, for chaining.
+	 * @returns {PointOverlayRenderer} The overlay object, for chaining.
 	 */
 	refreshBuffers() {
 		// clip points to only those that are inside the cell
@@ -152,7 +152,7 @@ class WebGLPointOverlayRenderer extends WebGLOverlayRenderer {
 	/**
 	 * The draw function that is executed per frame.
 	 *
-	 * @returns {WebGLPointOverlayRenderer} The overlay object, for chaining.
+	 * @returns {PointOverlayRenderer} The overlay object, for chaining.
 	 */
 	draw() {
 		if (!this.points) {
@@ -195,4 +195,4 @@ class WebGLPointOverlayRenderer extends WebGLOverlayRenderer {
 	}
 }
 
-module.exports = WebGLPointOverlayRenderer;
+module.exports = PointOverlayRenderer;

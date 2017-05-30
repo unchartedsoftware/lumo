@@ -2,7 +2,7 @@
 
 const defaultTo = require('lodash/defaultTo');
 const VertexBuffer = require('../../../webgl/vertex/VertexBuffer');
-const WebGLOverlayRenderer = require('./WebGLOverlayRenderer');
+const WebGLOverlayRenderer = require('../WebGLOverlayRenderer');
 
 // Constants
 
@@ -458,10 +458,10 @@ const createVertexBuffer = function(overlay, points) {
 /**
  * Class representing a webgl polyline overlay renderer.
  */
-class WebGLLineOverlayRenderer extends WebGLOverlayRenderer {
+class LineOverlayRenderer extends WebGLOverlayRenderer {
 
 	/**
-	 * Instantiates a new WebGLLineOverlayRenderer object.
+	 * Instantiates a new LineOverlayRenderer object.
 	 *
 	 * @param {Object} options - The overlay options.
 	 * @param {Array} options.lineColor - The color of the line.
@@ -480,7 +480,7 @@ class WebGLLineOverlayRenderer extends WebGLOverlayRenderer {
 	 *
 	 * @param {Plot} plot - The plot to attach the overlay to.
 	 *
-	 * @returns {WebGLLineOverlayRenderer} The overlay object, for chaining.
+	 * @returns {LineOverlayRenderer} The overlay object, for chaining.
 	 */
 	onAdd(plot) {
 		super.onAdd(plot);
@@ -493,7 +493,7 @@ class WebGLLineOverlayRenderer extends WebGLOverlayRenderer {
 	 *
 	 * @param {Plot} plot - The plot to remove the overlay from.
 	 *
-	 * @returns {WebGLLineOverlayRenderer} The overlay object, for chaining.
+	 * @returns {LineOverlayRenderer} The overlay object, for chaining.
 	 */
 	onRemove(plot) {
 		super.onRemove(plot);
@@ -504,7 +504,7 @@ class WebGLLineOverlayRenderer extends WebGLOverlayRenderer {
 	/**
 	 * Generate any underlying buffers.
 	 *
-	 * @returns {WebGLLineOverlayRenderer} The overlay object, for chaining.
+	 * @returns {LineOverlayRenderer} The overlay object, for chaining.
 	 */
 	refreshBuffers() {
 		const clipped = this.overlay.getClippedGeometry();
@@ -521,7 +521,7 @@ class WebGLLineOverlayRenderer extends WebGLOverlayRenderer {
 	/**
 	 * The draw function that is executed per frame.
 	 *
-	 * @returns {WebGLLineOverlayRenderer} The overlay object, for chaining.
+	 * @returns {LineOverlayRenderer} The overlay object, for chaining.
 	 */
 	draw() {
 		if (!this.lines) {
@@ -566,4 +566,4 @@ class WebGLLineOverlayRenderer extends WebGLOverlayRenderer {
 	}
 }
 
-module.exports = WebGLLineOverlayRenderer;
+module.exports = LineOverlayRenderer;

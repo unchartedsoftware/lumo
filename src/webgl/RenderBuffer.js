@@ -119,10 +119,10 @@ const renderToScreen = function(gl, texture, shader, quad, opacity) {
 /**
  * Class representing a webgl renderbuffer.
  */
-class WebGLRenderBuffer {
+class RenderBuffer {
 
 	/**
-	 * Instantiates a WebGLRenderBuffer object.
+	 * Instantiates a RenderBuffer object.
 	 *
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
 	 * @param {number} width - The width of the renderbuffer.
@@ -150,7 +150,7 @@ class WebGLRenderBuffer {
 	/**
 	 * Binds the renderbuffer for writing.
 	 *
-	 * @returns {WebGLRenderBuffer} The renderbuffer object, for chaining.
+	 * @returns {RenderBuffer} The renderbuffer object, for chaining.
 	 */
 	bind() {
 		const gl = this.gl;
@@ -161,7 +161,7 @@ class WebGLRenderBuffer {
 	/**
 	 * Unbinds the renderbuffer for writing.
 	 *
-	 * @returns {WebGLRenderBuffer} The renderbuffer object, for chaining.
+	 * @returns {RenderBuffer} The renderbuffer object, for chaining.
 	 */
 	unbind() {
 		const gl = this.gl;
@@ -172,7 +172,7 @@ class WebGLRenderBuffer {
 	/**
 	 * Clears the renderbuffer buffer color bits.
 	 *
-	 * @returns {WebGLRenderBuffer} The renderbuffer object, for chaining.
+	 * @returns {RenderBuffer} The renderbuffer object, for chaining.
 	 */
 	clear() {
 		this.gl.clearColor(0, 0, 0, 0);
@@ -185,7 +185,7 @@ class WebGLRenderBuffer {
 	 *
 	 * @param {number} opacity - The opacity to blit at.
 	 *
-	 * @returns {WebGLRenderBuffer} The renderbuffer object, for chaining.
+	 * @returns {RenderBuffer} The renderbuffer object, for chaining.
 	 */
 	blitToScreen(opacity) {
 		renderToScreen(
@@ -203,7 +203,7 @@ class WebGLRenderBuffer {
 	 * @param {number} width - The new width of the renderbuffer.
 	 * @param {number} height - The new height of the renderbuffer.
 	 *
-	 * @returns {WebGLRenderBuffer} The renderbuffer object, for chaining.
+	 * @returns {RenderBuffer} The renderbuffer object, for chaining.
 	 */
 	resize(width, height) {
 		this.texture.resize(width, height);
@@ -211,4 +211,4 @@ class WebGLRenderBuffer {
 	}
 }
 
-module.exports = WebGLRenderBuffer;
+module.exports = RenderBuffer;

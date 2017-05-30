@@ -9,14 +9,12 @@ const EventBroadcaster = require('../event/EventBroadcaster');
 const EventDelegator = require('../event/EventDelegator');
 const Event = require('../event/Event');
 const ResizeEvent = require('../event/ResizeEvent');
-const CanvasRenderBuffer = require('../canvas/CanvasRenderBuffer');
-const WebGLRenderBuffer = require('../webgl/WebGLRenderBuffer');
+const RenderBuffer = require('../webgl/RenderBuffer');
 const ClickHandler = require('./handler/ClickHandler');
 const MouseHandler = require('./handler/MouseHandler');
 const PanHandler = require('./handler/PanHandler');
 const ZoomHandler = require('./handler/ZoomHandler');
 const Cell = require('./Cell');
-const ContextType = require('./ContextType');
 const Viewport = require('./Viewport');
 
 // Constants
@@ -224,29 +222,6 @@ const reset = function(plot) {
 	}
 };
 
-const setupWebGLFrame = function(plot) {
-	const gl = plot.getRenderingContext();
-	// clear the backbuffer
-	gl.clearColor(0, 0, 0, 0);
-	gl.clear(gl.COLOR_BUFFER_BIT);
-	// set the viewport
-	const size = plot.getViewportPixelSize();
-	gl.viewport(
-		0, 0,
-		size.width * plot.pixelRatio,
-		size.height * plot.pixelRatio);
-};
-
-const setupCanvasFrame = function(plot) {
-	const ctx = plot.getRenderingContext();
-	// clear the canvas
-	const size = plot.getViewportPixelSize();
-	ctx.clearRect(
-		0, 0,
-		size.width * plot.pixelRatio,
-		size.height * plot.pixelRatio);
-};
-
 const frame = function(plot) {
 
 	// get frame timestamp
@@ -286,12 +261,19 @@ const frame = function(plot) {
 		// update cell
 		updateCell(plot);
 
-		// setup frame based on context
-		if (plot.ctxType === ContextType.WEBGL) {
-			setupWebGLFrame(plot);
-		} else {
-			setupCanvasFrame(plot);
-		}
+		// get context
+		const gl = plot.getRenderingContext();
+
+		// clear the backbuffer
+		gl.clearColor(0, 0, 0, 0);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+
+		// set the viewport
+		const size = plot.getViewportPixelSize();
+		gl.viewport(
+			0, 0,
+			size.width * plot.pixelRatio,
+			size.height * plot.pixelRatio);
 
 		// sort layers by z-index
 		const layers = plot.getSortedLayers();
@@ -308,30 +290,6 @@ const frame = function(plot) {
 	plot.frameRequest = requestAnimationFrame(() => {
 		frame(plot);
 	});
-};
-
-const getContext = function(type, canvas, contextAttributes = {}) {
-	let ctx = null;
-	switch (type) {
-		case ContextType.CANVAS:
-			// get Canvas2D context
-			ctx = canvas.getContext('2d', contextAttributes);
-			if (!ctx) {
-				throw 'Unable to create a CanvasRenderingContext2D, please ensure your browser supports Canvas';
-			}
-			break;
-		case ContextType.WEBGL:
-			// get WebGL context
-			ctx = canvas.getContext('webgl', contextAttributes);
-			if (!ctx) {
-				throw 'Unable to create a WebGLRenderingContext, please ensure your browser supports WebGL';
-			}
-			break;
-		default:
-			// invalid context type
-			throw 'Unrecognized context symbol, please choose either `lumo.WEBGL` or `lumo.CANVAS`.';
-	}
-	return ctx;
 };
 
 /**
@@ -387,21 +345,16 @@ class Plot extends EventEmitter {
 		this.container.appendChild(this.canvas);
 
 		// get rendering context
-		this.ctxType = defaultTo(options.context, ContextType.WEBGL);
-		this.ctx = getContext(this.ctxType, this.canvas, options.contextAttributes);
+		this.ctx = this.canvas.getContext('webgl', options.contextAttributes);
+		if (!this.ctx) {
+			throw 'Unable to create a WebGLRenderingContext, please ensure your browser supports WebGL';
+		}
 
 		// create renderbuffer
-		if (this.ctxType === ContextType.WEBGL) {
-			this.renderBuffer = new WebGLRenderBuffer(
-				this.ctx,
-				this.canvas.width,
-				this.canvas.height);
-		} else {
-			this.renderBuffer = new CanvasRenderBuffer(
-				this.ctx,
-				this.canvas.width,
-				this.canvas.height);
-		}
+		this.renderBuffer = new RenderBuffer(
+			this.ctx,
+			this.canvas.width,
+			this.canvas.height);
 
 		// tile size in pixels
 		this.tileSize = defaultTo(options.tileSize, 256);
@@ -581,15 +534,6 @@ class Plot extends EventEmitter {
 		layer.onRemove(this);
 		this.setDirty();
 		return this;
-	}
-
-	/**
-	 * Returns the rendering context of the plot.
-	 *
-	 * @returns {WebGLRenderingContext|CanvasRenderingContext2D} The context object.
-	 */
-	getRenderingContext() {
-		return this.ctx;
 	}
 
 	/**
