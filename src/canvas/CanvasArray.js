@@ -13,7 +13,6 @@ class CanvasArray {
 	 * @param {Object} options - The image array options.
 	 * @param {number} options.chunkSize - The dimension of each canvas, in pixels.
 	 * @param {number} options.numChunks - The size of the array, in tiles.
-	 * @param {bool} options.scaled - Whether or not the chunkSize should be scaled by the pixel ratio.
 	 */
 	constructor(options = {}) {
 		this.chunkSize = defaultTo(options.chunkSize, 256);

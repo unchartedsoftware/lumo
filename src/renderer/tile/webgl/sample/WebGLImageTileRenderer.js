@@ -1,7 +1,7 @@
 'use strict';
 
 const VertexBuffer = require('../../../../webgl/vertex/VertexBuffer');
-const WebGLTextureTileRenderer = require('../WebGLTextureTileRenderer');
+const WebGLTileRenderer = require('../WebGLTileRenderer');
 
 // Constants
 
@@ -94,7 +94,7 @@ const createQuad = function(gl, min, max) {
 /**
  * Class representing a webgl image tile renderer.
  */
-class WebGLImageTileRenderer extends WebGLTextureTileRenderer {
+class WebGLImageTileRenderer extends WebGLTileRenderer {
 
 	/**
 	 * Instantiates a new WebGLImageTileRenderer object.

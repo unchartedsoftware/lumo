@@ -3,7 +3,7 @@
 const defaultTo = require('lodash/defaultTo');
 const CircleCollidable = require('../../../../geometry/CircleCollidable');
 const VertexBuffer = require('../../../../webgl/vertex/VertexBuffer');
-const WebGLVertexTileRenderer = require('../WebGLVertexTileRenderer');
+const WebGLTileRenderer = require('../WebGLTileRenderer');
 
 // Constants
 
@@ -166,7 +166,7 @@ const renderPoint = function(point, shader, plot, target, color, radius) {
 /**
  * Class representing a webgl interactive point tile renderer.
  */
-class WebGLInteractiveTileRenderer extends WebGLVertexTileRenderer {
+class WebGLInteractiveTileRenderer extends WebGLTileRenderer {
 
 	/**
 	 * Instantiates a new WebGLInteractiveTileRenderer object.

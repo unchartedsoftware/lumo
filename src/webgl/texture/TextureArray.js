@@ -45,22 +45,23 @@ class TextureArray {
 	 * using an atlas.
 	 *
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
+	 * @param {Object} params - The texture parameters.
+	 * @param {string} params.format - The texture pixel format.
+	 * @param {string} params.type - The texture pixel component type.
+	 * @param {string} params.filter - The min / mag filter used during scaling.
+	 * @param {string} params.wrap - The wrapping type over both S and T dimension.
+	 * @param {bool} params.invertY - Whether or not invert-y is enabled.
+	 * @param {bool} params.premultiplyAlpha - Whether or not alpha premultiplying is enabled.
 	 * @param {Object} options - The texture array options.
 	 * @param {number} options.chunkSize - The dimension of each texture, in pixels.
 	 * @param {number} options.numChunks - The size of the array, in tiles.
-	 * @param {string} options.format - The texture pixel format.
-	 * @param {string} options.type - The texture pixel component type.
-	 * @param {string} options.filter - The min / mag filter used during scaling.
-	 * @param {string} options.wrap - The wrapping type over both S and T dimension.
-	 * @param {bool} options.invertY - Whether or not invert-y is enabled.
-	 * @param {bool} options.premultiplyAlpha - Whether or not alpha premultiplying is enabled.
 	 */
-	constructor(gl, options = {}) {
+	constructor(gl, params = {}, options = {}) {
 		this.gl = gl;
 		// set array properties
 		this.chunkSize = defaultTo(options.chunkSize, 256);
 		this.numChunks = defaultTo(options.numChunks, 256);
-		// set texture properties
+		// set texture parameters
 		this.format = defaultTo(options.format, 'RGBA');
 		this.type = defaultTo(options.type, 'UNSIGNED_BYTE');
 		this.filter = defaultTo(options.filter, 'LINEAR');
