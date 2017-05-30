@@ -4,7 +4,7 @@ const defaultTo = require('lodash/defaultTo');
 
 // Private Methods
 
-const createTexture = function(gl, format, size, type, filter, invertY, premultiplyAlpha) {
+const createTexture = function(gl, format, size, type, filter, wrap, invertY, premultiplyAlpha) {
 	const texture = gl.createTexture();
 	gl.bindTexture(gl.TEXTURE_2D, texture);
 	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, invertY);
@@ -21,8 +21,8 @@ const createTexture = function(gl, format, size, type, filter, invertY, premulti
 		gl[type],
 		null);
 	// set parameters
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl[wrap]);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl[wrap]);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl[filter]);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl[filter]);
 	return texture;
@@ -45,18 +45,27 @@ class TextureArray {
 	 * using an atlas.
 	 *
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
-	 * @param {number} tileSize - The size of a tile, in pixels.
+	 * @param {Object} params - The texture parameters.
+	 * @param {string} params.format - The texture pixel format.
+	 * @param {string} params.type - The texture pixel component type.
+	 * @param {string} params.filter - The min / mag filter used during scaling.
+	 * @param {string} params.wrap - The wrapping type over both S and T dimension.
+	 * @param {bool} params.invertY - Whether or not invert-y is enabled.
+	 * @param {bool} params.premultiplyAlpha - Whether or not alpha premultiplying is enabled.
 	 * @param {Object} options - The texture array options.
+	 * @param {number} options.chunkSize - The dimension of each texture, in pixels.
 	 * @param {number} options.numChunks - The size of the array, in tiles.
 	 */
-	constructor(gl, tileSize = 256, options = {}) {
+	constructor(gl, params = {}, options = {}) {
 		this.gl = gl;
+		// set array properties
+		this.chunkSize = defaultTo(options.chunkSize, 256);
 		this.numChunks = defaultTo(options.numChunks, 256);
-		this.chunkSize = tileSize;
-		// set texture properties
+		// set texture parameters
 		this.format = defaultTo(options.format, 'RGBA');
 		this.type = defaultTo(options.type, 'UNSIGNED_BYTE');
 		this.filter = defaultTo(options.filter, 'LINEAR');
+		this.wrap = defaultTo(options.wrap, 'CLAMP_TO_EDGE');
 		this.invertY = defaultTo(options.invertY, false);
 		this.premultiplyAlpha = defaultTo(options.premultiplyAlpha, false);
 		// create textures
@@ -69,6 +78,7 @@ class TextureArray {
 					this.chunkSize,
 					this.type,
 					this.filter,
+					this.wrap,
 					this.invertY,
 					this.premultiplyAlpha)
 			};

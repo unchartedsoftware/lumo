@@ -2,16 +2,22 @@
 
 const assert = require('assert');
 const sinon = require('sinon');
+const EventType = require('../../src/event/EventType');
 const Layer = require('../../src/layer/Layer');
+const Renderer = require('../../src/renderer/Renderer');
+
+const noop = function() {};
 
 describe('Layer', () => {
 
 	let plot;
+	let renderer;
 
 	beforeEach(() => {
 		plot = {
 			setDirty: function() {}
 		};
+		renderer = new Renderer();
 	});
 
 	describe('#constructor()', () => {
@@ -33,10 +39,87 @@ describe('Layer', () => {
 		});
 	});
 
+	describe('#setRenderer()', () => {
+		it('should set the renderer property of the layer', () => {
+			const layer = new Layer();
+			layer.setRenderer(renderer);
+			assert(layer.renderer === renderer);
+		});
+		it('should replace a previously existing renderer', () => {
+			const layer = new Layer();
+			const rendererA = {};
+			const rendererB = {};
+			layer.setRenderer(rendererA);
+			layer.setRenderer(rendererB);
+			assert(layer.renderer === rendererB);
+		});
+		it('should call `onAdd` on the renderer if the layer is attached to a plot', () => {
+			const layer = new Layer();
+			layer.onAdd(plot);
+			const onAdd = sinon.stub(renderer, 'onAdd').callsFake(noop);
+			layer.setRenderer(renderer);
+			assert(onAdd.calledOnce);
+		});
+		it('should call `onRemove` on the previous renderer if the layer is attached to a plot', () => {
+			const layer = new Layer();
+			layer.onAdd(plot);
+			const onRemove = sinon.stub(renderer, 'onRemove').callsFake(noop);
+			layer.setRenderer(renderer);
+			layer.setRenderer(new Renderer());
+			assert(onRemove.calledOnce);
+		});
+		it('should throw an exception if no renderer is provided', () => {
+			let threw = false;
+			try {
+				const layer = new Layer();
+				layer.setRenderer();
+			} catch (e) {
+				threw = true;
+			}
+			assert(threw);
+		});
+	});
+
+	describe('#removeRenderer()', () => {
+		it('should remove the attached renderer', () => {
+			const layer = new Layer();
+			layer.setRenderer(renderer);
+			layer.removeRenderer();
+			assert(layer.renderer === null);
+		});
+		it('should call `onRemove` on the attached renderer if the layer is attached to a plot', () => {
+			const layer = new Layer();
+			layer.onAdd(plot);
+			const onRemove = sinon.stub(renderer, 'onRemove').callsFake(noop);
+			layer.setRenderer(renderer);
+			layer.removeRenderer();
+			assert(onRemove.calledOnce);
+		});
+		it('should throw an exception if there is no renderer attached', () => {
+			let threw = false;
+			try {
+				const layer = new Layer();
+				layer.removeRenderer();
+			} catch (e) {
+				threw = true;
+			}
+			assert(threw);
+		});
+	});
+
 	describe('#draw()', () => {
-		it('should do nothing', () => {
+		it('should do nothing if there is no attached renderer', () => {
 			const layer = new Layer();
 			layer.draw();
+			layer.hide();
+			layer.draw();
+		});
+		it('should call `draw` on the attached renderer', () => {
+			const layer = new Layer();
+			layer.setRenderer(renderer);
+			const draw = sinon.stub(renderer, 'draw').callsFake(noop);
+			layer.draw();
+			assert(draw.calledOnce);
 		});
 	});
 
@@ -123,6 +206,13 @@ describe('Layer', () => {
 			assert(layer.isHidden() === false);
 			layer.hide();
 			assert(layer.isHidden() === true);
+		});
+		it('should call `clear` on the attached renderer', () => {
+			const layer = new Layer();
+			layer.setRenderer(renderer);
+			const clear = sinon.stub(renderer, 'clear');
+			layer.hide();
+			assert(clear.called);
 		});
 		it('should flag the plot as dirty if attached and is not hidden', () => {
 			const layer = new Layer();
@@ -218,10 +308,17 @@ describe('Layer', () => {
 	});
 
 	describe('#pick()', () => {
-		it('should return `null`', () => {
+		it('should call `pick` on the attached renderer', () => {
 			const layer = new Layer();
+			layer.setRenderer(renderer);
+			const pick = sinon.stub(layer.getRenderer(), 'pick').callsFake(noop);
 			layer.pick();
-			assert(layer.pick() == null);
+			assert(pick.calledOnce);
+		});
+		it('should return null if no renderer is attached', () => {
+			const layer = new Layer();
+			const res = layer.pick();
+			assert(res === null);
 		});
 	});
 
@@ -442,6 +539,22 @@ describe('Layer', () => {
 			const setDirty = sinon.stub(plot, 'setDirty');
 			layer.clear();
 			assert(setDirty.called);
+		});
+	});
+
+	describe('#refresh()', () => {
+		it('should clear the underlying layer', () => {
+			const layer = new Layer();
+			const clear = sinon.stub(layer, 'clear');
+			layer.refresh();
+			assert(clear.called);
+		});
+		it('should emit a `REFRESH` event from the layer', done => {
+			const layer = new Layer();
+			layer.on(EventType.REFRESH, () => {
+				done();
+			});
+			layer.refresh();
 		});
 	});
 

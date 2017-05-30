@@ -1,10 +1,18 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const VertexBuffer = require('../../webgl/vertex/VertexBuffer');
-const WebGLInteractiveRenderer = require('./WebGLInteractiveRenderer');
+const CircleCollidable = require('../../../geometry/CircleCollidable');
+const VertexBuffer = require('../../../webgl/vertex/VertexBuffer');
+const WebGLTileRenderer = require('../WebGLTileRenderer');
 
 // Constants
+
+/**
+ * Numver of vertices supported per chunk.
+ * @private
+ * @constant {number}
+ */
+const CHUNK_SIZE = 128 * 128;
 
 /**
  * Highlighted point radius increase.
@@ -19,6 +27,13 @@ const HIGHLIGHTED_RADIUS_OFFSET = 2;
  * @constant {number}
  */
 const SELECTED_RADIUS_OFFSET = 4;
+
+/**
+ * R-Tree node capacity.
+ * @private
+ * @constant {number}
+ */
+const NODE_CAPACITY = 32;
 
 /**
  * Shader GLSL source.
@@ -88,6 +103,22 @@ const createPoint = function(gl) {
 		});
 };
 
+const createCollidables = function(tile, xOffset, yOffset) {
+	const data = tile.data;
+	const collidables = new Array(data.length / 3);
+	for (let i=0; i<data.length; i+=3) {
+		// add collidable
+		collidables[i/3] = new CircleCollidable(
+			data[i], // x
+			data[i+1], // y
+			data[i+2], // radius
+			xOffset,
+			yOffset,
+			tile);
+	}
+	return collidables;
+};
+
 const renderTiles = function(atlas, shader, renderables, color) {
 	// set global uniforms
 	shader.setUniform('uColor', color);
@@ -116,48 +147,41 @@ const renderPoint = function(point, shader, plot, target, color, radius) {
 	const scale = Math.pow(2, plot.zoom - coord.z);
 	const viewport = plot.getViewportPixelOffset();
 	const tileOffset = [
-		(coord.x * scale * plot.tileSize) + (scale * target.x) - viewport.x,
-		(coord.y * scale * plot.tileSize) + (scale * target.y) - viewport.y
+		(((coord.x * plot.tileSize) + target.x) * scale) - viewport.x,
+		(((coord.y * plot.tileSize) + target.y) * scale) - viewport.y
 	];
 	// set uniforms
 	shader.setUniform('uTileOffset', tileOffset);
 	shader.setUniform('uScale', scale);
 	shader.setUniform('uColor', color);
 	shader.setUniform('uRadiusOffset', radius + target.radius);
-
 	// binds the buffer to instance
 	point.bind();
-
 	// draw the points
 	point.draw();
-
 	// unbind
 	point.unbind();
 };
 
 /**
- * Class representing an interactive point renderer.
+ * Class representing a webgl interactive point tile renderer.
  */
-class InteractiveRenderer extends WebGLInteractiveRenderer {
+class InteractiveTileRenderer extends WebGLTileRenderer {
 
 	/**
-	 * Instantiates a new InteractiveRenderer object.
+	 * Instantiates a new InteractiveTileRenderer object.
 	 *
 	 * @param {Object} options - The options object.
-	 * @param {Array} options.xField - The X field of the data.
-	 * @param {Array} options.yField - The Y field of the data.
-	 * @param {Array} options.radiusField - The radius field of the data.
 	 * @param {Array} options.color - The color of the points.
 	 */
 	constructor(options = {}) {
-		super(options);
+		super();
+		this.color = defaultTo(options.color, [ 1.0, 0.4, 0.1, 0.8 ]);
 		this.shader = null;
 		this.point = null;
+		this.tree = null;
 		this.atlas = null;
-		this.xField = defaultTo(options.xField, 'x');
-		this.yField = defaultTo(options.yField, 'y');
-		this.radiusField = defaultTo(options.radiusField, 'radius');
-		this.color = defaultTo(options.color, [ 1.0, 0.4, 0.1, 0.8 ]);
+		this.ext = null;
 	}
 
 	/**
@@ -173,16 +197,23 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 		this.ext = this.gl.getExtension('OES_standard_derivatives');
 		this.point = createPoint(this.gl);
 		this.shader = this.createShader(SHADER_GLSL);
+		this.tree = this.createRTreePyramid({
+			nodeCapacity: NODE_CAPACITY,
+			createCollidables: createCollidables
+		});
 		this.atlas = this.createVertexAtlas({
-			// position
-			0: {
-				size: 2,
-				type: 'FLOAT'
-			},
-			// radius
-			1: {
-				size: 1,
-				type: 'FLOAT'
+			chunkSize: CHUNK_SIZE,
+			attributePointers: {
+				// position
+				0: {
+					size: 2,
+					type: 'FLOAT'
+				},
+				// radius
+				1: {
+					size: 1,
+					type: 'FLOAT'
+				}
 			}
 		});
 		return this;
@@ -197,74 +228,32 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 	 */
 	onRemove(layer) {
 		this.destroyVertexAtlas(this.atlas);
+		this.destroyRTreePyramid(this.tree);
 		this.atlas = null;
 		this.shader = null;
 		this.point = null;
+		this.tree = null;
+		this.ext = null;
 		super.onRemove(layer);
 		return this;
 	}
 
 	/**
-	 * Executed when a tile is added to the layer pyramid.
+	 * Pick a position of the renderer for a collision with any rendered objects.
 	 *
-	 * @param {VertexAtlas} atlas - The vertex atlas object.
-	 * @param {Tile} tile - The new tile object containing data.
+	 * @param {Object} pos - The plot position to pick at.
+	 *
+	 * @returns {Object} The collision, if any.
 	 */
-	addTile(atlas, tile) {
-		const coord = tile.coord;
-		const data = tile.data;
-		const tileSize = this.layer.plot.tileSize;
-		const xOffset = coord.x * tileSize;
-		const yOffset = coord.y * tileSize;
-		const xField = this.xField;
-		const yField = this.yField;
-		const radiusField = this.radiusField;
-		const points = new Array(data.length);
-		const vertices = new Float32Array(data.length * 3);
-		for (let i=0; i<data.length; i++) {
-			const datum = data[i];
-			// get point attributes
-			const x = datum[xField];
-			const y = datum[yField];
-			const radius = datum[radiusField];
-			// convert to plot pixels
-			const plotX = x + xOffset;
-			const plotY = y + yOffset;
-			// add to buffer
-			vertices[i*3] = x;
-			vertices[i*3+1] = y;
-			vertices[i*3+2] = radius;
-			// add to points
-			points[i] = {
-				x: x,
-				y: y,
-				radius: radius,
-				minX: plotX - radius,
-				maxX: plotX + radius,
-				minY: plotY - radius,
-				maxY: plotY + radius,
-				tile: tile,
-				data: datum
-			};
+	pick(pos) {
+		if (this.layer.plot.isZooming()) {
+			return null;
 		}
-		// index points
-		this.addPoints(coord, points);
-		// add to atlas
-		atlas.set(coord.hash, vertices, points.length);
-	}
-
-	/**
-	 * Executed when a tile is removed from the layer pyramid.
-	 *
-	 * @param {VertexAtlas} atlas - The vertex atlas object.
-	 * @param {Tile} tile - The new tile object containing data.
-	 */
-	removeTile(atlas, tile) {
-		const coord = tile.coord;
-		// remove from atlas
-		atlas.delete(coord.hash);
-		// unindex points
-		this.removePoints(coord);
+		return this.tree.searchPoint(
+			pos.x,
+			pos.y,
+			this.layer.plot.zoom,
+			this.layer.plot.getPixelExtent());
 	}
 
 	/**
@@ -334,4 +323,4 @@ class InteractiveRenderer extends WebGLInteractiveRenderer {
 	}
 }
 
-module.exports = InteractiveRenderer;
+module.exports = InteractiveTileRenderer;

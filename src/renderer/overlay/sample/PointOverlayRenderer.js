@@ -2,7 +2,7 @@
 
 const defaultTo = require('lodash/defaultTo');
 const VertexBuffer = require('../../../webgl/vertex/VertexBuffer');
-const WebGLOverlay = require('./WebGLOverlay');
+const WebGLOverlayRenderer = require('../WebGLOverlayRenderer');
 
 // Constants
 
@@ -36,6 +36,7 @@ const SHADER_GLSL = {
 		#endif
 		precision highp float;
 		uniform vec4 uPointColor;
+		uniform float uOpacity;
 		void main() {
 			vec2 cxy = 2.0 * gl_PointCoord - 1.0;
 			float radius = dot(cxy, cxy);
@@ -48,7 +49,7 @@ const SHADER_GLSL = {
 					discard;
 				}
 			#endif
-			gl_FragColor = vec4(uPointColor.rgb, uPointColor.a * alpha);
+			gl_FragColor = vec4(uPointColor.rgb, uPointColor.a * alpha * uOpacity);
 		}
 		`
 };
@@ -82,29 +83,15 @@ const createVertexBuffer = function(gl, points) {
 		});
 };
 
-const clipPoints = function(cell, points) {
-	let clipped = [];
-	points.forEach(pts => {
-		const derp = cell.bounds.clipPoints(pts);
-		derp.forEach(point => {
-			clipped.push(cell.project(point));
-		});
-	});
-	return clipped;
-};
-
 /**
- * Class representing a webgl point overlay.
+ * Class representing a webgl point overlay renderer.
  */
-class WebGLPointOverlay extends WebGLOverlay {
+class PointOverlayRenderer extends WebGLOverlayRenderer {
 
 	/**
-	 * Instantiates a new WebGLPointOverlay object.
+	 * Instantiates a new PointOverlayRenderer object.
 	 *
-	 * @param {Object} options - The layer options.
-	 * @param {Renderer} options.renderer - The layer renderer.
-	 * @param {number} options.opacity - The layer opacity.
-	 * @param {number} options.zIndex - The layer z-index.
+	 * @param {Object} options - The overlay options.
 	 * @param {Array} options.pointColor - The color of the points.
 	 * @param {number} options.pointRadius - The pixel radius of the points.
 	 */
@@ -112,20 +99,20 @@ class WebGLPointOverlay extends WebGLOverlay {
 		super(options);
 		this.pointColor = defaultTo(options.pointColor, [ 1.0, 0.0, 1.0, 1.0 ]);
 		this.pointRadius = defaultTo(options.pointRadius, 4);
-		this.points = new Map();
 		this.shader = null;
 		this.ext = null;
+		this.points = null;
 	}
 
 	/**
 	 * Executed when the overlay is attached to a plot.
 	 *
-	 * @param {Plot} plot - The plot to attach the overlay to.
+	 * @param {Layer} overlay - The overlay to attach the renderer to.
 	 *
-	 * @returns {WebGLPointOverlay} The overlay object, for chaining.
+	 * @returns {PointOverlayRenderer} The renderer object, for chaining.
 	 */
-	onAdd(plot) {
-		super.onAdd(plot);
+	onAdd(overlay) {
+		super.onAdd(overlay);
 		this.ext = this.gl.getExtension('OES_standard_derivatives');
 		this.shader = this.createShader(SHADER_GLSL);
 		return this;
@@ -134,91 +121,52 @@ class WebGLPointOverlay extends WebGLOverlay {
 	/**
 	 * Executed when the overlay is removed from a plot.
 	 *
-	 * @param {Plot} plot - The plot to remove the overlay from.
+	 * @param {Layer} overlay - The overlay to remove the renderer from.
 	 *
-	 * @returns {WebGLPointOverlay} The overlay object, for chaining.
+	 * @returns {PointOverlayRenderer} The renderer object, for chaining.
 	 */
-	onRemove(plot) {
+	onRemove(overlay) {
 		this.shader = null;
 		this.ext = null;
-		super.onRemove(plot);
+		this.points = null;
+		super.onRemove(overlay);
 		return this;
 	}
 
 	/**
-	 * Create and return an array of VertexBuffers.
+	 * Generate any underlying buffers.
 	 *
-	 * @param {Cell} cell - The rendering cell.
-	 *
-	 * @returns {Array} The array of VertexBuffer objects.
+	 * @returns {PointOverlayRenderer} The overlay object, for chaining.
 	 */
-	createBuffers(cell) {
+	refreshBuffers() {
 		// clip points to only those that are inside the cell
-		const clipped = clipPoints(cell, this.points);
+		const clipped = this.overlay.getClippedGeometry();
 		// generate the buffer
-		if (clipped.length > 0) {
-			return createVertexBuffer(this.gl, clipped);
+		if (clipped && clipped.length > 0) {
+			this.points = createVertexBuffer(this.gl, clipped);
+		} else {
+			this.points = null;
 		}
-		return null;
-	}
-
-	/**
-	 * Add a set of points to render.
-	 *
-	 * @param {string} id - The id to store the points under.
-	 * @param {Array} points - The points.
-	 *
-	 * @returns {WebGLPointOverlay} The overlay object, for chaining.
-	 */
-	addPoints(id, points) {
-		this.points.set(id, points);
-		if (this.plot) {
-			this.refreshBuffers();
-		}
-		return this;
-	}
-
-	/**
-	 * Remove a set of points by id from the overlay.
-	 *
-	 * @param {string} id - The id to store the points under.
-	 *
-	 * @returns {WebGLPointOverlay} The overlay object, for chaining.
-	 */
-	removePoints(id) {
-		this.points.delete(id);
-		if (this.plot) {
-			this.refreshBuffers();
-		}
-		return this;
-	}
-
-	/**
-	 * Remove all points from the layer.
-	 *
-	 * @returns {WebGLPointOverlay} The overlay object, for chaining.
-	 */
-	clearPoints() {
-		this.points = new Map();
-		if (this.plot) {
-			this.buffers = [];
-		}
-		return this;
 	}
 
 	/**
 	 * The draw function that is executed per frame.
 	 *
-	 * @returns {WebGLPointOverlay} The overlay object, for chaining.
+	 * @returns {PointOverlayRenderer} The overlay object, for chaining.
 	 */
 	draw() {
+		if (!this.points) {
+			return this;
+		}
+
 		const gl = this.gl;
 		const shader = this.shader;
-		const buffers = this.buffers;
-		const plot = this.plot;
+		const points = this.points;
+		const plot = this.overlay.plot;
 		const cell = plot.cell;
 		const proj = this.getOrthoMatrix();
 		const scale = Math.pow(2, plot.zoom - cell.zoom);
+		const opacity = this.overlay.opacity;
 
 		// get view offset in cell space
 		const offset = cell.project(plot.viewport, plot.zoom);
@@ -237,16 +185,14 @@ class WebGLPointOverlay extends WebGLOverlay {
 		shader.setUniform('uPointColor', this.pointColor);
 		shader.setUniform('uPointRadius', this.pointRadius);
 		shader.setUniform('uPixelRatio', plot.pixelRatio);
+		shader.setUniform('uOpacity', opacity);
 
-		// for each point buffer
-		buffers.forEach(buffer => {
-			// draw the points
-			buffer.bind();
-			buffer.draw();
-		});
+		// draw the points
+		points.bind();
+		points.draw();
 
 		return this;
 	}
 }
 
-module.exports = WebGLPointOverlay;
+module.exports = PointOverlayRenderer;

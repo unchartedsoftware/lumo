@@ -63,8 +63,7 @@ const getAttributePointers = function(attributePointers) {
 };
 
 /**
- * @class VertexBuffer
- * @classdesc A vertex buffer object.
+ * Class representing a vertex buffer.
  */
 class VertexBuffer {
 

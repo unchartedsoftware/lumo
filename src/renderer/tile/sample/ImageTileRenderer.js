@@ -1,7 +1,7 @@
 'use strict';
 
-const VertexBuffer = require('../../webgl/vertex/VertexBuffer');
-const WebGLTextureRenderer = require('./WebGLTextureRenderer');
+const VertexBuffer = require('../../../webgl/vertex/VertexBuffer');
+const WebGLTileRenderer = require('../WebGLTileRenderer');
 
 // Constants
 
@@ -92,17 +92,15 @@ const createQuad = function(gl, min, max) {
 };
 
 /**
- * Class representing a renderer.
+ * Class representing a webgl image tile renderer.
  */
-class TextureRenderer extends WebGLTextureRenderer {
+class ImageTileRenderer extends WebGLTileRenderer {
 
 	/**
-	 * Instantiates a new TextureRenderer object.
-	 *
-	 * @param {Object} options - The options object.
+	 * Instantiates a new ImageTileRenderer object.
 	 */
-	constructor(options = {}) {
-		super(options);
+	constructor() {
+		super();
 		this.quad = null;
 		this.shader = null;
 		this.array = null;
@@ -113,13 +111,15 @@ class TextureRenderer extends WebGLTextureRenderer {
 	 *
 	 * @param {Layer} layer - The layer to attach the renderer to.
 	 *
-	 * @returns {Renderer} The renderer object, for chaining.
+	 * @returns {ImageTileRenderer} The renderer object, for chaining.
 	 */
 	onAdd(layer) {
 		super.onAdd(layer);
 		this.quad = createQuad(this.gl, 0, layer.plot.tileSize);
 		this.shader = this.createShader(SHADER_GLSL);
-		this.array = this.createTextureArray(layer.plot.tileSize);
+		this.array = this.createTextureArray({
+			chunkSize: layer.plot.tileSize
+		});
 		return this;
 	}
 
@@ -128,7 +128,7 @@ class TextureRenderer extends WebGLTextureRenderer {
 	 *
 	 * @param {Layer} layer - The layer to remove the renderer from.
 	 *
-	 * @returns {Renderer} The renderer object, for chaining.
+	 * @returns {ImageTileRenderer} The renderer object, for chaining.
 	 */
 	onRemove(layer) {
 		this.destroyTextureArray(this.array);
@@ -142,7 +142,7 @@ class TextureRenderer extends WebGLTextureRenderer {
 	/**
 	 * The draw function that is executed per frame.
 	 *
-	 * @returns {Renderer} The renderer object, for chaining.
+	 * @returns {ImageTileRenderer} The renderer object, for chaining.
 	 */
 	draw() {
 		const gl = this.gl;
@@ -185,4 +185,4 @@ class TextureRenderer extends WebGLTextureRenderer {
 	}
 }
 
-module.exports = TextureRenderer;
+module.exports = ImageTileRenderer;

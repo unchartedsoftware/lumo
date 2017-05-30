@@ -1,7 +1,6 @@
 'use strict';
 
 const EventType = require('./event/EventType');
-const CollisionType = require('./geometry/CollisionType');
 
 module.exports = {
 	// events
@@ -20,6 +19,7 @@ module.exports = {
 	ZOOM_END: EventType.ZOOM_END,
 	RESIZE: EventType.RESIZE,
 	FRAME: EventType.FRAME,
+	REFRESH: EventType.REFRESH,
 	TILE_REQUEST: EventType.TILE_REQUEST,
 	TILE_FAILURE: EventType.TILE_FAILURE,
 	TILE_ADD: EventType.TILE_ADD,
@@ -34,32 +34,35 @@ module.exports = {
 	// geometry
 	Bounds: require('./geometry/Bounds'),
 	RTree: require('./geometry/RTree'),
-	// collision types
-	CIRCLE: CollisionType.CIRCLE,
-	RECTANGLE: CollisionType.RECTANGLE,
+	RTreePyramid: require('./geometry/RTreePyramid'),
+	CircleCollidable: require('./geometry/CircleCollidable'),
+	RectangleCollidable: require('./geometry/RectangleCollidable'),
 	// plot
 	Plot: require('./plot/Plot'),
 	// layer
 	Layer: require('./layer/Layer'),
 	// tile layer
-	Tile: require('./layer/tile/Tile'),
-	TileCoord: require('./layer/tile/TileCoord'),
 	TileLayer: require('./layer/tile/TileLayer'),
-	// overlay
+	// overlay layer
 	Overlay: require('./layer/overlay/Overlay'),
-	WebGLOverlay: require('./layer/overlay/webgl/WebGLOverlay'),
-	WebGLLineOverlay: require('./layer/overlay/webgl/WebGLLineOverlay'),
-	WebGLPointOverlay: require('./layer/overlay/webgl/WebGLPointOverlay'),
-	// render
+	PointOverlay: require('./layer/overlay/PointOverlay'),
+	LineOverlay: require('./layer/overlay/LineOverlay'),
+	// renderer
 	Renderer: require('./renderer/Renderer'),
-	WebGLRenderer: require('./renderer/webgl/WebGLRenderer'),
-	WebGLTextureRenderer: require('./renderer/webgl/WebGLTextureRenderer'),
-	WebGLVertexRenderer: require('./renderer/webgl/WebGLVertexRenderer'),
-	WebGLInteractiveRenderer: require('./renderer/webgl/WebGLInteractiveRenderer'),
-	PointRenderer: require('./renderer/webgl/PointRenderer'),
-	ShapeRenderer: require('./renderer/webgl/ShapeRenderer'),
-	TextureRenderer: require('./renderer/webgl/TextureRenderer'),
-	InteractiveRenderer: require('./renderer/webgl/InteractiveRenderer'),
+	// tile renderer
+	TileRenderer: require('./renderer/tile/TileRenderer'),
+	// webgl tile renderer
+	WebGLTileRenderer: require('./renderer/tile/WebGLTileRenderer'),
+	ImageTileRenderer: require('./renderer/tile/sample/ImageTileRenderer'),
+	InteractiveTileRenderer: require('./renderer/tile/sample/InteractiveTileRenderer'),
+	PointTileRenderer: require('./renderer/tile/sample/PointTileRenderer'),
+	InstancedTileRenderer: require('./renderer/tile/sample/InstancedTileRenderer'),
+	// overlay renderer
+	OverlayRenderer: require('./renderer/overlay/OverlayRenderer'),
+	// webgl overlay renderer
+	WebGLOverlayRenderer: require('./renderer/overlay/WebGLOverlayRenderer'),
+	PointOverlayRenderer: require('./renderer/overlay/sample/PointOverlayRenderer'),
+	LineOverlayRenderer: require('./renderer/overlay/sample/LineOverlayRenderer'),
 	// webgl shader
 	Shader: require('./webgl/shader/Shader'),
 	// webgl texture
@@ -70,7 +73,6 @@ module.exports = {
 	VertexBuffer: require('./webgl/vertex/VertexBuffer'),
 	// util
 	Browser: require('./util/Browser'),
-	Keyboard: require('./util/Keyboard'),
 	loadBuffer: require('./util/loadBuffer'),
 	loadImage: require('./util/loadImage')
 };

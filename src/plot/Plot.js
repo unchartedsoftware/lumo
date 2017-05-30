@@ -9,13 +9,13 @@ const EventBroadcaster = require('../event/EventBroadcaster');
 const EventDelegator = require('../event/EventDelegator');
 const Event = require('../event/Event');
 const ResizeEvent = require('../event/ResizeEvent');
-const RenderBuffer = require('../webgl/texture/RenderBuffer');
-const Viewport = require('./Viewport');
-const Cell = require('./Cell');
+const RenderBuffer = require('../webgl/RenderBuffer');
 const ClickHandler = require('./handler/ClickHandler');
 const MouseHandler = require('./handler/MouseHandler');
 const PanHandler = require('./handler/PanHandler');
 const ZoomHandler = require('./handler/ZoomHandler');
+const Cell = require('./Cell');
+const Viewport = require('./Viewport');
 
 // Constants
 
@@ -143,7 +143,7 @@ const resize = function(plot) {
 		plot.canvas.style.height = current.height + 'px';
 		plot.canvas.width = current.width * plot.pixelRatio;
 		plot.canvas.height = current.height * plot.pixelRatio;
-		// resize render target
+		// resize renderbuffer
 		plot.renderBuffer.resize(
 			current.width * plot.pixelRatio,
 			current.height * plot.pixelRatio);
@@ -261,8 +261,8 @@ const frame = function(plot) {
 		// update cell
 		updateCell(plot);
 
-		// context shorthand
-		const gl = plot.gl;
+		// get context
+		const gl = plot.getRenderingContext();
 
 		// clear the backbuffer
 		gl.clearColor(0, 0, 0, 0);
@@ -308,6 +308,8 @@ class Plot extends EventEmitter {
 	 * @param {number} options.maxZoom - The maximum zoom of the plot.
 	 * @param {Object} options.center - The center of the plot, in plot pixels.
 	 * @param {boolean} options.wraparound - Whether or not the plot wraps around.
+	 * @param {boolean} options.context - The rendering context type, defaults to `webgl`.
+	 * @param {boolean} options.contextAttributes - The rendering context attribtues argument. Optional.
 	 * @param {boolean} options.dirtyChecking - Whether or not the plot uses dirty checking or renders every frame.
 	 *
 	 * @param {number} options.panThrottle - Pan request throttle timeout in ms.
@@ -331,28 +333,28 @@ class Plot extends EventEmitter {
 			throw `Element could not be found for selector ${selector}`;
 		}
 
+		// set pixel ratio
+		this.pixelRatio = window.devicePixelRatio;
+
 		// create canvas element
 		this.canvas = document.createElement('canvas');
-		this.canvas.style.width = this.container.offsetWidth + 'px';
-		this.canvas.style.height = this.container.offsetHeight + 'px';
-		this.canvas.width = this.container.offsetWidth * window.devicePixelRatio;
-		this.canvas.height = this.container.offsetHeight * window.devicePixelRatio;
+		this.canvas.style.width = `${this.container.offsetWidth}px`;
+		this.canvas.style.height = `${this.container.offsetHeight}px`;
+		this.canvas.width = this.container.offsetWidth * this.pixelRatio;
+		this.canvas.height = this.container.offsetHeight * this.pixelRatio;
 		this.container.appendChild(this.canvas);
 
-		// get WebGL context
-		this.gl = this.canvas.getContext('webgl', options);
-		if (!this.gl) {
+		// get rendering context
+		this.ctx = this.canvas.getContext('webgl', options.contextAttributes);
+		if (!this.ctx) {
 			throw 'Unable to create a WebGLRenderingContext, please ensure your browser supports WebGL';
 		}
 
 		// create renderbuffer
 		this.renderBuffer = new RenderBuffer(
-			this.gl,
+			this.ctx,
 			this.canvas.width,
 			this.canvas.height);
-
-		// set pixel ratio
-		this.pixelRatio = window.devicePixelRatio;
 
 		// tile size in pixels
 		this.tileSize = defaultTo(options.tileSize, 256);
@@ -460,7 +462,7 @@ class Plot extends EventEmitter {
 			this.remove(layer);
 		});
 		// destroy context
-		this.gl = null;
+		this.ctx = null;
 		// remove canvas
 		this.container.removeChild(this.canvas);
 		this.canvas = null;
@@ -532,6 +534,15 @@ class Plot extends EventEmitter {
 		layer.onRemove(this);
 		this.setDirty();
 		return this;
+	}
+
+	/**
+	 * Returns the rendering context of the plot.
+	 *
+	 * @returns {WebGLRenderingContext|CanvasRenderingContext2D} The context object.
+	 */
+	getRenderingContext() {
+		return this.ctx;
 	}
 
 	/**

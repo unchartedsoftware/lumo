@@ -1,31 +1,16 @@
 'use strict';
 
 const defaultTo = require('lodash/defaultTo');
-const VertexBuffer = require('../../webgl/vertex/VertexBuffer');
-const WebGLVertexRenderer = require('./WebGLVertexRenderer');
+const WebGLTileRenderer = require('../WebGLTileRenderer');
 
 // Constants
 
 /**
- * Inner radius of star.
+ * Numver of vertices supported per chunk.
  * @private
  * @constant {number}
  */
-const STAR_INNER_RADIUS = 0.4;
-
-/**
- * Outer radius of star.
- * @private
- * @constant {number}
- */
-const STAR_OUTER_RADIUS = 1.0;
-
-/**
- * number of points on the star.
- * @private
- * @constant {number}
- */
-const STAR_NUM_POINTS = 5;
+const CHUNK_SIZE = 128 * 128;
 
 /**
  * Shader GLSL source.
@@ -37,80 +22,58 @@ const SHADER_GLSL = {
 		`
 		precision highp float;
 		attribute vec2 aPosition;
-		attribute vec2 aOffset;
 		attribute float aRadius;
 		uniform vec2 uTileOffset;
 		uniform float uScale;
+		uniform float uPixelRatio;
 		uniform mat4 uProjectionMatrix;
 		void main() {
-			vec2 wPosition = (aPosition * aRadius) + (aOffset * uScale) + uTileOffset;
+			vec2 wPosition = (aPosition * uScale) + uTileOffset;
+			gl_PointSize = aRadius * 2.0 * uPixelRatio;
 			gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
 		}
 		`,
 	frag:
 		`
+		#ifdef GL_OES_standard_derivatives
+			#extension GL_OES_standard_derivatives : enable
+		#endif
 		precision highp float;
 		uniform vec4 uColor;
 		void main() {
-			gl_FragColor = uColor;
+			vec2 cxy = 2.0 * gl_PointCoord - 1.0;
+			float radius = dot(cxy, cxy);
+			float alpha = 1.0;
+			#ifdef GL_OES_standard_derivatives
+				float delta = fwidth(radius);
+				alpha = 1.0 - smoothstep(1.0 - delta, 1.0 + delta, radius);
+			#else
+				if (radius > 1.0) {
+					discard;
+				}
+			#endif
+			gl_FragColor = vec4(uColor.rgb, uColor.a * alpha);
 		}
 		`
 };
 
-// Private Methods
-
-const createStar = function(gl) {
-	const theta = (2 * Math.PI) / STAR_NUM_POINTS;
-	const htheta = theta / 2.0;
-	const qtheta = theta / 4.0;
-	const positions = new Float32Array((STAR_NUM_POINTS * 2) * 2 + 4);
-	positions[0] = 0;
-	positions[1] = 0;
-	for (let i=0; i<STAR_NUM_POINTS; i++) {
-		const angle = i * theta;
-		let sx = Math.cos(angle - qtheta) * STAR_INNER_RADIUS;
-		let sy = Math.sin(angle - qtheta) * STAR_INNER_RADIUS;
-		positions[i*4+2] = sx;
-		positions[i*4+1+2] = sy;
-		sx = Math.cos(angle + htheta - qtheta) * STAR_OUTER_RADIUS;
-		sy = Math.sin(angle + htheta - qtheta) * STAR_OUTER_RADIUS;
-		positions[i*4+2+2] = sx;
-		positions[i*4+3+2] = sy;
-	}
-	positions[positions.length-2] = positions[2];
-	positions[positions.length-1] = positions[3];
-	return new VertexBuffer(
-		gl,
-		positions,
-		{
-			0: {
-				size: 2,
-				type: 'FLOAT'
-			}
-		},
-		{
-			mode: 'TRIANGLE_FAN',
-			count: positions.length / 2
-		});
-};
-
 /**
- * Class representing a shape renderer.
+ * Class representing a webgl point tile renderer.
  */
-class ShapeRenderer extends WebGLVertexRenderer {
+class PointTileRenderer extends WebGLTileRenderer {
 
 	/**
-	 * Instantiates a new ShapeRenderer object.
+	 * Instantiates a new PointTileRenderer object.
 	 *
 	 * @param {Object} options - The options object.
 	 * @param {Array} options.color - The color of the points.
 	 */
 	constructor(options = {}) {
-		super(options);
-		this.shape = null;
+		super();
+		this.color = defaultTo(options.color, [ 1.0, 0.4, 0.1, 0.8 ]);
 		this.shader = null;
 		this.atlas = null;
-		this.color = defaultTo(options.color, [ 1.0, 0.4, 0.1, 0.8 ]);
+		this.ext = null;
 	}
 
 	/**
@@ -122,18 +85,22 @@ class ShapeRenderer extends WebGLVertexRenderer {
 	 */
 	onAdd(layer) {
 		super.onAdd(layer);
-		this.shape = createStar(this.gl);
+		// get the extension for standard derivatives
+		this.ext = this.gl.getExtension('OES_standard_derivatives');
 		this.shader = this.createShader(SHADER_GLSL);
 		this.atlas = this.createVertexAtlas({
-			// offset
-			1: {
-				size: 2,
-				type: 'FLOAT'
-			},
-			// radius
-			2: {
-				size: 1,
-				type: 'FLOAT'
+			chunkSize: CHUNK_SIZE,
+			attributePointers: {
+				// position
+				0: {
+					size: 2,
+					type: 'FLOAT'
+				},
+				// radius
+				1: {
+					size: 1,
+					type: 'FLOAT'
+				}
 			}
 		});
 		return this;
@@ -149,8 +116,8 @@ class ShapeRenderer extends WebGLVertexRenderer {
 	onRemove(layer) {
 		this.destroyVertexAtlas(this.atlas);
 		this.atlas = null;
-		this.shape = null;
 		this.shader = null;
+		this.ext = null;
 		super.onRemove(layer);
 		return this;
 	}
@@ -164,7 +131,6 @@ class ShapeRenderer extends WebGLVertexRenderer {
 		const gl = this.gl;
 		const shader = this.shader;
 		const atlas = this.atlas;
-		const shape = this.shape;
 		const plot = this.layer.plot;
 		const renderables = this.getRenderables();
 		const proj = this.getOrthoMatrix();
@@ -184,12 +150,10 @@ class ShapeRenderer extends WebGLVertexRenderer {
 		// set global uniforms
 		shader.setUniform('uProjectionMatrix', proj);
 		shader.setUniform('uColor', this.color);
+		shader.setUniform('uPixelRatio', plot.pixelRatio);
 
-		// bind shape
-		shape.bind();
-
-		// binds the buffer to instance
-		atlas.bindInstanced();
+		// binds the vertex atlas
+		atlas.bind();
 
 		// for each renderable
 		for (let i=0; i<renderables.length; i++) {
@@ -197,15 +161,12 @@ class ShapeRenderer extends WebGLVertexRenderer {
 			// set tile uniforms
 			shader.setUniform('uScale', renderable.scale);
 			shader.setUniform('uTileOffset', renderable.tileOffset);
-			// draw the instances
-			atlas.drawInstanced(renderable.hash, shape.mode, shape.count);
+			// draw the points
+			atlas.draw(renderable.hash, 'POINTS');
 		}
 
 		// unbind
-		atlas.unbindInstanced();
-
-		// unbind quad
-		shape.unbind();
+		atlas.unbind();
 
 		// unbind render target
 		plot.renderBuffer.unbind();
@@ -217,4 +178,4 @@ class ShapeRenderer extends WebGLVertexRenderer {
 	}
 }
 
-module.exports = ShapeRenderer;
+module.exports = PointTileRenderer;

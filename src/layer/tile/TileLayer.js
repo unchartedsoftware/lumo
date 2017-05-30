@@ -22,7 +22,6 @@ class TileLayer extends Layer {
 	 * Instantiates a new TileLayer object.
 	 *
 	 * @param {Object} options - The layer options.
-	 * @param {Renderer} options.renderer - The layer renderer.
 	 * @param {number} options.opacity - The layer opacity.
 	 * @param {number} options.zIndex - The layer z-index.
 	 * @param {boolean} options.hidden - Whether or not the layer is visible.
@@ -33,7 +32,6 @@ class TileLayer extends Layer {
 	constructor(options = {}) {
 		super(options);
 		this.muted = defaultTo(options.muted, false);
-		this.renderer = defaultTo(options.renderer, null);
 		this.pyramid = new TilePyramid(this, options);
 	}
 
@@ -46,10 +44,6 @@ class TileLayer extends Layer {
 	 */
 	onAdd(plot) {
 		super.onAdd(plot);
-		// execute renderer hook
-		if (this.renderer) {
-			this.renderer.onAdd(this);
-		}
 		// request tiles if not muted
 		if (!this.isMuted()) {
 			requestVisibleTiles(this);
@@ -67,58 +61,8 @@ class TileLayer extends Layer {
 	onRemove(plot) {
 		// clear the underlying pyramid
 		this.pyramid.clear();
-		// execute renderer hook
-		if (this.renderer) {
-			this.renderer.onRemove(this);
-		}
 		super.onRemove(plot);
 		return this;
-	}
-
-	/**
-	 * Add a renderer to the layer.
-	 *
-	 * @param {Renderer} renderer - The renderer to add to the layer.
-	 *
-	 * @returns {TileLayer} The layer object, for chaining.
-	 */
-	setRenderer(renderer) {
-		if (!renderer) {
-			throw 'No renderer argument provided';
-		}
-		if (this.renderer && this.plot) {
-			this.renderer.onRemove(this);
-		}
-		this.renderer = renderer;
-		if (this.plot) {
-			this.renderer.onAdd(this);
-		}
-		return this;
-	}
-
-	/**
-	 * Remove the renderer from the layer.
-	 *
-	 * @returns {TileLayer} The layer object, for chaining.
-	 */
-	removeRenderer() {
-		if (!this.renderer) {
-			throw 'No renderer is currently attached to the layer';
-		}
-		if (this.plot) {
-			this.renderer.onRemove(this);
-		}
-		this.renderer = null;
-		return this;
-	}
-
-	/**
-	 * Returns the renderer of the layer.
-	 *
-	 * @returns {Renderer} The renderer object.
-	 */
-	getRenderer() {
-		return this.renderer;
 	}
 
 	/**
@@ -207,48 +151,25 @@ class TileLayer extends Layer {
 	}
 
 	/**
-	 * Draw the layer for the frame.
-	 *
-	 * @param {number} timestamp - The frame timestamp.
-	 *
-	 * @returns {TileLayer} The layer object, for chaining.
-	 */
-	draw(timestamp) {
-		if (this.renderer) {
-			this.renderer.draw(timestamp);
-		}
-		return this;
-	}
-
-	/**
-	 * Clears any persisted state in the layer.
+	 * Clears any persisted state in the layer and refreshes the underlying
+	 * data. This involves emptying the tile pyramid and re-requesting all the
+	 * tiles.
 	 *
 	 * @returns {TileLayer} The layer object, for chaining.
 	 */
-	clear() {
-		super.clear();
-		// clear renderer state
-		if (this.renderer) {
-			this.renderer.clear();
-		}
-		return this;
-	}
-
-	/**
-	 * Clear and re-request all tiles for the layer.
-	 *
-	 * @returns {TileLayer} The layer object, for chaining.
-	 */
+	 /**
+ 	 * Clears any persisted state in the layer and refreshes the underlying
+ 	 * data.
+ 	 */
 	refresh() {
 		// clear the underlying pyramid
 		this.pyramid.clear();
-		// clear layer state
-		this.clear();
 		// request if attached and not muted
 		if (this.plot && !this.isMuted()) {
 			// request visible tiles
 			requestVisibleTiles(this);
 		}
+		super.refresh();
 		return this;
 	}
 
@@ -275,20 +196,6 @@ class TileLayer extends Layer {
 		}
 		this.pyramid.requestTiles(coords);
 		return this;
-	}
-
-	/**
-	 * Pick a position of the layer for a collision with any rendered objects.
-	 *
-	 * @param {Object} pos - The plot position to pick at.
-	 *
-	 * @returns {Object} The collision, or null.
-	 */
-	pick(pos) {
-		if (this.renderer) {
-			return this.renderer.pick(pos);
-		}
-		return null;
 	}
 }
 
