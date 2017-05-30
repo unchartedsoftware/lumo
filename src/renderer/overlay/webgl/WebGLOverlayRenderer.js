@@ -1,8 +1,8 @@
 'use strict';
 
 const Shader = require('../../../webgl/shader/Shader');
-const Renderer = require('../OverlayRenderer');
 const EventType = require('../../../event/EventType');
+const OverlayRenderer = require('../OverlayRenderer');
 
 // Constants
 
@@ -16,7 +16,7 @@ const REFRESH = Symbol();
 /**
  * Class representing a webgl overlay renderer.
  */
-class WebGLOverlayRenderer extends Renderer {
+class WebGLOverlayRenderer extends OverlayRenderer {
 
 	/**
 	 * Instantiates a new WebGLOverlayRenderer object.

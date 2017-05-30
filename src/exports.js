@@ -57,16 +57,12 @@ module.exports = {
 	TileRenderer: require('./renderer/tile/TileRenderer'),
 	// webgl tile renderer
 	WebGLTileRenderer: require('./renderer/tile/webgl/WebGLTileRenderer'),
-	WebGLTextureTileRenderer: require('./renderer/tile/webgl/WebGLTextureTileRenderer'),
-	WebGLVertexTileRenderer: require('./renderer/tile/webgl/WebGLVertexTileRenderer'),
-	// webgl sample renderer
 	WebGLImageTileRenderer: require('./renderer/tile/webgl/sample/WebGLImageTileRenderer'),
 	WebGLInteractiveTileRenderer: require('./renderer/tile/webgl/sample/WebGLInteractiveTileRenderer'),
 	WebGLPointTileRenderer: require('./renderer/tile/webgl/sample/WebGLPointTileRenderer'),
 	WebGLShapeTileRenderer: require('./renderer/tile/webgl/sample/WebGLShapeTileRenderer'),
 	// canvas tile renderer
 	CanvasTileRenderer: require('./renderer/tile/canvas/CanvasTileRenderer'),
-	// canvas sample renderer
 	CanvasImageTileRenderer: require('./renderer/tile/canvas/sample/CanvasImageTileRenderer'),
 	// overlay renderer
 	OverlayRenderer: require('./renderer/overlay/OverlayRenderer'),
