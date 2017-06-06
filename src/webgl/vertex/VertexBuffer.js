@@ -110,6 +110,7 @@ class VertexBuffer {
 		const gl = this.gl;
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
 		gl.bufferData(gl.ARRAY_BUFFER, arg, gl.STATIC_DRAW);
+		return this;
 	}
 
 	/**

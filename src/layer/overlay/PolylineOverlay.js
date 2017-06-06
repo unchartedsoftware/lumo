@@ -7,30 +7,18 @@ const Overlay = require('./Overlay');
 const clipPolylines = function(cell, polylines) {
 	const clipped = [];
 	polylines.forEach(polyline => {
-		let current = [];
-		for (let i=1; i<polyline.length; i++) {
-			const a = polyline[i-1];
-			const b = polyline[i];
-			// clip the line
-			const line = cell.bounds.clipLine(a, b);
-			// no line in bounds
-			if (!line) {
-				continue;
-			}
-			// add src point
-			current.push(cell.project(line.a));
-			if (line.b.clipped || i === polyline.length - 1) {
-				// only add destination point if it was clipped, or is last
-				// point
-				current.push(cell.project(line.b));
-				// then break the polyline
-				clipped.push(current);
-				current = [];
-			}
+		// clip the polyline, resulting in multiple clipped polylines
+		const clippedPolylines = cell.bounds.clipPolyline(polyline);
+		if (!clippedPolylines) {
+			return;
 		}
-		if (current.length > 0) {
-			// add last polyline
-			clipped.push(current);
+		for (let i=0; i<clippedPolylines.length; i++) {
+			const clippedPolyline = clippedPolylines[i];
+			for (let j=0; j<clippedPolyline.length; j++) {
+				// project in place
+				clippedPolyline[j] = cell.project(clippedPolyline[j]);
+			}
+			clipped.push(clippedPolyline);
 		}
 	});
 	return clipped;
@@ -39,10 +27,10 @@ const clipPolylines = function(cell, polylines) {
 /**
  * Class representing a polyline overlay.
  */
-class LineOverlay extends Overlay {
+class PolylineOverlay extends Overlay {
 
 	/**
-	 * Instantiates a new LineOverlay object.
+	 * Instantiates a new PolylineOverlay object.
 	 *
 	 * @param {Object} options - The layer options.
 	 * @param {Renderer} options.renderer - The layer renderer.
@@ -60,7 +48,7 @@ class LineOverlay extends Overlay {
 	 * @param {string} id - The id to store the polyline under.
 	 * @param {Array} points - The polyline points.
 	 *
-	 * @returns {LineOverlay} The overlay object, for chaining.
+	 * @returns {PolylineOverlay} The overlay object, for chaining.
 	 */
 	addPolyline(id, points) {
 		this.polylines.set(id, points);
@@ -75,7 +63,7 @@ class LineOverlay extends Overlay {
 	 *
 	 * @param {string} id - The id to store the polyline under.
 	 *
-	 * @returns {LineOverlay} The overlay object, for chaining.
+	 * @returns {PolylineOverlay} The overlay object, for chaining.
 	 */
 	removePolyline(id) {
 		this.polylines.delete(id);
@@ -88,7 +76,7 @@ class LineOverlay extends Overlay {
 	/**
 	 * Remove all polylines from the layer.
 	 *
-	 * @returns {LineOverlay} The overlay object, for chaining.
+	 * @returns {PolylineOverlay} The overlay object, for chaining.
 	 */
 	clearPolylines() {
 		this.clear();
@@ -106,10 +94,9 @@ class LineOverlay extends Overlay {
 	 *
 	 * @returns {Array} The array of clipped geometry.
 	 */
-	/* eslint-disable no-unused-vars */
 	clipGeometry(cell) {
 		return clipPolylines(cell, this.polylines);
 	}
 }
 
-module.exports = LineOverlay;
+module.exports = PolylineOverlay;

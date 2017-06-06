@@ -46,7 +46,8 @@ module.exports = {
 	// overlay layer
 	Overlay: require('./layer/overlay/Overlay'),
 	PointOverlay: require('./layer/overlay/PointOverlay'),
-	LineOverlay: require('./layer/overlay/LineOverlay'),
+	PolylineOverlay: require('./layer/overlay/PolylineOverlay'),
+	PolygonOverlay: require('./layer/overlay/PolygonOverlay'),
 	// renderer
 	Renderer: require('./renderer/Renderer'),
 	// tile renderer
@@ -62,7 +63,8 @@ module.exports = {
 	// webgl overlay renderer
 	WebGLOverlayRenderer: require('./renderer/overlay/WebGLOverlayRenderer'),
 	PointOverlayRenderer: require('./renderer/overlay/sample/PointOverlayRenderer'),
-	LineOverlayRenderer: require('./renderer/overlay/sample/LineOverlayRenderer'),
+	PolylineOverlayRenderer: require('./renderer/overlay/sample/PolylineOverlayRenderer'),
+	PolygonOverlayRenderer: require('./renderer/overlay/sample/PolygonOverlayRenderer'),
 	// webgl shader
 	Shader: require('./webgl/shader/Shader'),
 	// webgl texture
