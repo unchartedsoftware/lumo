@@ -73,6 +73,7 @@ module.exports = {
 	// webgl vertex
 	VertexAtlas: require('./webgl/vertex/VertexAtlas'),
 	VertexBuffer: require('./webgl/vertex/VertexBuffer'),
+	IndexBuffer: require('./webgl/vertex/IndexBuffer'),
 	// util
 	Browser: require('./util/Browser'),
 	loadBuffer: require('./util/loadBuffer'),
