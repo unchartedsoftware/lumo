@@ -215,7 +215,7 @@ class SampleRenderer extends WebGLVertexRenderer {
 An overlay represents a single source of data. The data is not tiled and is added and removed in a global sense. Overlays are typically used when a small amount of client-side static data needs to be displayed.
 
 ```javascript
-const overlay = new lumo.LineOverlay();
+const overlay = new lumo.PolylineOverlay();
 
 overlay.addPolyline('line-id', [
 	{ x: 0.2, y: 0.2 },
@@ -233,7 +233,7 @@ plot.add(overlay)
 A `lumo.OverlayRenderer` is attached to a `lumo.Overlay` and is responsible for spatially partitioning the data and efficiently rendering any available data to the plot.
 
 ```javascript
-const renderer = new lumo.LineOverlayRenderer();
+const renderer = new lumo.PolylineOverlayRenderer();
 overlay.setRenderer(renderer);
 ```
 
