@@ -88,17 +88,17 @@ describe('Bounds', () => {
 
 	describe('#overlaps()', () => {
 		it('should return true if the bounds overlap, inclusive of edges', () => {
-			//	_ _ _ _ _ _ _ _ _ _ _
-			// | d				|				c |
-			// |			_ _ | _ _			|
-			// |		 |		|		|		 |
-			// |		 |		|		|		 |
-			//	_ _ _ _ _ _ _ _ _ _ _
-			// |		 |		|		|		 |
-			// |		 | e	|		|		 |
-			// |			_ _ | _ _			|
-			// | a				|				b |
-			//	_ _ _ _ _ _ _ _ _ _ _
+			//  _ _ _ _ _ _ _ _ _ _ _
+			// | d        |        c |
+			// |      _ _ | _ _      |
+			// |     |    |    |     |
+			// |     |    |    |     |
+			//  _ _ _ _ _ _ _ _ _ _ _
+			// |     |    |    |     |
+			// |     | e  |    |     |
+			// |      _ _ | _ _      |
+			// | a        |        b |
+			//  _ _ _ _ _ _ _ _ _ _ _
 			const a = new Bounds(0, 1, 0, 1);
 			const b = new Bounds(1, 2, 0, 1);
 			const c = new Bounds(1, 2, 1, 2);
@@ -131,19 +131,19 @@ describe('Bounds', () => {
 			assert(d.overlaps(b));
 		});
 		it('should return false if the bounds do not overlap, inclusive of edges', () => {
-			//	_ _ _ _ _ _		_ _ _ _ _ _
-			// | d				 |	|				 c |
-			// |					 |	|					 |
-			// |					 |	|					 |
-			// |					 |	|					 |
-			//	_ _ _ _ _ _		_ _ _ _ _ _
+			//  _ _ _ _ _ _    _ _ _ _ _ _
+			// | d         |  |         c |
+			// |           |  |           |
+			// |           |  |           |
+			// |           |  |           |
+			//  _ _ _ _ _ _    _ _ _ _ _ _
 			//
-			//	_ _ _ _ _ _		_ _ _ _ _ _
-			// |					 |	|					 |
-			// |					 |	|					 |
-			// |					 |	|					 |
-			// | a				 |	|				 b |
-			//	_ _ _ _ _ _		_ _ _ _ _ _
+			//  _ _ _ _ _ _    _ _ _ _ _ _
+			// |           |  |           |
+			// |           |  |           |
+			// |           |  |           |
+			// | a         |  |         b |
+			//  _ _ _ _ _ _    _ _ _ _ _ _
 			const a = new Bounds(0, 1, 0, 1);
 			const b = new Bounds(2, 3, 0, 1);
 			const c = new Bounds(2, 3, 2, 3);
@@ -165,17 +165,17 @@ describe('Bounds', () => {
 
 	describe('#intersection()', () => {
 		it('should return the intersection bounds, inclusive of edges', () => {
-			//	_ _ _ _ _ _ _ _ _ _ _
-			// | d				|				c |
-			// |			_ _ | _ _			|
-			// |		 |		|		|		 |
-			// |		 |		|		|		 |
-			//	_ _ _ _ _ _ _ _ _ _ _
-			// |		 |		|		|		 |
-			// |		 | e	|		|		 |
-			// |			_ _ | _ _			|
-			// | a				|				b |
-			//	_ _ _ _ _ _ _ _ _ _ _
+			//  _ _ _ _ _ _ _ _ _ _ _
+			// | d        |        c |
+			// |      _ _ | _ _      |
+			// |     |    |    |     |
+			// |     |    |    |     |
+			//  _ _ _ _ _ _ _ _ _ _ _
+			// |     |    |    |     |
+			// |     | e  |    |     |
+			// |      _ _ | _ _      |
+			// | a        |        b |
+			//  _ _ _ _ _ _ _ _ _ _ _
 			const a = new Bounds(0, 1, 0, 1);
 			const b = new Bounds(1, 2, 0, 1);
 			const c = new Bounds(1, 2, 1, 2);
@@ -208,19 +208,19 @@ describe('Bounds', () => {
 			assert(d.intersection(b).equals(new Bounds(1.0, 1.0, 1.0, 1.0)));
 		});
 		it('should return undefined if there is no intersection', () => {
-			//	_ _ _ _ _ _		_ _ _ _ _ _
-			// | d				 |	|				 c |
-			// |					 |	|					 |
-			// |					 |	|					 |
-			// |					 |	|					 |
-			//	_ _ _ _ _ _		_ _ _ _ _ _
+			//  _ _ _ _ _ _    _ _ _ _ _ _
+			// | d         |  |         c |
+			// |           |  |           |
+			// |           |  |           |
+			// |           |  |           |
+			//  _ _ _ _ _ _    _ _ _ _ _ _
 			//
-			//	_ _ _ _ _ _		_ _ _ _ _ _
-			// |					 |	|					 |
-			// |					 |	|					 |
-			// |					 |	|					 |
-			// | a				 |	|				 b |
-			//	_ _ _ _ _ _		_ _ _ _ _ _
+			//  _ _ _ _ _ _    _ _ _ _ _ _
+			// |           |  |           |
+			// |           |  |           |
+			// |           |  |           |
+			// | a         |  |         b |
+			//  _ _ _ _ _ _    _ _ _ _ _ _
 			const a = new Bounds(0, 1, 0, 1);
 			const b = new Bounds(2, 3, 0, 1);
 			const c = new Bounds(2, 3, 2, 3);
