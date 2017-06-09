@@ -458,10 +458,10 @@ const createVertexBuffer = function(overlay, points) {
 /**
  * Class representing a webgl polyline overlay renderer.
  */
-class LineOverlayRenderer extends WebGLOverlayRenderer {
+class PolylineOverlayRenderer extends WebGLOverlayRenderer {
 
 	/**
-	 * Instantiates a new LineOverlayRenderer object.
+	 * Instantiates a new PolylineOverlayRenderer object.
 	 *
 	 * @param {Object} options - The overlay options.
 	 * @param {Array} options.lineColor - The color of the line.
@@ -480,7 +480,7 @@ class LineOverlayRenderer extends WebGLOverlayRenderer {
 	 *
 	 * @param {Plot} plot - The plot to attach the overlay to.
 	 *
-	 * @returns {LineOverlayRenderer} The overlay object, for chaining.
+	 * @returns {PolylineOverlayRenderer} The overlay object, for chaining.
 	 */
 	onAdd(plot) {
 		super.onAdd(plot);
@@ -493,7 +493,7 @@ class LineOverlayRenderer extends WebGLOverlayRenderer {
 	 *
 	 * @param {Plot} plot - The plot to remove the overlay from.
 	 *
-	 * @returns {LineOverlayRenderer} The overlay object, for chaining.
+	 * @returns {PolylineOverlayRenderer} The overlay object, for chaining.
 	 */
 	onRemove(plot) {
 		super.onRemove(plot);
@@ -504,7 +504,7 @@ class LineOverlayRenderer extends WebGLOverlayRenderer {
 	/**
 	 * Generate any underlying buffers.
 	 *
-	 * @returns {LineOverlayRenderer} The overlay object, for chaining.
+	 * @returns {PolylineOverlayRenderer} The overlay object, for chaining.
 	 */
 	refreshBuffers() {
 		const clipped = this.overlay.getClippedGeometry();
@@ -521,7 +521,7 @@ class LineOverlayRenderer extends WebGLOverlayRenderer {
 	/**
 	 * The draw function that is executed per frame.
 	 *
-	 * @returns {LineOverlayRenderer} The overlay object, for chaining.
+	 * @returns {PolylineOverlayRenderer} The overlay object, for chaining.
 	 */
 	draw() {
 		if (!this.lines) {
@@ -566,4 +566,4 @@ class LineOverlayRenderer extends WebGLOverlayRenderer {
 	}
 }
 
-module.exports = LineOverlayRenderer;
+module.exports = PolylineOverlayRenderer;

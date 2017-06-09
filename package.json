@@ -19,8 +19,9 @@
     "src"
   ],
   "dependencies": {
+    "earcut": "2.1.1",
     "lodash": "4.17.4",
-    "lru-cache": "4.0.2",
+    "lru-cache": "4.1.0",
     "rbush": "2.0.1"
   },
   "devDependencies": {
@@ -31,7 +32,7 @@
     "eslint-plugin-jsdoc": "3.1.0",
     "gulp": "3.9.1",
     "gulp-eslint": "3.0.1",
-    "gulp-istanbul": "1.1.1",
+    "gulp-istanbul": "1.1.2",
     "gulp-mocha": "3.0.1",
     "gulp-uglify": "3.0.0",
     "sinon": "2.3.2",

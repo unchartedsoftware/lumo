@@ -5,11 +5,14 @@ const Overlay = require('./Overlay');
 // Private Methods
 
 const clipPoints = function(cell, points) {
-	let clipped = [];
+	const clipped = [];
 	points.forEach(pts => {
-		const clip = cell.bounds.clipPoints(pts);
-		for (let i=0; i<clip.length; i++) {
-			clipped.push(cell.project(clip[i]));
+		const clippedPoints = cell.bounds.clipPoints(pts);
+		if (!clippedPoints) {
+			return;
+		}
+		for (let i=0; i<clippedPoints.length; i++) {
+			clipped.push(cell.project(clippedPoints[i]));
 		}
 	});
 	return clipped;
@@ -84,7 +87,6 @@ class PointOverlay extends Overlay {
 	 *
 	 * @returns {Array} The array of clipped geometry.
 	 */
-	/* eslint-disable no-unused-vars */
 	clipGeometry(cell) {
 		return clipPoints(cell, this.points);
 	}

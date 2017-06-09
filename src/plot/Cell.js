@@ -28,7 +28,6 @@ class Cell {
 	 * @param {number} zoom - The zoom the the cells is generated for.
 	 * @param {Object} center - The plot position of the center of the cell.
 	 * @param {number} extent - The pixel extent of the plot at the time of generation.
-	 *
 	 */
 	constructor(zoom, center, extent) {
 		const halfSize = CELL_HALF_SIZE / extent;

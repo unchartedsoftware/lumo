@@ -240,4 +240,237 @@ describe('Bounds', () => {
 		});
 	});
 
+	describe('#clipPoints()', () => {
+		it('should clip any provided points outside of the bounds', () => {
+			const bounds = new Bounds(-1, 1, -1, 1);
+			const points = [];
+			for (let i=0; i<32; i++) {
+				points.push({
+					x: Math.random() * 4 - 2,
+					y: Math.random() * 4 - 2
+				});
+			}
+			for (let i=0; i<32; i++) {
+				points.push({
+					x: Math.random() * 2 - 1,
+					y: Math.random() * 2 - 1
+				});
+			}
+			const clipped = bounds.clipPoints(points);
+			clipped.forEach(point => {
+				assert(point.x >= bounds.left);
+				assert(point.x <= bounds.right);
+				assert(point.y >= bounds.bottom);
+				assert(point.y <= bounds.top);
+			});
+		});
+		it('should return null if no points are within the bounds', () => {
+			const bounds = new Bounds(0, 1, 0, 1);
+			const points = [];
+			for (let i=0; i<64; i++) {
+				points.push({
+					x: 1.1 + Math.random(),
+					y: 1.1 + Math.random()
+				});
+			}
+			const clipped = bounds.clipPoints(points);
+			assert(clipped === null);
+		});
+		it('should return null if the input is empty or invalid', () => {
+			const bounds = new Bounds(0, 1, 0, 1);
+			assert(bounds.clipPoints([]) === null);
+			assert(bounds.clipPoints() === null);
+			assert(bounds.clipPoints(null) === null);
+			assert(bounds.clipPoints(undefined) === null);
+		});
+	});
+
+	describe('#clipLine()', () => {
+		it('should clip a provided line inside of the bounds', () => {
+			const bounds = new Bounds(-1, 1, -1, 1);
+			const lines = [];
+			for (let i=0; i<64; i++) {
+				lines.push([
+					{
+						x: Math.random() * 4 - 2,
+						y: Math.random() * 4 - 2
+					},
+					{
+						x: Math.random() * 4 - 2,
+						y: Math.random() * 4 - 2
+					}
+				]);
+			}
+			lines.push([
+				{ x: 1.1, y: 0 },
+				{ x: 0, y: -1.1 }
+			]);
+			lines.push([
+				{ x: 0, y: -1.1 },
+				{ x: -1.1, y: 0 }
+			]);
+			lines.push([
+				{ x: -1.1, y: 0 },
+				{ x: 0, y: 1.1 }
+			]);
+			lines.push([
+				{ x: 0, y: 1.1 },
+				{ x: 1.1, y: 0 }
+			]);
+			const clipped = [];
+			lines.forEach(line => {
+				const clippedLine = bounds.clipLine(line);
+				if (clippedLine) {
+					clipped.push(clippedLine);
+				}
+			});
+			clipped.forEach(line => {
+				assert(line[0].x >= bounds.left);
+				assert(line[0].x <= bounds.right);
+				assert(line[0].y >= bounds.bottom);
+				assert(line[0].y <= bounds.top);
+				assert(line[1].x >= bounds.left);
+				assert(line[1].x <= bounds.right);
+				assert(line[1].y >= bounds.bottom);
+				assert(line[1].y <= bounds.top);
+			});
+		});
+		it('should return null if the line is not within the bounds', () => {
+			const bounds = new Bounds(0, 1, 0, 1);
+			const lines = [];
+			for (let i=0; i<64; i++) {
+				lines.push([
+					{
+						x: 1.1 + Math.random(),
+						y: 1.1 + Math.random(),
+					},
+					{
+						x: 1.1 + Math.random(),
+						y: 1.1 + Math.random(),
+					}
+				]);
+			}
+			lines.forEach(line => {
+				const clipped = bounds.clipLine(line);
+				assert(clipped === null);
+			});
+		});
+		it('should return null if the input is empty or invalid', () => {
+			const bounds = new Bounds(0, 1, 0, 1);
+			assert(bounds.clipLine([]) === null);
+			assert(bounds.clipLine([{ x: 0, y: 0 }]) === null);
+			assert(bounds.clipLine(null) === null);
+			assert(bounds.clipLine(undefined) === null);
+		});
+	});
+
+	describe('#clipPolyline()', () => {
+		it('should clip a provided polyline inside of the bounds', () => {
+			const bounds = new Bounds(-1, 1, -1, 1);
+			const polyline = [];
+			for (let i=0; i<4; i++) {
+				polyline.push({
+					x: Math.random() * 4 - 2,
+					y: Math.random() * 4 - 2,
+				});
+			}
+			polyline.push({ x: 1.1, y: 0 });
+			polyline.push({ x: 0, y: -1.1 });
+			polyline.push({ x: -1.1, y: 0 });
+			polyline.push({ x: 0, y: 1.1 });
+			polyline.push({ x: 1.1, y: 0 });
+			polyline.push({ x: 0, y: 0 });
+			polyline.push({ x: 0, y: 0.5 });
+			const clipped = bounds.clipPolyline(polyline);
+			clipped.forEach(segment => {
+				segment.forEach(point => {
+					assert(point.x >= bounds.left);
+					assert(point.x <= bounds.right);
+					assert(point.y >= bounds.bottom);
+					assert(point.y <= bounds.top);
+				});
+			});
+		});
+		it('should return null if the polyline is not within the bounds', () => {
+			const bounds = new Bounds(0, 1, 0, 1);
+			const polyline = [];
+			for (let i=0; i<64; i++) {
+				polyline.push({
+					x: 1.1 + Math.random(),
+					y: 1.1 + Math.random(),
+				});
+			}
+			const clipped = bounds.clipPolyline(polyline);
+			assert(clipped === null);
+		});
+		it('should return null if the input is empty or invalid', () => {
+			const bounds = new Bounds(0, 1, 0, 1);
+			assert(bounds.clipPolyline([]) === null);
+			assert(bounds.clipPolyline([{ x: 0, y: 0 }]) === null);
+			assert(bounds.clipPolyline(null) === null);
+			assert(bounds.clipPolyline(undefined) === null);
+		});
+	});
+
+	describe('#clipPolygon()', () => {
+		it('should clip a provided polyline inside of the bounds', () => {
+			const bounds = new Bounds(-1, 1, -1, 1);
+			const polygon = [
+				{ x: -1.67, y: -0.33 },
+				{ x: -1.00, y: -0.33 },
+				{ x: -0.33, y: -0.33 },
+				{ x: -0.33, y: -0.67 },
+				{ x: -0.33, y: -1.33 },
+				{ x: -0.33, y: -1.67 },
+				{ x: 0.33, y: -1.67 },
+				{ x: 0.33, y: -0.33 },
+				{ x: 1.67, y: -0.33 },
+				{ x: 1.67, y: 0.33 },
+				{ x: 0.33, y: 0.33 },
+				{ x: 0.33, y: 1.67 },
+				{ x: -0.33, y: 1.67 },
+				{ x: -0.33, y: 0.33 },
+				{ x: -0.67, y: 0.33 },
+				{ x: -1.67, y: 0.33 }
+			];
+			const clipped = bounds.clipPolygon(polygon);
+			clipped.forEach(point => {
+				assert(point.x >= bounds.left);
+				assert(point.x <= bounds.right);
+				assert(point.y >= bounds.bottom);
+				assert(point.y <= bounds.top);
+			});
+		});
+		it('should return null if the polyline is not within the bounds', () => {
+			const bounds = new Bounds(0, 1, 0, 1);
+			const polygon = [
+				{ x: 1.33, y: 2.67 },
+				{ x: 2.00, y: 2.67 },
+				{ x: 2.67, y: 2.67 },
+				{ x: 2.67, y: 2.33 },
+				{ x: 2.67, y: 1.67 },
+				{ x: 2.67, y: 1.33 },
+				{ x: 3.33, y: 1.33 },
+				{ x: 3.33, y: 2.67 },
+				{ x: 4.67, y: 2.67 },
+				{ x: 4.67, y: 3.33 },
+				{ x: 3.33, y: 3.33 },
+				{ x: 3.33, y: 4.67 },
+				{ x: 2.67, y: 4.67 },
+				{ x: 2.67, y: 3.33 },
+				{ x: 2.33, y: 3.33 },
+				{ x: 1.33, y: 3.33 }
+			];
+			const clipped = bounds.clipPolygon(polygon);
+			assert(clipped === null);
+		});
+		it('should return null if the input is empty or invalid', () => {
+			const bounds = new Bounds(0, 1, 0, 1);
+			assert(bounds.clipPolygon([]) === null);
+			assert(bounds.clipPolygon([{ x: 0, y: 0 }]) === null);
+			assert(bounds.clipPolygon(null) === null);
+			assert(bounds.clipPolygon(undefined) === null);
+		});
+	});
+
 });
