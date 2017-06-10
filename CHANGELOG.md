@@ -4,6 +4,13 @@
 
 An in-progress version being developed on the `master` branch.
 
+## 0.19.0 - June 9th, 2017
+### Changed
+- Drop `lru-cache` dependency in favor of faster implementation more suited to the TilePyramid requirements.
+
+### Removed
+- No longer export the `Browser` utility namespace.
+
 ## 0.18.0 - June 8th, 2017
 ### Added
 - `CHANGELOG.md` to help track changes and ease version migration.
