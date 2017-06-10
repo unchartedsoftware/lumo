@@ -35,7 +35,9 @@ describe('TilePyramid', () => {
 				return this.viewport;
 			},
 			setDirty: function() {
-
+			},
+			remove: function(l) {
+				l.onRemove(plot);
 			}
 		};
 		layer.plot = plot;
@@ -99,6 +101,26 @@ describe('TilePyramid', () => {
 			const coordB = new TileCoord(pyramid.numPersistentLevels + 1, 0, 0);
 			assert(pyramid.get(coordA) === undefined);
 			assert(pyramid.get(coordB) === undefined);
+		});
+	});
+
+	describe('#forEach', () => {
+		it('should iterate over the tiles executing the provided function', () => {
+			const coords = [
+				new TileCoord(0, 0, 0),
+				new TileCoord(1, 0, 0),
+				new TileCoord(1, 0, 1),
+				new TileCoord(1, 1, 1),
+				new TileCoord(1, 1, 0),
+				new TileCoord(pyramid.numPersistentLevels + 1, 0, 0)
+			];
+			pyramid.requestTiles(coords);
+			let count = 0;
+			pyramid.forEach((tile, hash) => {
+				assert(tile.coord.hash === hash);
+				count++;
+			});
+			assert(count === coords.length);
 		});
 	});
 
@@ -362,6 +384,25 @@ describe('TilePyramid', () => {
 				new TileCoord(0, 0, 0)
 			]);
 			pyramid.clear();
+			resolve();
+		});
+		it('should emit a `TILE_DISCARD` event from the layer if layer has been removed from the plot before the response is received', done => {
+			let resolve;
+			const promise = new Promise(r => {
+				resolve = r;
+			});
+			layer.requestTile = (_, callback) => {
+				promise.then(() => {
+					callback(null, {});
+				});
+			};
+			layer.on(EventType.TILE_DISCARD, () => {
+				done();
+			});
+			pyramid.requestTiles([
+				new TileCoord(0, 0, 0)
+			]);
+			plot.remove(layer);
 			resolve();
 		});
 		it('should emit a `LOAD` event from the layer if all pending tile requests have succeeded', done => {

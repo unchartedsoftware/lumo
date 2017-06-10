@@ -65,7 +65,6 @@ describe('TileLayer', () => {
 		it('should call `requestTiles` if the layer is attached to a plot', () => {
 			const layer = new TileLayer();
 			const requestTiles = sinon.stub(layer, 'requestTiles').callsFake(noop);
-			sinon.stub(layer.pyramid, 'requestTiles').callsFake(noop);
 			layer.onAdd(plot);
 			layer.refresh();
 			assert(requestTiles.called);
@@ -73,8 +72,6 @@ describe('TileLayer', () => {
 		it('should call `clear` on the renderer if the layer is attached to a plot', () => {
 			const layer = new TileLayer();
 			layer.setRenderer(renderer);
-			sinon.stub(layer, 'requestTiles').callsFake(noop);
-			sinon.stub(layer.pyramid, 'requestTiles').callsFake(noop);
 			const clear = sinon.stub(layer.renderer, 'clear').callsFake(noop);
 			layer.onAdd(plot);
 			layer.refresh();
@@ -87,19 +84,34 @@ describe('TileLayer', () => {
 			const layer = new TileLayer({
 				renderer: renderer
 			});
-			sinon.stub(layer, 'refresh').callsFake(noop);
 			const onAdd = sinon.stub(renderer, 'onAdd').callsFake(noop);
 			layer.onAdd(plot);
 			assert(onAdd.calledOnce);
 		});
-	});
-
-	describe('#onRemove()', () => {
-		it('should call `clear` on the layer\'s tile pyramid', () => {
+		it('should call `requestTiles` on the pyramid if it is not muted', () => {
 			const layer = new TileLayer({
 				renderer: renderer
 			});
-			sinon.stub(layer, 'refresh').callsFake(noop);
+			const requestTiles = sinon.stub(layer.getPyramid(), 'requestTiles').callsFake(noop);
+			layer.onAdd(plot);
+			assert(requestTiles.calledOnce);
+		});
+		it('should not call `requestTiles` on the pyramid if it is not muted', () => {
+			const layer = new TileLayer({
+				renderer: renderer
+			});
+			const requestTiles = sinon.stub(layer.getPyramid(), 'requestTiles').callsFake(noop);
+			layer.mute();
+			layer.onAdd(plot);
+			assert(!requestTiles.called);
+		});
+	});
+
+	describe('#onRemove()', () => {
+		it('should call `clear` on the tile pyramid of the layer', () => {
+			const layer = new TileLayer({
+				renderer: renderer
+			});
 			const clear = sinon.stub(layer.pyramid, 'clear').callsFake(noop);
 			layer.onAdd(plot);
 			layer.onRemove(plot);
@@ -109,11 +121,19 @@ describe('TileLayer', () => {
 			const layer = new TileLayer({
 				renderer: renderer
 			});
-			sinon.stub(layer, 'refresh').callsFake(noop);
 			const onRemove = sinon.stub(renderer, 'onRemove').callsFake(noop);
 			layer.onAdd(plot);
 			layer.onRemove(plot);
 			assert(onRemove.calledOnce);
+		});
+	});
+
+	describe('#getPyramid()', () => {
+		it('should return the tile pyramid of the layer', () => {
+			const layer = new TileLayer({
+				renderer: renderer
+			});
+			assert(layer.getPyramid() !== null);
 		});
 	});
 

@@ -136,4 +136,54 @@ describe('TileCoord', () => {
 		});
 	});
 
+	describe('#getCenter()', () => {
+		it('should return the plot coordinate for the center of tile', () => {
+			const a = new TileCoord(0, 0, 0);
+			const b = new TileCoord(1, 0, 0);
+			const c = new TileCoord(1, 1, 0);
+			const d = new TileCoord(1, 1, 1);
+			const e = new TileCoord(1, 0, 1);
+			// a
+			assert(a.getCenter().x === 0.5);
+			assert(a.getCenter().y === 0.5);
+			// b
+			assert(b.getCenter().x === 0.25);
+			assert(b.getCenter().y === 0.25);
+			// c
+			assert(c.getCenter().x === 0.75);
+			assert(c.getCenter().y === 0.25);
+			// d
+			assert(d.getCenter().x === 0.75);
+			assert(d.getCenter().y === 0.75);
+			// e
+			assert(e.getCenter().x === 0.25);
+			assert(e.getCenter().y === 0.75);
+		});
+	});
+
+	describe('#getPosition()', () => {
+		it('should return the plot coordinate for the bottom-left of the tile', () => {
+			const a = new TileCoord(0, 0, 0);
+			const b = new TileCoord(1, 0, 0);
+			const c = new TileCoord(1, 1, 0);
+			const d = new TileCoord(1, 1, 1);
+			const e = new TileCoord(1, 0, 1);
+			// a
+			assert(a.getPosition().x === 0.0);
+			assert(a.getPosition().y === 0.0);
+			// b
+			assert(b.getPosition().x === 0.0);
+			assert(b.getPosition().y === 0.0);
+			// c
+			assert(c.getPosition().x === 0.5);
+			assert(c.getPosition().y === 0.0);
+			// d
+			assert(d.getPosition().x === 0.5);
+			assert(d.getPosition().y === 0.5);
+			// e
+			assert(e.getPosition().x === 0.0);
+			assert(e.getPosition().y === 0.5);
+		});
+	});
+
 });
