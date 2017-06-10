@@ -2,9 +2,9 @@
 
 const defaultTo = require('lodash/defaultTo');
 const throttle = require('lodash/throttle');
-const LRU = require('lru-cache');
 const EventType = require('../../event/EventType');
 const TileEvent = require('../../event/TileEvent');
+const LRUCache = require('../../util/LRUCache');
 const Tile = require('./Tile');
 const TilePartial = require('./TilePartial');
 
@@ -156,6 +156,8 @@ const shouldDiscard = function(pyramid, tile) {
 	const plot = pyramid.layer.plot;
 	if (!plot) {
 		// layer has been removed from plot, discard tile
+		// NOTE: this should _NEVER_ happen, since when a layer is remove from
+		// the plot, the pending tiles are all flagged as stale.
 		return true;
 	}
 	// check if tile is in view, if not, discard
@@ -187,9 +189,9 @@ class TilePyramid {
 		this.persistents = new Map();
 		this.pending = new Map();
 		this.stale = new Map();
-		this.tiles = new LRU({
-			max: this.cacheSize,
-			dispose: (key, tile) => {
+		this.tiles = new LRUCache({
+			capacity: this.cacheSize,
+			onRemove: tile => {
 				remove(this, tile);
 			}
 		});
@@ -225,7 +227,7 @@ class TilePyramid {
 		});
 		this.persistents.clear();
 		// clear lru cache
-		this.tiles.reset();
+		this.tiles.clear();
 	}
 
 	/**
@@ -406,6 +408,7 @@ class TilePyramid {
 				add(this, tile);
 				// check if loaded
 				checkIfLoaded(this);
+				// flag as dirty
 				this.layer.plot.setDirty();
 			});
 		}
