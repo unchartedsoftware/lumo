@@ -73,6 +73,7 @@ const isSafari = function() {
 
 /**
  * Browser detection.
+ * @private
  */
 module.exports = {
 

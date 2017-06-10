@@ -75,7 +75,6 @@ module.exports = {
 	VertexBuffer: require('./webgl/vertex/VertexBuffer'),
 	IndexBuffer: require('./webgl/vertex/IndexBuffer'),
 	// util
-	Browser: require('./util/Browser'),
 	loadBuffer: require('./util/loadBuffer'),
 	loadImage: require('./util/loadImage')
 };
