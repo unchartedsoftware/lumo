@@ -11,21 +11,26 @@ class CircleCollidable {
 	 * @param {number} x - The tile x pixel coordinate.
 	 * @param {number} y - The tile y pixel coordinate.
 	 * @param {number} radius - The radius in pixels.
+	 * @param {number} radiusBuffer - The radius buffer in pixels (additional hit-area beyond radius)
 	 * @param {number} xOffset - The tile x offset in pixels.
 	 * @param {number} yOffset - The tile y offset in pixels.
 	 * @param {Tile} tile - The tile object.
 	 * @param {Object} data - Any arbitrary user data.
+	 * @param {bool} includeArea = whether to include the area of the circle in the hit-testing (default true)
 	 */
-	constructor(x, y, radius, xOffset, yOffset, tile, data) {
+	constructor(x, y, radius, radiusBuffer, xOffset, yOffset, tile, data, includeArea) {
+
 		this.x = x;
 		this.y = y;
 		this.radius = radius;
+		this.radiusBuffer = radiusBuffer;
 		this.minX = x + xOffset - radius;
 		this.maxX = x + xOffset + radius;
 		this.minY = y + yOffset - radius;
 		this.maxY = y + yOffset + radius;
 		this.tile = tile;
 		this.data = data;
+		this.includeArea = includeArea === undefined ? true : includeArea;
 	}
 
 	/**
@@ -37,13 +42,53 @@ class CircleCollidable {
 	 * @returns {bool} Whether or not there is an intersection.
 	 */
 	testPoint(x, y) {
+		if (this.includeArea) {
+			return this._testPointInArea(x, y);
+		} else {
+			return this._testPointOnPerimeter(x, y);
+		}
+	}
+
+	/**
+	 * Test if the provided position is within the buffered inner shape of the collidable.
+	 *
+	 * @param {number} x - The x position to test.
+	 * @param {number} y - The y position to test.
+	 *
+	 * @returns {bool} Whether or not there is an intersection.
+	 */
+	_testPointInArea(x, y) {
 		// center pos
 		const cx = (this.minX + this.maxX) * 0.5;
 		const cy = (this.minY + this.maxY) * 0.5;
 		// distance to point
 		const dx = cx - x;
 		const dy = cy - y;
-		return (dx * dx + dy * dy) <= (this.radius * this.radius);
+		const bufferedRadius = this.radius + this.radiusBuffer;
+		return (dx * dx + dy * dy) <= (bufferedRadius * bufferedRadius);
+	}
+
+	/**
+	 * Test if the provided position is within the buffered ring shape of the collidable.
+	 *
+	 * @param {number} x - The x position to test.
+	 * @param {number} y - The y position to test.
+	 *
+	 * @returns {bool} Whether or not there is an intersection.
+	 */
+	_testPointOnPerimeter(x, y) {
+		// center pos
+		const cx = (this.minX + this.maxX) * 0.5;
+		const cy = (this.minY + this.maxY) * 0.5;
+		// distance to point
+		const dx = cx - x;
+		const dy = cy - y;
+		const distance = dx * dx + dy * dy;
+
+		const innerRadius = this.radius - this.radiusBuffer;
+		const outerRadius = this.radius + this.radiusBuffer;
+
+		return (distance <= (outerRadius * outerRadius)) && (distance >= (innerRadius * innerRadius));
 	}
 
 	/**
