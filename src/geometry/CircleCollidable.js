@@ -16,7 +16,7 @@ class CircleCollidable {
 	 * @param {number} yOffset - The tile y offset in pixels.
 	 * @param {Tile} tile - The tile object.
 	 * @param {Object} data - Any arbitrary user data.
-	 * @param {bool} includeArea = whether to include the area of the circle in the hit-testing (default true)
+	 * @param {bool} includeArea - whether to include the area of the circle in the hit-testing (default true)
 	 */
 	constructor(x, y, radius, radiusBuffer, xOffset, yOffset, tile, data, includeArea) {
 
