@@ -17,15 +17,8 @@ While Lumo does provide some higher level data abstractions for WebGL, it assume
 
 ## Installation
 
-Lumo can be installed via [node](http://nodejs.org/) or [bower](http://bower.io/).
-
 ```bash
 npm install lumo
-```
-
-or
-```bash
-bower install lumo
 ```
 
 Lumo is written in ES6 and requires a 6.x+ distribution of [node](http://nodejs.org/). The `lumo.js` and `lumo.min.js` build files have been transpiled via [babeljs](https://babeljs.io/) using the [es2015 preset](https://babeljs.io/docs/plugins/preset-es2015/) and should be consumable by most modern browsers.
