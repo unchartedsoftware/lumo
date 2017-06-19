@@ -37,6 +37,7 @@ module.exports = {
 	RTreePyramid: require('./geometry/RTreePyramid'),
 	CircleCollidable: require('./geometry/CircleCollidable'),
 	RectangleCollidable: require('./geometry/RectangleCollidable'),
+	RingCollidable: require('./geometry/RingCollidable'),
 	// plot
 	Plot: require('./plot/Plot'),
 	// layer

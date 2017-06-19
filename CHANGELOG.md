@@ -4,9 +4,9 @@
 
 An in-progress version being developed on the `master` branch.
 
-## 0.20.0 - June 16, 2017
-### Changed
-- CircleCollidable takes new paramters to allow hitting by area or just by perimeter of the circle.
+## 0.20.0 - June 19, 2017
+### Added
+- `lumo.RingCollidable` class.
 
 ## 0.19.0 - June 9th, 2017
 ### Changed
