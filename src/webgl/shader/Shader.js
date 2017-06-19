@@ -103,9 +103,8 @@ const getUniformLocations = function(shader) {
 	uniforms.forEach((uniform, name) => {
 		// get the uniform location
 		const location = gl.getUniformLocation(shader.program, name);
-		// check if null, parse may detect uniform that is compiled out
-		// due to a preprocessor evaluation.
-		// TODO: fix parser so that it evaluates these correctly.
+		// check if null, parse may detect uniform that is compiled out due to
+		// not being used, or due to a preprocessor evaluation.
 		if (location === null) {
 			uniforms.delete(name);
 		} else {
