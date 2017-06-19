@@ -30,11 +30,11 @@
     "del": "3.0.0",
     "eslint-plugin-jsdoc": "3.1.0",
     "gulp": "3.9.1",
-    "gulp-eslint": "3.0.1",
+    "gulp-eslint": "4.0.0",
     "gulp-istanbul": "1.1.2",
     "gulp-mocha": "3.0.1",
     "gulp-uglify": "3.0.0",
-    "sinon": "2.3.2",
+    "sinon": "2.3.4",
     "vinyl-buffer": "1.0.0",
     "vinyl-source-stream": "1.1.0"
   },
