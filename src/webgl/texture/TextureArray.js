@@ -62,12 +62,12 @@ class TextureArray {
 		this.chunkSize = defaultTo(options.chunkSize, 256);
 		this.numChunks = defaultTo(options.numChunks, 256);
 		// set texture parameters
-		this.format = defaultTo(options.format, 'RGBA');
-		this.type = defaultTo(options.type, 'UNSIGNED_BYTE');
-		this.filter = defaultTo(options.filter, 'LINEAR');
-		this.wrap = defaultTo(options.wrap, 'CLAMP_TO_EDGE');
-		this.invertY = defaultTo(options.invertY, false);
-		this.premultiplyAlpha = defaultTo(options.premultiplyAlpha, false);
+		this.format = defaultTo(params.format, 'RGBA');
+		this.type = defaultTo(params.type, 'UNSIGNED_BYTE');
+		this.filter = defaultTo(params.filter, 'LINEAR');
+		this.wrap = defaultTo(params.wrap, 'CLAMP_TO_EDGE');
+		this.invertY = defaultTo(params.invertY, false);
+		this.premultiplyAlpha = defaultTo(params.premultiplyAlpha, false);
 		// create textures
 		this.available = new Array(this.numChunks);
 		for (let i=0; i<this.numChunks; i++) {
