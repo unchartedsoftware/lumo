@@ -24,10 +24,11 @@ class RingCollidable {
 		this.y = y;
 		this.radius = radius;
 		this.width = width;
-		this.minX = x + xOffset - radius;
-		this.maxX = x + xOffset + radius;
-		this.minY = y + yOffset - radius;
-		this.maxY = y + yOffset + radius;
+		const halfWidth = width * 0.5;
+		this.minX = x + xOffset - radius - halfWidth;
+		this.maxX = x + xOffset + radius + halfWidth;
+		this.minY = y + yOffset - radius - halfWidth;
+		this.maxY = y + yOffset + radius + halfWidth;
 		this.tile = tile;
 		this.data = data;
 	}

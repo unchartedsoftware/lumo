@@ -4,6 +4,10 @@
 
 An in-progress version being developed on the `master` branch.
 
+## 0.20.1 - June 19, 2017
+### Changed
+- Fix bug `lumo.RingCollidable` class where r-tree rectangle was not expanded by halfwidth.
+
 ## 0.20.0 - June 19, 2017
 ### Added
 - `lumo.RingCollidable` class.
