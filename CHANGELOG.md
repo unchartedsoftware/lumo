@@ -4,6 +4,10 @@
 
 An in-progress version being developed on the `master` branch.
 
+## 0.20.3 - Oct 3rd, 2017
+### Fixed
+- Updated build files missed in previous release.
+
 ## 0.20.2 - Oct 3rd, 2017
 ### Fixed
 - `DOMHandler` now calculates mouse position relative to container rather than relative to the page.
