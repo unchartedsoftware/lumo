@@ -52,9 +52,12 @@ class DOMHandler {
 		const plot = this.plot;
 		const extent = plot.getPixelExtent();
 		const size = plot.getViewportPixelSize();
+		const container = this.plot.getContainer();
+		const x = event.pageX - container.offsetLeft;
+		const y = event.pageY - container.offsetTop;
 		return {
-			x: plot.viewport.x + (event.clientX / extent),
-			y: plot.viewport.y + ((size.height - event.clientY) / extent)
+			x: plot.viewport.x + (x / extent),
+			y: plot.viewport.y + ((size.height - y) / extent)
 		};
 	}
 
@@ -68,9 +71,12 @@ class DOMHandler {
 	 */
 	mouseToViewPx(event) {
 		const size = this.plot.getViewportPixelSize();
+		const container = this.plot.getContainer();
+		const x = event.pageX - container.offsetLeft;
+		const y = event.pageY - container.offsetTop;
 		return {
-			x: event.clientX,
-			y: size.height - event.clientY
+			x: x,
+			y: size.height - y
 		};
 	}
 

@@ -3,7 +3,6 @@
 > A high performance WebGL tile rendering library
 
 [![npm version](https://badge.fury.io/js/lumo.svg)](http://badge.fury.io/js/lumo)
-[![Bower version](https://badge.fury.io/bo/lumo.svg)](http://badge.fury.io/bo/lumo)
 [![Build Status](https://travis-ci.org/unchartedsoftware/lumo.svg?branch=master)](https://travis-ci.org/unchartedsoftware/lumo)
 [![Dependency Status](https://david-dm.org/unchartedsoftware/lumo/status.svg)](https://david-dm.org/unchartedsoftware/lumo)
 

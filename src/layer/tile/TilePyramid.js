@@ -374,7 +374,7 @@ class TilePyramid {
 			this.layer.emit(EventType.TILE_REQUEST, new TileEvent(this.layer, tile));
 			// request tile
 			this.layer.requestTile(tile.coord, (err, data) => {
-				// check if stale, clears tiles any flagged as stale
+				// check if stale, clears stale status
 				const isStale = isTileStale(this, tile);
 				// if not stale remove tile from pending
 				if (!isStale) {
