@@ -53,8 +53,9 @@ class DOMHandler {
 		const extent = plot.getPixelExtent();
 		const size = plot.getViewportPixelSize();
 		const container = this.plot.getContainer();
-		const x = event.pageX - container.offsetLeft;
-		const y = event.pageY - container.offsetTop;
+		const bounds = container.getBoundingClientRect();
+		const x = event.pageX - bounds.left;
+		const y = event.pageY - bounds.top;
 		return {
 			x: plot.viewport.x + (x / extent),
 			y: plot.viewport.y + ((size.height - y) / extent)
@@ -72,8 +73,9 @@ class DOMHandler {
 	mouseToViewPx(event) {
 		const size = this.plot.getViewportPixelSize();
 		const container = this.plot.getContainer();
-		const x = event.pageX - container.offsetLeft;
-		const y = event.pageY - container.offsetTop;
+		const bounds = container.getBoundingClientRect();
+		const x = event.pageX - bounds.left;
+		const y = event.pageY - bounds.top;
 		return {
 			x: x,
 			y: size.height - y
