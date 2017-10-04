@@ -4,6 +4,11 @@
 
 An in-progress version being developed on the `master` branch.
 
+## 0.20.4 - Oct 4th, 2017
+### Fixed
+- `DOMHandler` mouse position calculation updated to take into account a nested container.
+
+
 ## 0.20.3 - Oct 3rd, 2017
 ### Fixed
 - Updated build files missed in previous release.
