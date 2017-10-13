@@ -88,7 +88,7 @@ class PolylineOverlay extends Overlay {
 	}
 
 	/**
-	 * Given an array of point based geometry, return the clipped geometry.
+	 * Return the clipped geometry based on the current cell.
 	 *
 	 * @param {Cell} cell - The rendering cell.
 	 *

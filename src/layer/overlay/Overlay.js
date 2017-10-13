@@ -133,7 +133,7 @@ class Overlay extends Layer {
 	}
 
 	/**
-	 * Returns the clipped geometry for the overlay.
+	 * Return the clipped geometry based on the current cell.
 	 *
 	 * @returns {Array} The array of clipped geometry.
 	 */

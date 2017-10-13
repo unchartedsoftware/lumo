@@ -730,6 +730,80 @@ class Plot extends EventEmitter {
 	}
 
 	/**
+	 * Takes a DOM event and returns the corresponding plot position.
+	 * Coordinate [0, 0] is bottom-left of the plot.
+	 *
+	 * @param {Event} event - The mouse event.
+	 *
+	 * @returns {Object} The plot position.
+	 */
+	mouseToPlotCoord(event) {
+		const extent = this.getPixelExtent();
+		const size = this.getViewportPixelSize();
+		const container = this.getContainer();
+		const bounds = container.getBoundingClientRect();
+		const x = event.pageX - bounds.left;
+		const y = event.pageY - bounds.top;
+		return {
+			x: this.viewport.x + (x / extent),
+			y: this.viewport.y + ((size.height - y) / extent)
+		};
+	}
+
+	/**
+	 * Takes a DOM event and returns the corresponding viewport pixel position.
+	 * Coordinate [0, 0] is bottom-left of the viewport.
+	 *
+	 * @param {Event} event - The mouse event.
+	 *
+	 * @returns {Object} The viewport pixel coordinate.
+	 */
+	mouseToViewportPixel(event) {
+		const size = this.getViewportPixelSize();
+		const container = this.getContainer();
+		const bounds = container.getBoundingClientRect();
+		const x = event.pageX - bounds.left;
+		const y = event.pageY - bounds.top;
+		return {
+			x: x,
+			y: size.height - y
+		};
+	}
+
+	/**
+	 * Converts a coordinate in viewport pixel space to a normalized plot
+	 * coordinate.
+	 * Coordinate [0, 0] is bottom-left of the plot.
+	 *
+	 * @param {Object} px - The viewport pixel coordinate.
+	 *
+	 * @returns {Object} The normalized plot coordinate.
+	 */
+	viewportPixelToPlotCoord(px) {
+		const extent = this.getPixelExtent();
+		return {
+			x: px.x / extent,
+			y: px.y / extent
+		};
+	}
+
+	/**
+	 * Converts a coordinate in normalized plot space to viewport pixel space.
+	 * Coordinate [0, 0] is bottom-left of the plot.
+	 *
+	 * @param {Object} pos - The normalized plot coordinate
+	 *
+	 * @returns {Object} The viewport pixel coordinate.
+	 */
+	plotCoordToViewportPixel(pos) {
+		const extent = this.plot.getPixelExtent();
+		return {
+			x: pos.x * extent,
+			y: pos.y * extent
+		};
+	}
+
+	/**
 	 * Returns the orthographic projection matrix for the viewport.
 	 *
 	 * @returns {Float32Array} The orthographic projection matrix.

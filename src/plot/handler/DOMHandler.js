@@ -25,7 +25,7 @@ class DOMHandler {
 		if (this.enabled) {
 			throw 'Handler is already enabled';
 		}
-		this.enable = true;
+		this.enabled = true;
 	}
 
 	/**
@@ -34,7 +34,7 @@ class DOMHandler {
 	 * @returns {ZoomHandler} The handler object, for chaining.
 	 */
 	disable() {
-		if (this.enabled) {
+		if (!this.enabled) {
 			throw 'Handler is already disabled';
 		}
 		this.enabled = false;
@@ -49,17 +49,7 @@ class DOMHandler {
 	 * @returns {Object} The plot position.
 	 */
 	mouseToPlot(event) {
-		const plot = this.plot;
-		const extent = plot.getPixelExtent();
-		const size = plot.getViewportPixelSize();
-		const container = this.plot.getContainer();
-		const bounds = container.getBoundingClientRect();
-		const x = event.pageX - bounds.left;
-		const y = event.pageY - bounds.top;
-		return {
-			x: plot.viewport.x + (x / extent),
-			y: plot.viewport.y + ((size.height - y) / extent)
-		};
+		return this.plot.mouseToPlotCoord(event);
 	}
 
 	/**
@@ -71,15 +61,7 @@ class DOMHandler {
 	 * @returns {Object} The viewport pixel coordinate.
 	 */
 	mouseToViewPx(event) {
-		const size = this.plot.getViewportPixelSize();
-		const container = this.plot.getContainer();
-		const bounds = container.getBoundingClientRect();
-		const x = event.pageX - bounds.left;
-		const y = event.pageY - bounds.top;
-		return {
-			x: x,
-			y: size.height - y
-		};
+		return this.plot.mouseToViewportPixel(event);
 	}
 
 	/**
@@ -92,11 +74,7 @@ class DOMHandler {
 	 * @returns {Object} The plot position.
 	 */
 	viewPxToPlot(px) {
-		const extent = this.plot.getPixelExtent();
-		return {
-			x: px.x / extent,
-			y: px.y / extent
-		};
+		return this.plot.viewportPixelToPlotCoord(px);
 	}
 
 	/**
@@ -109,11 +87,7 @@ class DOMHandler {
 	 * @returns {Object} The viewport pixel coordinate.
 	 */
 	plotToViewPx(pos) {
-		const extent = this.plot.getPixelExtent();
-		return {
-			x: pos.x * extent,
-			y: pos.y * extent
-		};
+		return this.plot.plotCoordToViewportPixel(pos);
 	}
 
 	/**
