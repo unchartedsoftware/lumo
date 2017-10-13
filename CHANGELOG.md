@@ -4,6 +4,10 @@
 
 An in-progress version being developed on the `master` branch.
 
+## 0.20.6 - Oct 13th, 2017
+### Changed
+- Add `enablePanning`, `disablePanning`, `enableZooming`, and `disableZooming` methods to `lumo.Plot` class.
+
 ## 0.20.5 - Oct 13th, 2017
 ### Changed
 - Expose `mouseToPlotCoord`, `mouseToViewportPixel`, `viewportPixelToPlotCoord`, and `plotCoordToViewportPixel` methods on `lumo.Plot` class.
