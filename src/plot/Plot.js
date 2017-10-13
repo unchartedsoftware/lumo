@@ -948,6 +948,34 @@ class Plot extends EventEmitter {
 	}
 
 	/**
+	 * Enables the pan event handler on the plot.
+	 */
+	enablePanning() {
+		this[HANDLERS].get(PAN).enable();
+	}
+
+	/**
+	 * Disables the pan event handler on the plot.
+	 */
+	disablePanning() {
+		this[HANDLERS].get(PAN).disable();
+	}
+
+	/**
+	 * Enables the zoom event handler on the plot.
+	 */
+	enableZooming() {
+		this[HANDLERS].get(ZOOM).enable();
+	}
+
+	/**
+	 * Disables the zoom event handler on the plot.
+	 */
+	disableZooming() {
+		this[HANDLERS].get(ZOOM).disable();
+	}
+
+	/**
 	 * Returns any highlighted data.
 	 *
 	 * @returns {Object} The highlighted data.
