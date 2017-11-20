@@ -877,6 +877,25 @@ class Plot extends EventEmitter {
 	}
 
 	/**
+	 * Zooms in to the target zoom level, centered on the target coordinates. The zoom is bounded by the plot objects
+	 * minZoom and maxZoom attributes. Cancels any current zoom or pan animations.
+	 *
+	 * @param {number} level - The target zoom level.
+	 * @param {Object} position - The target center position.
+	 * @param {boolean} animate - Whether or not to animate the zoom. Defaults to `true`.
+	 *
+	 * @returns {Plot} The plot object, for chaining.
+	 */
+	zoomToPosition(level, position, animate = true) {
+		// cancel existing animations
+		this.cancelPan();
+		this.cancelZoom();
+		this[HANDLERS].get(ZOOM).zoomToPosition(level, position, animate);
+		this.setDirty();
+		return this;
+	}
+
+	/**
 	 * Fit the plot to a provided bounds in plot coordinates.
 	 *
 	 * @param {Bounds} bounds - The bounds object, in plot coordinates.

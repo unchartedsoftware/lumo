@@ -155,22 +155,24 @@ class Viewport {
 	 * @param {number} zoom - The current zoom of the viewport.
 	 * @param {number} targetZoom - The target zoom of the viewport.
 	 * @param {Object} targetPos - The target position to zoom around.
+	 * @param {boolean} relative - The target position is relative to the current position when true, and centered
+	 * when false.  This paramater defaults to true.
 	 *
 	 * @returns {Viewport} The new viewport object.
 	 */
-	zoomToPos(zoom, targetZoom, targetPos) {
+	zoomToPos(zoom, targetZoom, targetPos, relative = true) {
 		const scale = Math.pow(2, targetZoom - zoom);
 		const scaledWidth = this.width / scale;
 		const scaledHeight = this.height / scale;
-		const diff = {
-			x: (targetPos.x - this.x) / scale,
-			y: (targetPos.y - this.y) / scale
-		};
-		return new Viewport(
-			targetPos.x - diff.x,
-			targetPos.y - diff.y,
+		const viewport = new Viewport(
+			targetPos.x - ((targetPos.x - this.x) / scale),
+			targetPos.y - ((targetPos.y - this.y) / scale),
 			scaledWidth,
 			scaledHeight);
+		if (!relative) {
+			viewport.centerOn(targetPos);
+		}
+		return viewport;
 	}
 
 	/**

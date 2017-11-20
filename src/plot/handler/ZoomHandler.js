@@ -106,7 +106,7 @@ const computeTargetZoom = function(zoomDelta, currentZoom, currentAnimation, min
 	return clamp(targetZoom, minZoom, maxZoom);
 };
 
-const zoom = function(plot, targetPos, zoomDelta, duration) {
+const zoom = function(plot, targetPos, zoomDelta, duration, relative = true) {
 	// calculate target zoom level
 	const targetZoom = computeTargetZoom(
 		zoomDelta,
@@ -114,13 +114,19 @@ const zoom = function(plot, targetPos, zoomDelta, duration) {
 		plot.zoomAnimation,
 		plot.minZoom,
 		plot.maxZoom);
-	// check if we need to zoom
-	if (targetZoom !== plot.getTargetZoom()) {
-		// set target viewport
-		const targetViewport = plot.viewport.zoomToPos(
-			plot.zoom,
-			targetZoom,
-			targetPos);
+  // set target viewport
+	const targetViewport = plot.viewport.zoomToPos(
+		plot.zoom,
+		targetZoom,
+		targetPos,
+		relative);
+	// get previous targets
+	const prevTargetZoom = plot.getTargetZoom();
+	const prevTargetViewport = plot.getTargetViewport();
+	// only process zoom if it is required
+	if (targetZoom !== prevTargetZoom ||
+			targetViewport.x !== prevTargetViewport.x ||
+			targetViewport.y !== prevTargetViewport.y) {
 		// clear pan animation
 		plot.panAnimation = null;
 		// if there is a duration
@@ -132,10 +138,10 @@ const zoom = function(plot, targetPos, zoomDelta, duration) {
 				prevZoom: plot.zoom,
 				targetZoom: targetZoom,
 				prevViewport: new Viewport(
-					plot.viewport.x,
-					plot.viewport.y,
-					plot.viewport.width,
-					plot.viewport.height),
+						plot.viewport.x,
+						plot.viewport.y,
+						plot.viewport.width,
+						plot.viewport.height),
 				targetViewport: targetViewport,
 				targetPos: targetPos
 			});
@@ -148,7 +154,7 @@ const zoom = function(plot, targetPos, zoomDelta, duration) {
 			plot.zoom = targetZoom;
 			plot.viewport = targetViewport;
 			// emit zoom end
-			plot.emit(EventType.ZOOM_END,  new Event(plot));
+			plot.emit(EventType.ZOOM_END, new Event(plot));
 		}
 		// request tiles
 		plot.zoomRequest();
@@ -319,6 +325,21 @@ class ZoomHandler extends DOMHandler {
 			// animate
 			zoom(plot, targetPos, zoomDelta, this.zoomDuration);
 		}
+	}
+
+	/**
+	 * Zooms to the target zoom level, and centers on the target position.  The zoom is bounded by the plot objects
+	 * minZoom and maxZoom attributes.
+	 *
+	 * @param {number} level - The target zoom level.
+	 * @param {Object} targetPos - The target center position.
+	 * @param {boolean} animate - Whether or not to animate the zoom. Defaults to `true`.
+	 */
+	zoomToPosition(level, targetPos, animate = true) {
+		const plot = this.plot;
+		const zoomDelta = level - plot.zoom;
+		const duration = animate ?  this.zoomDuration : 0;
+		zoom(plot, targetPos, zoomDelta, duration, false /* centered on target position */);
 	}
 }
 
