@@ -4,6 +4,10 @@
 
 An in-progress version being developed on the `master` branch.
 
+## 0.20.7 - Nov 20, 2017
+### Changed
+- Add `zoomToPosition` functionality to provide a method for zooming to a specific position.
+
 ## 0.20.6 - Oct 13th, 2017
 ### Changed
 - Add `enablePanning`, `disablePanning`, `enableZooming`, and `disableZooming` methods to `lumo.Plot` class.
