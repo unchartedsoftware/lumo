@@ -74,7 +74,7 @@ class PolygonOverlay extends Overlay {
 	 *
 	 * @returns {PolygonOverlay} The overlay object, for chaining.
 	 */
-	clearPolylines() {
+	clearPolygons() {
 		this.clear();
 		this.polygons = new Map();
 		if (this.plot) {

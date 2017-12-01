@@ -345,7 +345,8 @@ class Plot extends EventEmitter {
 		this.container.appendChild(this.canvas);
 
 		// get rendering context
-		this.ctx = this.canvas.getContext('webgl', options.contextAttributes);
+		this.ctx = this.canvas.getContext('webgl', options.contextAttributes) ||
+			this.canvas.getContext('experimental-webgl', options.contextAttributes); // MS Edge
 		if (!this.ctx) {
 			throw 'Unable to create a WebGLRenderingContext, please ensure your browser supports WebGL';
 		}
@@ -642,15 +643,6 @@ class Plot extends EventEmitter {
 	 */
 	getTargetViewportCenter() {
 		return this.getTargetViewport().getCenter();
-	}
-
-	/**
-	 * Returns the center of the plot in plot coordinates.
-	 *
-	 * @returns {Object} The target center in plot coordinates.
-	 */
-	getViewportCenter() {
-		return this.viewport.getCenter();
 	}
 
 	/**
