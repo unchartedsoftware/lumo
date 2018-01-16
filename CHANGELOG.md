@@ -4,7 +4,16 @@
 
 An in-progress version being developed on the `master` branch.
 
-## 0.20.7 - Nov 20, 2017
+## 0.20.9 - Jan 16th, 2018
+### Changed
+- Bump dependency versions.
+
+## 0.20.8 - Nov 27th, 2017
+### Changed
+- Add support for MS Edge browser for WebGL context.
+- Fix incorrectly named method on `lumo.PolygonOverlay` from `clearPolylines` to `clearPolygons`.
+
+## 0.20.7 - Nov 20th, 2017
 ### Changed
 - Add `zoomToPosition` functionality to provide a method for zooming to a specific position.
 
