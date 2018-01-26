@@ -4,6 +4,11 @@
 
 An in-progress version being developed on the `master` branch.
 
+## 0.20.10 - Jan 26th, 2018
+### Changed
+- No longer throw an exception when enabling an enabled handler, or disabling disabled handler.
+- Add package-lock.jon file to repo.
+
 ## 0.20.9 - Jan 16th, 2018
 ### Changed
 - Bump dependency versions.

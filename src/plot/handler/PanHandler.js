@@ -86,7 +86,9 @@ class PanHandler extends DOMHandler {
 	 * @returns {PanHandler} The handler object, for chaining.
 	 */
 	enable() {
-		super.enable();
+		if (this.enabled) {
+			return this;
+		}
 
 		const plot = this.plot;
 
@@ -232,6 +234,7 @@ class PanHandler extends DOMHandler {
 		container.addEventListener('mousedown', this.mousedown);
 		document.addEventListener('mousemove', this.mousemove);
 		document.addEventListener('mouseup', this.mouseup);
+		return super.enable();
 	}
 
 	/**
@@ -240,7 +243,9 @@ class PanHandler extends DOMHandler {
 	 * @returns {PanHandler} The handler object, for chaining.
 	 */
 	disable() {
-		super.disable();
+		if (!this.enabled) {
+			return this;
+		}
 
 		const container = this.plot.getContainer();
 		container.removeEventListener('mousedown', this.mousedown);
@@ -249,6 +254,7 @@ class PanHandler extends DOMHandler {
 		this.mousedown = null;
 		this.mousemove = null;
 		this.mouseup = null;
+		return super.disable();
 	}
 
 	/**

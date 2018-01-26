@@ -19,25 +19,21 @@ class DOMHandler {
 	/**
 	 * Enables the handler.
 	 *
-	 * @returns {ZoomHandler} The handler object, for chaining.
+	 * @returns {DOMHandler} The handler object, for chaining.
 	 */
 	enable() {
-		if (this.enabled) {
-			throw 'Handler is already enabled';
-		}
 		this.enabled = true;
+		return this;
 	}
 
 	/**
 	 * Disables the handler.
 	 *
-	 * @returns {ZoomHandler} The handler object, for chaining.
+	 * @returns {DOMHandler} The handler object, for chaining.
 	 */
 	disable() {
-		if (!this.enabled) {
-			throw 'Handler is already disabled';
-		}
 		this.enabled = false;
+		return this;
 	}
 
 	/**

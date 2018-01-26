@@ -45,7 +45,9 @@ class ClickHandler extends DOMHandler {
 	 * @returns {ClickHandler} The handler object, for chaining.
 	 */
 	enable() {
-		super.enable();
+		if (this.enabled) {
+			return this;
+		}
 
 		const plot = this.plot;
 
@@ -83,6 +85,7 @@ class ClickHandler extends DOMHandler {
 		container.addEventListener('mousedown', this.mousedown);
 		container.addEventListener('mouseup', this.mouseup);
 		container.addEventListener('dblclick', this.dblclick);
+		return super.enable();
 	}
 
 	/**
@@ -91,7 +94,10 @@ class ClickHandler extends DOMHandler {
 	 * @returns {ClickHandler} The handler object, for chaining.
 	 */
 	disable() {
-		super.disable();
+		if (!this.enabled) {
+			return this;
+		}
+
 		const container = this.plot.getContainer();
 		container.removeEventListener('mousedown', this.mousedown);
 		container.removeEventListener('mouseup', this.mouseup);
@@ -99,6 +105,7 @@ class ClickHandler extends DOMHandler {
 		this.mousedown = null;
 		this.mouseup = null;
 		this.dblclick = null;
+		return super.disable();
 	}
 }
 

@@ -228,7 +228,9 @@ class ZoomHandler extends DOMHandler {
 	 * @returns {ZoomHandler} The handler object, for chaining.
 	 */
 	enable() {
-		super.enable();
+		if (this.enabled) {
+			return this;
+		}
 
 		const plot = this.plot;
 
@@ -290,6 +292,7 @@ class ZoomHandler extends DOMHandler {
 		const container = plot.getContainer();
 		container.addEventListener('dblclick', this.dblclick);
 		container.addEventListener('wheel', this.wheel);
+		return super.enable();
 	}
 
 	/**
@@ -298,13 +301,16 @@ class ZoomHandler extends DOMHandler {
 	 * @returns {ZoomHandler} The handler object, for chaining.
 	 */
 	disable() {
-		super.disable();
+		if (!this.enabled) {
+			return this;
+		}
 
 		const container = this.plot.getContainer();
 		container.removeEventListener('dblclick', this.dblclick);
 		container.removeEventListener('wheel', this.wheel);
 		this.dblclick = null;
 		this.wheel = null;
+		return super.disable();
 	}
 
 	/**

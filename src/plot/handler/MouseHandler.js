@@ -35,7 +35,9 @@ class MouseHandler extends DOMHandler {
 	 * @returns {MouseHandler} The handler object, for chaining.
 	 */
 	enable() {
-		super.enable();
+		if (this.enabled) {
+			return this;
+		}
 
 		const plot = this.plot;
 
@@ -81,6 +83,7 @@ class MouseHandler extends DOMHandler {
 		container.addEventListener('mouseover', this.mouseover);
 		container.addEventListener('mouseout', this.mouseout);
 		container.addEventListener('wheel', this.wheel);
+		return super.enable();
 	}
 
 	/**
@@ -89,7 +92,9 @@ class MouseHandler extends DOMHandler {
 	 * @returns {MouseHandler} The handler object, for chaining.
 	 */
 	disable() {
-		super.disable();
+		if (!this.enabled) {
+			return this;
+		}
 
 		const container = this.plot.getContainer();
 		container.removeEventListener('mousedown', this.mousedown);
@@ -104,6 +109,7 @@ class MouseHandler extends DOMHandler {
 		this.mouseover = null;
 		this.mouseout = null;
 		this.wheel = null;
+		return super.disable();
 	}
 }
 
