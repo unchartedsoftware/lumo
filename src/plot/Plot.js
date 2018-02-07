@@ -144,9 +144,11 @@ const resize = function(plot) {
 		plot.canvas.width = current.width * plot.pixelRatio;
 		plot.canvas.height = current.height * plot.pixelRatio;
 		// resize renderbuffer
-		plot.renderBuffer.resize(
-			current.width * plot.pixelRatio,
-			current.height * plot.pixelRatio);
+		if (plot.renderBuffer) {
+			plot.renderBuffer.resize(
+				current.width * plot.pixelRatio,
+				current.height * plot.pixelRatio);
+		}
 		// update viewport
 		const extent = plot.getPixelExtent();
 		plot.viewport.width = current.width / extent;
@@ -222,6 +224,24 @@ const reset = function(plot) {
 	}
 };
 
+const prepareFrame = function(plot) {
+	// get context
+	const gl = plot.getRenderingContext();
+	if (!gl) {
+		return;
+	}
+	// clear the backbuffer
+	gl.clearColor(0, 0, 0, 0);
+	gl.clear(gl.COLOR_BUFFER_BIT);
+
+	// set the viewport
+	const size = plot.getViewportPixelSize();
+	gl.viewport(
+		0, 0,
+		size.width * plot.pixelRatio,
+		size.height * plot.pixelRatio);
+};
+
 const frame = function(plot) {
 
 	// get frame timestamp
@@ -261,19 +281,8 @@ const frame = function(plot) {
 		// update cell
 		updateCell(plot);
 
-		// get context
-		const gl = plot.getRenderingContext();
-
-		// clear the backbuffer
-		gl.clearColor(0, 0, 0, 0);
-		gl.clear(gl.COLOR_BUFFER_BIT);
-
-		// set the viewport
-		const size = plot.getViewportPixelSize();
-		gl.viewport(
-			0, 0,
-			size.width * plot.pixelRatio,
-			size.height * plot.pixelRatio);
+		// prepare the frame for rendering
+		prepareFrame(plot);
 
 		// sort layers by z-index
 		const layers = plot.getSortedLayers();
@@ -308,7 +317,6 @@ class Plot extends EventEmitter {
 	 * @param {number} options.maxZoom - The maximum zoom of the plot.
 	 * @param {Object} options.center - The center of the plot, in plot pixels.
 	 * @param {boolean} options.wraparound - Whether or not the plot wraps around.
-	 * @param {boolean} options.context - The rendering context type, defaults to `webgl`.
 	 * @param {boolean} options.contextAttributes - The rendering context attribtues argument. Optional.
 	 * @param {boolean} options.dirtyChecking - Whether or not the plot uses dirty checking or renders every frame.
 	 *
@@ -325,16 +333,17 @@ class Plot extends EventEmitter {
 	 * @param {number} options.maxConcurrentZooms - The maximum concurrent zooms in a single batch.
 	 * @param {number} options.deltaPerZoom - The scroll delta required per zoom level.
 	 * @param {number} options.zoomDebounce - The debounce duration of the zoom in ms.
+	 *
+	 * @param {boolean} options.noContext - Prevent the constructor from throwing exception if no WebGL context can be acquired.
 	 */
 	constructor(selector, options = {}) {
 		super();
+
+		// get container
 		this.container = document.querySelector(selector);
 		if (!this.container) {
 			throw `Element could not be found for selector ${selector}`;
 		}
-
-		// set pixel ratio
-		this.pixelRatio = window.devicePixelRatio;
 
 		// create canvas element
 		this.canvas = document.createElement('canvas');
@@ -347,15 +356,22 @@ class Plot extends EventEmitter {
 		// get rendering context
 		this.ctx = this.canvas.getContext('webgl', options.contextAttributes) ||
 			this.canvas.getContext('experimental-webgl', options.contextAttributes); // MS Edge
-		if (!this.ctx) {
+		if (!this.ctx && !options.noContext) {
 			throw 'Unable to create a WebGLRenderingContext, please ensure your browser supports WebGL';
 		}
 
-		// create renderbuffer
-		this.renderBuffer = new RenderBuffer(
-			this.ctx,
-			this.canvas.width,
-			this.canvas.height);
+		if (this.ctx) {
+			// create renderbuffer
+			this.renderBuffer = new RenderBuffer(
+				this.ctx,
+				this.canvas.width,
+				this.canvas.height);
+		} else {
+			this.renderBuffer = null;
+		}
+
+		// set pixel ratio
+		this.pixelRatio = window.devicePixelRatio;
 
 		// tile size in pixels
 		this.tileSize = defaultTo(options.tileSize, 256);
