@@ -4,6 +4,12 @@
 
 An in-progress version being developed on the `master` branch.
 
+## 0.20.12 - Apr 5th, 2018
+### Fixed
+- Instantiate `pixelRatio` before setting initial canvas dimensions.
+### Changed
+- Bump dependency versions.
+
 ## 0.20.11 - Feb 7th, 2018
 ### Changed
 - `lumo.Plot` accepts an option `noContext` to prevent throwing an exception if no `WebGLRenderingContext` can be acquired.
