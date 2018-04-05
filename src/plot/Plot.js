@@ -345,6 +345,9 @@ class Plot extends EventEmitter {
 			throw `Element could not be found for selector ${selector}`;
 		}
 
+		// set pixel ratio
+		this.pixelRatio = window.devicePixelRatio;
+
 		// create canvas element
 		this.canvas = document.createElement('canvas');
 		this.canvas.style.width = `${this.container.offsetWidth}px`;
@@ -369,9 +372,6 @@ class Plot extends EventEmitter {
 		} else {
 			this.renderBuffer = null;
 		}
-
-		// set pixel ratio
-		this.pixelRatio = window.devicePixelRatio;
 
 		// tile size in pixels
 		this.tileSize = defaultTo(options.tileSize, 256);
