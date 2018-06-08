@@ -6,8 +6,6 @@ const buffer = require('vinyl-buffer');
 const del = require('del');
 const eslint = require('gulp-eslint');
 const gulp = require('gulp');
-const istanbul = require('gulp-istanbul');
-const mocha = require('gulp-mocha');
 const source = require('vinyl-source-stream');
 const uglify = require('gulp-uglify');
 
@@ -15,7 +13,6 @@ const project = 'lumo';
 const paths = {
 	root: 'src/exports.js',
 	source: [ 'src/**/*.js' ],
-	test: [ 'test/**/*.js' ],
 	build: 'build'
 };
 
@@ -32,14 +29,6 @@ function logError(err) {
 function handleError(err) {
 	logError(err);
 	this.emit('end');
-}
-
-function handleErrorTimeout(err) {
-	logError(err);
-	setTimeout(() => {
-		// set delay for full mocha error message
-		process.exit(1);
-	});
 }
 
 function bundle(bundler, output) {
@@ -65,7 +54,7 @@ function build(root, output, minify) {
 	}).transform(babel, {
 		global: true,
 		compact: true,
-		presets: [ 'es2015' ]
+		presets: ['@babel/preset-env']
 	});
 	return (minify) ? bundleMin(bundler, output) : bundle(bundler, output);
 }
@@ -90,19 +79,6 @@ gulp.task('build-js', [ 'lint', 'clean' ], () => {
 });
 
 gulp.task('build', [ 'build-js', 'build-min-js' ], () => {
-});
-
-gulp.task('coverage', () => {
-	return gulp.src(paths.source)
-		.pipe(istanbul({ includeUntested: true }))
-		.pipe(istanbul.hookRequire());
-});
-
-gulp.task('test', [ 'coverage' ], () => {
-	return gulp.src(paths.test)
-		.pipe(mocha({ reporter: 'list' })
-			.on('error', handleErrorTimeout))
-		.pipe(istanbul.writeReports());
 });
 
 gulp.task('default', [ 'build' ], () => {

@@ -4,6 +4,11 @@
 
 An in-progress version being developed on the `master` branch.
 
+## 0.20.13 - June 8th, 2018
+### Changed
+- Bump dependency versions.
+- Use `mocha` and `nyc` test / coverage CLIs directly instead of gulp wrappers.
+
 ## 0.20.12 - Apr 5th, 2018
 ### Fixed
 - Instantiate `pixelRatio` before setting initial canvas dimensions.
