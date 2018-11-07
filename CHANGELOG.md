@@ -4,6 +4,10 @@
 
 An in-progress version being developed on the `master` branch.
 
+## 0.20.14 - Nov 7th, 2018
+### Changed
+- Bump dependency versions.
+
 ## 0.20.13 - June 8th, 2018
 ### Changed
 - Bump dependency versions.
