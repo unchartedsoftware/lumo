@@ -1,14 +1,17 @@
 'use strict';
 
 const gulp = require('gulp');
-const babel = require('gulp-babel');
-const concat = require('gulp-concat');
+const babel = require('babelify');
+const browserify = require('browserify');
 const eslint = require('gulp-eslint');
 const uglify = require('gulp-uglify');
+const buffer = require('vinyl-buffer');
+const source = require('vinyl-source-stream');
 const del = require('del');
 
 const project = 'lumo';
 const paths = {
+	root: 'src/exports.js',
 	src: 'src/**/*.js',
 	build: 'build'
 };
@@ -24,23 +27,55 @@ function lint() {
 		.pipe(eslint.failAfterError());
 }
 
-function buildDev() {
-	return gulp.src(paths.src, { sourcemaps: true })
-		.pipe(babel({
-			presets: ['@babel/env']
-		}))
-		.pipe(concat(`${project}.js`))
+function logError(err) {
+	if (err instanceof SyntaxError) {
+		console.error('Syntax Error:');
+		console.error(err.message);
+		console.error(err.codeFrame);
+	} else {
+		console.error(err.message);
+	}
+}
+
+function handleError(err) {
+	logError(err);
+	this.emit('end');
+}
+
+function bundleDev(bundler, output) {
+	return bundler.bundle()
+		.on('error', handleError)
+		.pipe(source(output))
 		.pipe(gulp.dest(paths.build));
 }
 
-function buildDist() {
-	return gulp.src(paths.src, { sourcemaps: false })
-		.pipe(babel({
-			presets: ['@babel/env']
-		}))
-		.pipe(uglify())
-		.pipe(concat(`${project}.min.js`))
+function bundleDist(bundler, output) {
+	return bundler.bundle()
+		.on('error', handleError)
+		.pipe(source(output))
+		.pipe(buffer())
+		.pipe(uglify().on('error', handleError))
 		.pipe(gulp.dest(paths.build));
+}
+
+function bundle(root, output, minify) {
+	let bundler = browserify(root, {
+		debug: !minify,
+		standalone: project
+	}).transform(babel, {
+		global: true,
+		compact: true,
+		presets: ['@babel/preset-env']
+	});
+	return (minify) ? bundleDist(bundler, output) : bundleDev(bundler, output);
+}
+
+function buildDev() {
+	return bundle(paths.root, `${project}.min.js`, true);
+}
+
+function buildDist() {
+	return bundle(paths.root, `${project}.js`, false);
 }
 
 const build = gulp.series(clean, lint, gulp.parallel(buildDev, buildDist));
