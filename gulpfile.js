@@ -1,85 +1,52 @@
 'use strict';
 
-const babel = require('babelify');
-const browserify = require('browserify');
-const buffer = require('vinyl-buffer');
-const del = require('del');
-const eslint = require('gulp-eslint');
 const gulp = require('gulp');
-const source = require('vinyl-source-stream');
+const babel = require('gulp-babel');
+const concat = require('gulp-concat');
+const eslint = require('gulp-eslint');
 const uglify = require('gulp-uglify');
+const del = require('del');
 
 const project = 'lumo';
 const paths = {
-	root: 'src/exports.js',
-	source: [ 'src/**/*.js' ],
+	src: 'src/**/*.js',
 	build: 'build'
 };
 
-function logError(err) {
-	if (err instanceof SyntaxError) {
-		console.error('Syntax Error:');
-		console.error(err.message);
-		console.error(err.codeFrame);
-	} else {
-		console.error(err.message);
-	}
+function clean() {
+	return del([ paths.build ]);
 }
 
-function handleError(err) {
-	logError(err);
-	this.emit('end');
-}
-
-function bundle(bundler, output) {
-	return bundler.bundle()
-		.on('error', handleError)
-		.pipe(source(output))
-		.pipe(gulp.dest(paths.build));
-}
-
-function bundleMin(bundler, output) {
-	return bundler.bundle()
-		.on('error', handleError)
-		.pipe(source(output))
-		.pipe(buffer())
-		.pipe(uglify().on('error', handleError))
-		.pipe(gulp.dest(paths.build));
-}
-
-function build(root, output, minify) {
-	let bundler = browserify(root, {
-		debug: !minify,
-		standalone: project
-	}).transform(babel, {
-		global: true,
-		compact: true,
-		presets: ['@babel/preset-env']
-	});
-	return (minify) ? bundleMin(bundler, output) : bundle(bundler, output);
-}
-
-gulp.task('clean', () => {
-	del.sync(paths.build);
-});
-
-gulp.task('lint', () => {
-	return gulp.src(paths.source)
+function lint() {
+	return gulp.src(paths.src)
 		.pipe(eslint())
 		.pipe(eslint.format())
 		.pipe(eslint.failAfterError());
-});
+}
 
-gulp.task('build-min-js', [ 'lint', 'clean' ], () => {
-	return build(paths.root, `${project}.min.js`, true);
-});
+function buildDev() {
+	return gulp.src(paths.src, { sourcemaps: true })
+		.pipe(babel({
+			presets: ['@babel/env']
+		}))
+		.pipe(concat(`${project}.js`))
+		.pipe(gulp.dest(paths.build));
+}
 
-gulp.task('build-js', [ 'lint', 'clean' ], () => {
-	return build(paths.root, `${project}.js`, false);
-});
+function buildDist() {
+	return gulp.src(paths.src, { sourcemaps: false })
+		.pipe(babel({
+			presets: ['@babel/env']
+		}))
+		.pipe(uglify())
+		.pipe(concat(`${project}.min.js`))
+		.pipe(gulp.dest(paths.build));
+}
 
-gulp.task('build', [ 'build-js', 'build-min-js' ], () => {
-});
+const build = gulp.series(clean, lint, gulp.parallel(buildDev, buildDist));
 
-gulp.task('default', [ 'build' ], () => {
-});
+exports.clean = clean;
+exports.lint = lint;
+exports.build = build;
+
+exports.default = build;
