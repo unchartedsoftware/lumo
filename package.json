@@ -2,7 +2,7 @@
   "name": "lumo",
   "version": "0.20.15",
   "description": "A high performance WebGL tile rendering library",
-  "main": "src/exports.js",
+  "main": "build/lumo.min.js",
   "author": "Kevin Birk <birk.kevin@gmail.com>",
   "license": "MIT",
   "repository": {
@@ -15,8 +15,10 @@
     "webgl",
     "tile"
   ],
+
   "files": [
-    "src"
+    "src",
+    "build"
   ],
   "dependencies": {
     "earcut": "^2.1.5",
