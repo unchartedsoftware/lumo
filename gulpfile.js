@@ -1,20 +1,31 @@
 'use strict';
 
+const gulp = require('gulp');
 const babel = require('babelify');
 const browserify = require('browserify');
-const buffer = require('vinyl-buffer');
-const del = require('del');
 const eslint = require('gulp-eslint');
-const gulp = require('gulp');
-const source = require('vinyl-source-stream');
 const uglify = require('gulp-uglify');
+const buffer = require('vinyl-buffer');
+const source = require('vinyl-source-stream');
+const del = require('del');
 
 const project = 'lumo';
 const paths = {
 	root: 'src/exports.js',
-	source: [ 'src/**/*.js' ],
+	src: 'src/**/*.js',
 	build: 'build'
 };
+
+function clean() {
+	return del([ paths.build ]);
+}
+
+function lint() {
+	return gulp.src(paths.src)
+		.pipe(eslint())
+		.pipe(eslint.format())
+		.pipe(eslint.failAfterError());
+}
 
 function logError(err) {
 	if (err instanceof SyntaxError) {
@@ -31,14 +42,14 @@ function handleError(err) {
 	this.emit('end');
 }
 
-function bundle(bundler, output) {
+function bundleDev(bundler, output) {
 	return bundler.bundle()
 		.on('error', handleError)
 		.pipe(source(output))
 		.pipe(gulp.dest(paths.build));
 }
 
-function bundleMin(bundler, output) {
+function bundleDist(bundler, output) {
 	return bundler.bundle()
 		.on('error', handleError)
 		.pipe(source(output))
@@ -47,7 +58,7 @@ function bundleMin(bundler, output) {
 		.pipe(gulp.dest(paths.build));
 }
 
-function build(root, output, minify) {
+function bundle(root, output, minify) {
 	let bundler = browserify(root, {
 		debug: !minify,
 		standalone: project
@@ -56,30 +67,21 @@ function build(root, output, minify) {
 		compact: true,
 		presets: ['@babel/preset-env']
 	});
-	return (minify) ? bundleMin(bundler, output) : bundle(bundler, output);
+	return (minify) ? bundleDist(bundler, output) : bundleDev(bundler, output);
 }
 
-gulp.task('clean', () => {
-	del.sync(paths.build);
-});
+function buildDev() {
+	return bundle(paths.root, `${project}.min.js`, true);
+}
 
-gulp.task('lint', () => {
-	return gulp.src(paths.source)
-		.pipe(eslint())
-		.pipe(eslint.format())
-		.pipe(eslint.failAfterError());
-});
+function buildDist() {
+	return bundle(paths.root, `${project}.js`, false);
+}
 
-gulp.task('build-min-js', [ 'lint', 'clean' ], () => {
-	return build(paths.root, `${project}.min.js`, true);
-});
+const build = gulp.series(clean, lint, gulp.parallel(buildDev, buildDist));
 
-gulp.task('build-js', [ 'lint', 'clean' ], () => {
-	return build(paths.root, `${project}.js`, false);
-});
+exports.clean = clean;
+exports.lint = lint;
+exports.build = build;
 
-gulp.task('build', [ 'build-js', 'build-min-js' ], () => {
-});
-
-gulp.task('default', [ 'build' ], () => {
-});
+exports.default = build;
