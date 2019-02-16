@@ -1,4 +1,6 @@
-<img width="600" src="https://rawgit.com/unchartedsoftware/lumo/master/logo.svg" alt="lumo" />
+<p align="center">
+	<img width="600" src="/logo.svg" alt="lumo" />
+</p>
 
 > A high performance WebGL tile rendering library
 
@@ -12,7 +14,10 @@ Lumo is a lightweight WebGL rendering library designed for highly scalable, cust
 
 While Lumo does provide some higher level data abstractions for WebGL, it assumes a degree of familiarity with the WebGL API and GLSL.
 
-**Note:** The library is currently a work-in-progress and the interfaces are likely to change.
+
+<p align="center">
+    <img width="800" src="/screenshot.png" alt="screenshot" />
+</p>
 
 ## Installation
 
@@ -77,6 +82,8 @@ points.requestTile = (coord, done) => {
 
 plot.add(points);
 ```
+
+##### For more usage examples please refer to the [lumo-example](https://github.com/unchartedsoftware/lumo-example) repository.
 
 ## Usage
 
