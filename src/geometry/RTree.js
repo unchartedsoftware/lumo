@@ -1,6 +1,6 @@
 'use strict';
 
-const rbush = require('rbush');
+const RBush = require('rbush');
 const defaultTo = require('lodash/defaultTo');
 
 /**
@@ -15,7 +15,7 @@ class RTree {
 	 * @param {boolean} options.nodeCapacity - The node capacity of the r-tree.
 	 */
 	constructor(options) {
-		this.tree = rbush(defaultTo(options.nodeCapacity, 32));
+		this.tree = new RBush(defaultTo(options.nodeCapacity, 32));
 	}
 
 	/**
