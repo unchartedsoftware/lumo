@@ -21,7 +21,7 @@ class TileLayer extends Layer {
 	/**
 	 * Instantiates a new TileLayer object.
 	 *
-	 * @param {Object} options - The layer options.
+	 * @param {object} options - The layer options.
 	 * @param {number} options.opacity - The layer opacity.
 	 * @param {number} options.zIndex - The layer z-index.
 	 * @param {boolean} options.hidden - Whether or not the layer is visible.

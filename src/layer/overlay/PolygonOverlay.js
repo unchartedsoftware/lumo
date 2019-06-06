@@ -28,7 +28,7 @@ class PolygonOverlay extends Overlay {
 	/**
 	 * Instantiates a new PolygonOverlay object.
 	 *
-	 * @param {Object} options - The layer options.
+	 * @param {object} options - The layer options.
 	 * @param {Renderer} options.renderer - The layer renderer.
 	 * @param {number} options.opacity - The layer opacity.
 	 * @param {number} options.zIndex - The layer z-index.

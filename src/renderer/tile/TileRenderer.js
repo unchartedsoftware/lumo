@@ -70,7 +70,7 @@ class TileRenderer extends Renderer {
 	 * Creates an rtree pyramid object. Creates and attaches the necessary
 	 * event handlers to add and remove data from the rtree accordingly.
 	 *
-	 * @param {Object} options - The options for the r-tree pyramid.
+	 * @param {object} options - The options for the r-tree pyramid.
 	 * @param {number} options.nodeCapacity - The node capacity of the rtree.
 	 * @param {Function} options.createCollidables - The function to create collidables from a tile.
 	 *

@@ -38,7 +38,7 @@ const NODE_CAPACITY = 32;
 /**
  * Shader GLSL source.
  * @private
- * @constant {Object}
+ * @constant {object}
  */
 const SHADER_GLSL = {
 	vert:
@@ -171,7 +171,7 @@ class InteractiveTileRenderer extends WebGLTileRenderer {
 	/**
 	 * Instantiates a new InteractiveTileRenderer object.
 	 *
-	 * @param {Object} options - The options object.
+	 * @param {object} options - The options object.
 	 * @param {Array} options.color - The color of the points.
 	 */
 	constructor(options = {}) {
@@ -241,9 +241,9 @@ class InteractiveTileRenderer extends WebGLTileRenderer {
 	/**
 	 * Pick a position of the renderer for a collision with any rendered objects.
 	 *
-	 * @param {Object} pos - The plot position to pick at.
+	 * @param {object} pos - The plot position to pick at.
 	 *
-	 * @returns {Object} The collision, if any.
+	 * @returns {object} The collision, if any.
 	 */
 	pick(pos) {
 		if (this.layer.plot.isZooming()) {

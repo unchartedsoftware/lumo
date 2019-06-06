@@ -12,7 +12,7 @@ class PanAnimation extends Animation {
 	/**
 	 * Instantiates a new PanAnimation object.
 	 *
-	 * @param {Object} params - The parameters of the animation.
+	 * @param {object} params - The parameters of the animation.
 	 * @param {number} params.plot - The plot target of the animation.
 	 * @param {number} params.duration - The duration of the animation.
 	 * @param {number} params.start - The start timestamp of the animation.

@@ -310,12 +310,12 @@ class Plot extends EventEmitter {
 	 * Instantiates a new Plot object.
 	 *
 	 * @param {string} selector - The selector for the container element.
-	 * @param {Object} options - The plot options.
+	 * @param {object} options - The plot options.
 	 * @param {number} options.tileSize - The dimension in pixels of a tile.
 	 * @param {number} options.zoom - The zoom of the plot.
 	 * @param {number} options.minZoom - The minimum zoom of the plot.
 	 * @param {number} options.maxZoom - The maximum zoom of the plot.
-	 * @param {Object} options.center - The center of the plot, in plot pixels.
+	 * @param {object} options.center - The center of the plot, in plot pixels.
 	 * @param {boolean} options.wraparound - Whether or not the plot wraps around.
 	 * @param {boolean} options.contextAttributes - The rendering context attribtues argument. Optional.
 	 * @param {boolean} options.dirtyChecking - Whether or not the plot uses dirty checking or renders every frame.
@@ -626,7 +626,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Returns the current bottom-left corner of the viewport.
 	 *
-	 * @returns {Object} The current center in plot coordinates.
+	 * @returns {object} The current center in plot coordinates.
 	 */
 	getViewportPosition() {
 		return this.viewport.getPosition();
@@ -636,7 +636,7 @@ class Plot extends EventEmitter {
 	 * Returns the target bottom-left corner of the viewport. If the plot is actively zooming
 	 * or panning, it will return the destination center.
 	 *
-	 * @returns {Object} The target center in plot coordinates.
+	 * @returns {object} The target center in plot coordinates.
 	 */
 	getTargetViewportPosition() {
 		return this.getTargetViewport().getPosition();
@@ -645,7 +645,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Returns the current center of the viewport.
 	 *
-	 * @returns {Object} The current center in plot coordinates.
+	 * @returns {object} The current center in plot coordinates.
 	 */
 	getViewportCenter() {
 		return this.viewport.getCenter();
@@ -655,7 +655,7 @@ class Plot extends EventEmitter {
 	 * Returns the target center of the plot in plot coordinates. If the plot is
 	 * actively zooming or panning, it will return the destination center.
 	 *
-	 * @returns {Object} The target center in plot coordinates.
+	 * @returns {object} The target center in plot coordinates.
 	 */
 	getTargetViewportCenter() {
 		return this.getTargetViewport().getCenter();
@@ -686,7 +686,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Returns the plot size in pixels.
 	 *
-	 * @returns {Object} The plot size in pixels.
+	 * @returns {object} The plot size in pixels.
 	 */
 	getPixelExtent() {
 		return Math.pow(2, this.zoom) * this.tileSize;
@@ -695,7 +695,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Returns the target plot size in pixels.
 	 *
-	 * @returns {Object} The target plot size in pixels.
+	 * @returns {object} The target plot size in pixels.
 	 */
 	getTargetPixelExtent() {
 		return Math.pow(2, this.getTargetZoom()) * this.tileSize;
@@ -704,7 +704,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Returns the viewport size in pixels.
 	 *
-	 * @returns {Object} The viewport size in pixels.
+	 * @returns {object} The viewport size in pixels.
 	 */
 	getViewportPixelSize() {
 		return this.viewport.getPixelSize(this.zoom, this.tileSize);
@@ -713,7 +713,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Returns the target viewport size in pixels.
 	 *
-	 * @returns {Object} The target viewport size in pixels.
+	 * @returns {object} The target viewport size in pixels.
 	 */
 	getTargetViewportPixelSize() {
 		return this.getTargetViewport().getPixelSize(this.zoom, this.tileSize);
@@ -722,7 +722,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Returns the viewport offset in pixels.
 	 *
-	 * @returns {Object} The viewport offset in pixels.
+	 * @returns {object} The viewport offset in pixels.
 	 */
 	getViewportPixelOffset() {
 		return this.viewport.getPixelOffset(this.zoom, this.tileSize);
@@ -731,7 +731,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Returns the target viewport offset in pixels.
 	 *
-	 * @returns {Object} The target viewport offset in pixels.
+	 * @returns {object} The target viewport offset in pixels.
 	 */
 	getTargetViewportPixelOffset() {
 		return this.getTargetViewport().getPixelOffset(this.zoom, this.tileSize);
@@ -743,7 +743,7 @@ class Plot extends EventEmitter {
 	 *
 	 * @param {Event} event - The mouse event.
 	 *
-	 * @returns {Object} The plot position.
+	 * @returns {object} The plot position.
 	 */
 	mouseToPlotCoord(event) {
 		const extent = this.getPixelExtent();
@@ -764,7 +764,7 @@ class Plot extends EventEmitter {
 	 *
 	 * @param {Event} event - The mouse event.
 	 *
-	 * @returns {Object} The viewport pixel coordinate.
+	 * @returns {object} The viewport pixel coordinate.
 	 */
 	mouseToViewportPixel(event) {
 		const size = this.getViewportPixelSize();
@@ -783,9 +783,9 @@ class Plot extends EventEmitter {
 	 * coordinate.
 	 * Coordinate [0, 0] is bottom-left of the plot.
 	 *
-	 * @param {Object} px - The viewport pixel coordinate.
+	 * @param {object} px - The viewport pixel coordinate.
 	 *
-	 * @returns {Object} The normalized plot coordinate.
+	 * @returns {object} The normalized plot coordinate.
 	 */
 	viewportPixelToPlotCoord(px) {
 		const extent = this.getPixelExtent();
@@ -799,9 +799,9 @@ class Plot extends EventEmitter {
 	 * Converts a coordinate in normalized plot space to viewport pixel space.
 	 * Coordinate [0, 0] is bottom-left of the plot.
 	 *
-	 * @param {Object} pos - The normalized plot coordinate
+	 * @param {object} pos - The normalized plot coordinate
 	 *
-	 * @returns {Object} The viewport pixel coordinate.
+	 * @returns {object} The viewport pixel coordinate.
 	 */
 	plotCoordToViewportPixel(pos) {
 		const extent = this.plot.getPixelExtent();
@@ -889,7 +889,7 @@ class Plot extends EventEmitter {
 	 * minZoom and maxZoom attributes. Cancels any current zoom or pan animations.
 	 *
 	 * @param {number} level - The target zoom level.
-	 * @param {Object} position - The target center position.
+	 * @param {object} position - The target center position.
 	 * @param {boolean} animate - Whether or not to animate the zoom. Defaults to `true`.
 	 *
 	 * @returns {Plot} The plot object, for chaining.
@@ -1005,7 +1005,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Returns any highlighted data.
 	 *
-	 * @returns {Object} The highlighted data.
+	 * @returns {object} The highlighted data.
 	 */
 	getHighlighted() {
 		const layers = this.layers;
@@ -1021,7 +1021,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Returns true if the provided argument is highlighted.
 	 *
-	 * @param {Object} data - The data to test.
+	 * @param {object} data - The data to test.
 	 *
 	 * @returns {boolean} Whether or not there is highlighted data.
 	 */
@@ -1055,7 +1055,7 @@ class Plot extends EventEmitter {
 	/**
 	 * Returns true if the provided argument is selected.
 	 *
-	 * @param {Object} data - The data to test.
+	 * @param {object} data - The data to test.
 	 *
 	 * @returns {boolean} Whether or not the data is selected.
 	 */

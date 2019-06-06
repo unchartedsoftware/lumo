@@ -21,7 +21,7 @@ class WebGLOverlayRenderer extends OverlayRenderer {
 	/**
 	 * Instantiates a new WebGLOverlayRenderer object.
 	 *
-	 * @param {Object} options - The overlay options.
+	 * @param {object} options - The overlay options.
 	 */
 	constructor(options = {}) {
 		super(options);
@@ -80,7 +80,7 @@ class WebGLOverlayRenderer extends OverlayRenderer {
 	 * Instantiate and return a new Shader object using the renderers internal
 	 * WebGLRenderingContext.
 	 *
-	 * @param {Object} source - The shader param object.
+	 * @param {object} source - The shader param object.
 	 * @param {string} source.common - Common glsl to be shared by both vertex and fragment shaders.
 	 * @param {string} source.vert - The vertex shader glsl.
 	 * @param {string} source.frag - The fragment shader glsl.

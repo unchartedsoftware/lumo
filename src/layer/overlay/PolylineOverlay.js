@@ -32,7 +32,7 @@ class PolylineOverlay extends Overlay {
 	/**
 	 * Instantiates a new PolylineOverlay object.
 	 *
-	 * @param {Object} options - The layer options.
+	 * @param {object} options - The layer options.
 	 * @param {Renderer} options.renderer - The layer renderer.
 	 * @param {number} options.opacity - The layer opacity.
 	 * @param {number} options.zIndex - The layer z-index.

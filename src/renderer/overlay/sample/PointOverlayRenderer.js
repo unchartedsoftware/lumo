@@ -9,7 +9,7 @@ const WebGLOverlayRenderer = require('../WebGLOverlayRenderer');
 /**
  * Shader GLSL source.
  * @private
- * @constant {Object}
+ * @constant {object}
  */
 const SHADER_GLSL = {
 	vert:
@@ -91,7 +91,7 @@ class PointOverlayRenderer extends WebGLOverlayRenderer {
 	/**
 	 * Instantiates a new PointOverlayRenderer object.
 	 *
-	 * @param {Object} options - The overlay options.
+	 * @param {object} options - The overlay options.
 	 * @param {Array} options.pointColor - The color of the points.
 	 * @param {number} options.pointRadius - The pixel radius of the points.
 	 */

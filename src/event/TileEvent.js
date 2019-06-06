@@ -10,7 +10,7 @@ class TileEvent extends Event {
 	/**
 	 * Instantiates a new TileEvent object.
 	 *
-	 * @param {Object} target - The object that fired the event.
+	 * @param {object} target - The object that fired the event.
 	 * @param {number} tile - The tile object.
 	 */
 	constructor(target, tile) {

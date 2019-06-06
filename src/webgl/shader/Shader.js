@@ -161,11 +161,11 @@ class Shader {
 	 * Instantiates a Shader object.
 	 *
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
-	 * @param {Object} params - The shader params object.
+	 * @param {object} params - The shader params object.
 	 * @param {string} params.common - Common glsl to be shared by both vertex and fragment shaders.
 	 * @param {string} params.vert - The vertex shader glsl.
 	 * @param {string} params.frag - The fragment shader glsl.
-	 * @param {Object} params.define - Any #define directives to include in the glsl.
+	 * @param {object} params.define - Any #define directives to include in the glsl.
 	 */
 	constructor(gl, params = {}) {
 		// check source arguments

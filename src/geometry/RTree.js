@@ -11,7 +11,7 @@ class RTree {
 	/**
 	 * Instantiates a new RTree object.
 	 *
-	 * @param {Object} options - The options object.
+	 * @param {object} options - The options object.
 	 * @param {boolean} options.nodeCapacity - The node capacity of the r-tree.
 	 */
 	constructor(options) {
@@ -45,7 +45,7 @@ class RTree {
 	 * @param {number} x - The x component.
 	 * @param {number} y - The y component.
 	 *
-	 * @returns {Object} The collision object.
+	 * @returns {object} The collision object.
 	 */
 	searchPoint(x, y) {
 		const collisions = this.tree.search({
@@ -75,7 +75,7 @@ class RTree {
 	 * @param {number} minY - The minimum y component.
 	 * @param {number} maxY - The maximum y component.
 	 *
-	 * @returns {Object} The collision object.
+	 * @returns {object} The collision object.
 	 */
 	searchRectangle(minX, maxX, minY, maxY) {
 		const collisions = this.tree.search({

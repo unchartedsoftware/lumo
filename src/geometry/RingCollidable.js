@@ -17,7 +17,7 @@ class RingCollidable {
 	 * @param {number} xOffset - The tile x offset in pixels.
 	 * @param {number} yOffset - The tile y offset in pixels.
 	 * @param {Tile} tile - The tile object.
-	 * @param {Object} data - Any arbitrary user data.
+	 * @param {object} data - Any arbitrary user data.
 	 */
 	constructor(x, y, radius, width, xOffset, yOffset, tile, data) {
 		this.x = x;

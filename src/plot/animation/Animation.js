@@ -8,7 +8,7 @@ class Animation {
 	/**
 	 * Instantiates a new Animation object.
 	 *
-	 * @param {Object} params - The parameters of the animation.
+	 * @param {object} params - The parameters of the animation.
 	 * @param {number} params.plot - The plot target of the animation.
 	 * @param {number} params.duration - The duration of the animation.
 	 */

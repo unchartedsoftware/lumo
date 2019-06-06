@@ -8,7 +8,7 @@ const WebGLTileRenderer = require('../WebGLTileRenderer');
 /**
  * Shader GLSL source.
  * @private
- * @constant {Object}
+ * @constant {object}
  */
 const SHADER_GLSL = {
 	vert:

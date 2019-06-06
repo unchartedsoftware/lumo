@@ -12,7 +12,7 @@ class ZoomAnimation extends Animation {
 	/**
 	 * Instantiates a new ZoomAnimation object.
 	 *
-	 * @param {Object} params - The parameters of the animation.
+	 * @param {object} params - The parameters of the animation.
 	 * @param {number} params.plot - The plot target of the animation.
 	 * @param {number} params.duration - The duration of the animation.
 	 * @param {number} params.prevZoom - The starting zoom of the animation.

@@ -9,7 +9,7 @@ const WebGLOverlayRenderer = require('../WebGLOverlayRenderer');
 /**
  * Shader GLSL source.
  * @private
- * @constant {Object}
+ * @constant {object}
  */
 const SHADER_GLSL = {
 	vert:
@@ -463,7 +463,7 @@ class PolylineOverlayRenderer extends WebGLOverlayRenderer {
 	/**
 	 * Instantiates a new PolylineOverlayRenderer object.
 	 *
-	 * @param {Object} options - The overlay options.
+	 * @param {object} options - The overlay options.
 	 * @param {Array} options.lineColor - The color of the line.
 	 * @param {number} options.lineWidth - The pixel width of the line.
 	 */

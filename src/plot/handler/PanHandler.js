@@ -68,7 +68,7 @@ class PanHandler extends DOMHandler {
 	 * Instantiates a new PanHandler object.
 	 *
 	 * @param {Plot} plot - The plot to attach the handler to.
-	 * @param {Object} options - The parameters of the animation.
+	 * @param {object} options - The parameters of the animation.
 	 * @param {number} options.inertia - Whether or not pan inertia is enabled.
 	 * @param {number} options.inertiaEasing - The inertia easing factor.
 	 * @param {number} options.inertiaDeceleration - The inertia deceleration factor.

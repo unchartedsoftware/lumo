@@ -142,7 +142,7 @@ class TileCoord {
 	/**
 	 * Returns the plot coordinate for the bottom-left corner of the coord.
 	 *
-	 * @returns {Object} The plot position of the coord.
+	 * @returns {object} The plot position of the coord.
 	 */
 	getPosition() {
 		const dim = Math.pow(2, this.z);
@@ -155,7 +155,7 @@ class TileCoord {
 	/**
 	 * Returns the plot coordinate for the center of the coord.
 	 *
-	 * @returns {Object} The plot position of the center.
+	 * @returns {object} The plot position of the center.
 	 */
 	getCenter() {
 		const dim = Math.pow(2, this.z);

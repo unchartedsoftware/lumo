@@ -15,7 +15,7 @@ const CHUNK_SIZE = 128 * 128;
 /**
  * Shader GLSL source.
  * @private
- * @constant {Object}
+ * @constant {object}
  */
 const SHADER_GLSL = {
 	vert:
@@ -65,7 +65,7 @@ class PointTileRenderer extends WebGLTileRenderer {
 	/**
 	 * Instantiates a new PointTileRenderer object.
 	 *
-	 * @param {Object} options - The options object.
+	 * @param {object} options - The options object.
 	 * @param {Array} options.color - The color of the points.
 	 */
 	constructor(options = {}) {

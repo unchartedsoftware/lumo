@@ -26,7 +26,7 @@ class PointOverlay extends Overlay {
 	/**
 	 * Instantiates a new PointOverlay object.
 	 *
-	 * @param {Object} options - The layer options.
+	 * @param {object} options - The layer options.
 	 * @param {number} options.opacity - The layer opacity.
 	 * @param {number} options.zIndex - The layer z-index.
 	 */

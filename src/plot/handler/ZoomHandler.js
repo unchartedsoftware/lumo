@@ -206,7 +206,7 @@ class ZoomHandler extends DOMHandler {
 	 * Instantiates a new ZoomHandler object.
 	 *
 	 * @param {Plot} plot - The plot to attach the handler to.
-	 * @param {Object} options - The parameters of the animation.
+	 * @param {object} options - The parameters of the animation.
 	 * @param {number} options.continuousZoom - Whether or not continuous zoom is enabled.
 	 * @param {number} options.zoomDuration - The duration of the zoom animation.
 	 * @param {number} options.maxConcurrentZooms - The maximum concurrent zooms in a single batch.
@@ -338,7 +338,7 @@ class ZoomHandler extends DOMHandler {
 	 * minZoom and maxZoom attributes.
 	 *
 	 * @param {number} level - The target zoom level.
-	 * @param {Object} targetPos - The target center position.
+	 * @param {object} targetPos - The target center position.
 	 * @param {boolean} animate - Whether or not to animate the zoom. Defaults to `true`.
 	 */
 	zoomToPosition(level, targetPos, animate = true) {

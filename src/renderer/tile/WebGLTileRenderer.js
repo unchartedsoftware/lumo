@@ -98,7 +98,7 @@ class WebGLTileRenderer extends TileRenderer {
 	 * Instantiate and return a new Shader object using the renderers internal
 	 * WebGLRenderingContext.
 	 *
-	 * @param {Object} source - The shader param object.
+	 * @param {object} source - The shader param object.
 	 * @param {string} source.common - Common glsl to be shared by both vertex and fragment shaders.
 	 * @param {string} source.vert - The vertex shader glsl.
 	 * @param {string} source.frag - The fragment shader glsl.
@@ -114,7 +114,7 @@ class WebGLTileRenderer extends TileRenderer {
 	 * the provided texture size. Creates and attaches the necessary event
 	 * handlers to add and remove data from the array accordingly.
 	 *
-	 * @param {Object} options - The options for the texture array.
+	 * @param {object} options - The options for the texture array.
 	 * @param {number} options.chunkSize - The resolution of the tile texture.
 	 * @param {string} options.format - The texture pixel format.
 	 * @param {string} options.type - The texture pixel component type.
@@ -182,8 +182,8 @@ class WebGLTileRenderer extends TileRenderer {
 	 * the provided attribute pointers. Creates and attaches the necessary
 	 * event handlers to add and remove data from the atlas accordingly.
 	 *
-	 * @param {Object} options - The options for the vertex atlas.
-	 * @param {Object} options.attributePointers - The vertex attribute pointers.
+	 * @param {object} options - The options for the vertex atlas.
+	 * @param {object} options.attributePointers - The vertex attribute pointers.
 	 * @param {number} options.chunkSize - The size of a single chunk, in vertices.
 	 * @param {Function} options.onAdd - The function executed when a tile is added.
 	 * @param {Function} options.onRemove - The function executed when a tile is removed.

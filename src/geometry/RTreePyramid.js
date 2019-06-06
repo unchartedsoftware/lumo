@@ -11,7 +11,7 @@ class RTreePyramid {
 	/**
 	 * Instantiates a new RTreePyramid object.
 	 *
-	 * @param {Object} options - The options object.
+	 * @param {object} options - The options object.
 	 * @param {boolean} options.nodeCapacity - The node capacity of the r-tree.
 	 */
 	constructor(options) {
@@ -61,7 +61,7 @@ class RTreePyramid {
 	 * @param {number} zoom - The zoom level of the plot.
 	 * @param {number} extent - The pixel extent of the plot zoom.
 	 *
-	 * @returns {Object} The collision object.
+	 * @returns {object} The collision object.
 	 */
 	searchPoint(x, y, zoom, extent) {
 		// points are stored in un-scaled coordinates, unscale the point
@@ -90,7 +90,7 @@ class RTreePyramid {
 	 * @param {number} zoom - The zoom level of the plot.
 	 * @param {number} extent - The pixel extent of the plot zoom.
 	 *
-	 * @returns {Object} The collision object.
+	 * @returns {object} The collision object.
 	 */
 	searchRectangle(minX, maxX, minY, maxY, zoom, extent) {
 		// points are stored in un-scaled coordinates, unscale the point

@@ -145,11 +145,11 @@ class SampleRenderer extends WebGLVertexRenderer {
 				attribute vec2 aPosition;
 				uniform vec2 uTileOffset;
 				uniform float uScale;
-				uniform mat4 uProjection;
+				uniform mat4 uProjectionMatrix;
 				void main() {
 					vec2 wPosition = (aPosition * uScale) + uTileOffset;
 					gl_PointSize = 4.0;
-					gl_Position = uProjection * vec4(wPosition, 0.0, 1.0);
+					gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
 				}
 				`,
 			frag:
@@ -248,7 +248,7 @@ There are three coordinate systems used by Lumo. Tile coordinates, plot coordina
 
 ### Events
 
-All `lumo.Plot`, `lumo.Layer`, and `lumo.Renderer`, classes extend the `EventEmitter` class and are capable of emitting events.
+All `lumo.Plot`, `lumo.Layer`, and `lumo.Renderer` classes extend the `EventEmitter` class and are capable of emitting events.
 
 The following events are emitted by Lumo:
 

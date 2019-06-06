@@ -37,7 +37,7 @@ const STAR_NUM_POINTS = 5;
 /**
  * Shader GLSL source.
  * @private
- * @constant {Object}
+ * @constant {object}
  */
 const SHADER_GLSL = {
 	vert:
@@ -109,7 +109,7 @@ class InstancedTileRenderer extends WebGLTileRenderer {
 	/**
 	 * Instantiates a new InstancedTileRenderer object.
 	 *
-	 * @param {Object} options - The options object.
+	 * @param {object} options - The options object.
 	 * @param {Array} options.color - The color of the points.
 	 */
 	constructor(options = {}) {

@@ -1,6 +1,6 @@
 {
   "name": "lumo",
-  "version": "0.20.15",
+  "version": "0.20.16",
   "description": "A high performance WebGL tile rendering library",
   "main": "build/lumo.min.js",
   "author": "Kevin Birk <birk.kevin@gmail.com>",
@@ -22,21 +22,21 @@
   "dependencies": {
     "earcut": "^2.1.5",
     "lodash": "^4.17.11",
-    "rbush": "^2.0.2"
+    "rbush": "^3.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.2.2",
-    "@babel/preset-env": "^7.2.2",
+    "@babel/core": "^7.4.5",
+    "@babel/preset-env": "^7.4.5",
     "babelify": "^10.0.0",
     "browserify": "^16.2.3",
-    "del": "^3.0.0",
-    "eslint-plugin-jsdoc": "^4.1.0",
-    "gulp": "^4.0.0",
+    "del": "^4.1.1",
+    "eslint-plugin-jsdoc": "^7.2.3",
+    "gulp": "^4.0.2",
     "gulp-eslint": "^5.0.0",
-    "gulp-uglify": "^3.0.1",
-    "mocha": "^5.2.0",
-    "nyc": "^13.2.0",
-    "sinon": "^7.2.3",
+    "gulp-uglify": "^3.0.2",
+    "mocha": "^6.1.4",
+    "nyc": "^14.1.1",
+    "sinon": "^7.3.2",
     "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0"
   },

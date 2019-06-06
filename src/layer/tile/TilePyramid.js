@@ -174,7 +174,7 @@ class TilePyramid {
 	 * Instantiates a new TilePyramid object.
 	 *
 	 * @param {Layer} layer - The layer object.
-	 * @param {Object} options - The pyramid options.
+	 * @param {object} options - The pyramid options.
 	 * @param {number} options.cacheSize - The size of the tile cache.
 	 * @param {number} options.numPersistentLevels - The number of persistent levels in the pyramid.
 	 */

@@ -45,14 +45,14 @@ class TextureArray {
 	 * using an atlas.
 	 *
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
-	 * @param {Object} params - The texture parameters.
+	 * @param {object} params - The texture parameters.
 	 * @param {string} params.format - The texture pixel format.
 	 * @param {string} params.type - The texture pixel component type.
 	 * @param {string} params.filter - The min / mag filter used during scaling.
 	 * @param {string} params.wrap - The wrapping type over both S and T dimension.
 	 * @param {bool} params.invertY - Whether or not invert-y is enabled.
 	 * @param {bool} params.premultiplyAlpha - Whether or not alpha premultiplying is enabled.
-	 * @param {Object} options - The texture array options.
+	 * @param {object} options - The texture array options.
 	 * @param {number} options.chunkSize - The dimension of each texture, in pixels.
 	 * @param {number} options.numChunks - The size of the array, in tiles.
 	 */
@@ -104,7 +104,7 @@ class TextureArray {
 	 *
 	 * @param {string} key - The key of the chunk to return.
 	 *
-	 * @returns {Object} The chunk object.
+	 * @returns {object} The chunk object.
 	 */
 	get(key) {
 		return this.used.get(key);

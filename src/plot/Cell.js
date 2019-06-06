@@ -26,7 +26,7 @@ class Cell {
 	 * Instantiates a new Cell object.
 	 *
 	 * @param {number} zoom - The zoom the the cells is generated for.
-	 * @param {Object} center - The plot position of the center of the cell.
+	 * @param {object} center - The plot position of the center of the cell.
 	 * @param {number} extent - The pixel extent of the plot at the time of generation.
 	 */
 	constructor(zoom, center, extent) {
@@ -50,10 +50,10 @@ class Cell {
 	/**
 	 * Project a normalized plot coordinate to the pixel space of the cell.
 	 *
-	 * @param {Object} pos - The normalized plot coordinate.
+	 * @param {object} pos - The normalized plot coordinate.
 	 * @param {number} zoom - The zoom of the plot pixel space to project to. Optional.
 	 *
-	 * @returns {Object} The coordinate in cell pixel space.
+	 * @returns {object} The coordinate in cell pixel space.
 	 */
 	project(pos, zoom = this.zoom) {
 		const scale = Math.pow(2, zoom - this.zoom) * this.extent;
@@ -67,10 +67,10 @@ class Cell {
 	 * Unproject a coordinate from the pixel space of the cell to a normalized
 	 * plot coordinate.
 	 *
-	 * @param {Object} px - The plot pixel coordinate.
+	 * @param {object} px - The plot pixel coordinate.
 	 * @param {number} zoom - The zoom of the plot pixel space to unproject from. Optional.
 	 *
-	 * @returns {Object} The normalized plot coordinate.
+	 * @returns {object} The normalized plot coordinate.
 	 */
 	unproject(px, zoom = this.zoom) {
 		const scale = Math.pow(2, zoom - this.zoom) * this.extent;

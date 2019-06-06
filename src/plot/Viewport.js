@@ -154,7 +154,7 @@ class Viewport {
 	 *
 	 * @param {number} zoom - The current zoom of the viewport.
 	 * @param {number} targetZoom - The target zoom of the viewport.
-	 * @param {Object} targetPos - The target position to zoom around.
+	 * @param {object} targetPos - The target position to zoom around.
 	 * @param {boolean} relative - The target position is relative to the current position when true, and centered
 	 * when false.  This paramater defaults to true.
 	 *
@@ -179,7 +179,7 @@ class Viewport {
 	 * Returns the lower-left corner position of the viewport in plot
 	 * coordinates.
 	 *
-	 * @returns {Object} The plot position.
+	 * @returns {object} The plot position.
 	 */
 	getPosition() {
 		return {
@@ -191,7 +191,7 @@ class Viewport {
 	/**
 	 * Returns the center of the viewport in plot coordinates.
 	 *
-	 * @returns {Object} The plot center.
+	 * @returns {object} The plot center.
 	 */
 	getCenter() {
 		return {
@@ -206,7 +206,7 @@ class Viewport {
 	 * @param {number} zoom - The zoom of the plot.
 	 * @param {number} tileSize - The size of a tile in pixels.
 	 *
-	 * @returns {Object} The view size in pixels.
+	 * @returns {object} The view size in pixels.
 	 */
 	getPixelSize(zoom, tileSize) {
 		const extent = Math.pow(2, zoom) * tileSize;
@@ -222,7 +222,7 @@ class Viewport {
 	 * @param {number} zoom - The zoom of the plot.
 	 * @param {number} tileSize - The size of a tile in pixels.
 	 *
-	 * @returns {Object} The view offset in pixels.
+	 * @returns {object} The view offset in pixels.
 	 */
 	getPixelOffset(zoom, tileSize) {
 		const extent = Math.pow(2, zoom) * tileSize;
@@ -235,7 +235,7 @@ class Viewport {
 	/**
 	 * Centers the viewport on a given plot coordinate.
 	 *
-	 * @param {Object} pos - The position to center the viewport on.
+	 * @param {object} pos - The position to center the viewport on.
 	 *
 	 * @returns {Viewport} The viewport object, for chaining.
 	 */

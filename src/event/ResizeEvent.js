@@ -10,7 +10,7 @@ class ResizeEvent extends Event {
 	/**
 	 * Instantiates a new ResizeEvent object.
 	 *
-	 * @param {Object} target - The object that fired the event.
+	 * @param {object} target - The object that fired the event.
 	 * @param {number} oldSize - The old size of the viewport.
 	 * @param {number} newSize - The new size of the viewport.
 	 */

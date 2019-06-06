@@ -11,7 +11,7 @@ const WebGLOverlayRenderer = require('../WebGLOverlayRenderer');
 /**
  * Shader GLSL source.
  * @private
- * @constant {Object}
+ * @constant {object}
  */
 const SHADER_GLSL = {
 	vert:
@@ -83,7 +83,7 @@ class PolygonOverlayRenderer extends WebGLOverlayRenderer {
 	/**
 	 * Instantiates a new PolygonOverlayRenderer object.
 	 *
-	 * @param {Object} options - The overlay options.
+	 * @param {object} options - The overlay options.
 	 * @param {Array} options.polygonColor - The color of the line.
 	 */
 	constructor(options = {}) {

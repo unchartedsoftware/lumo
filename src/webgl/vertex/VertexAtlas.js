@@ -70,8 +70,8 @@ class VertexAtlas {
 	 * NOTE: Assumes interleaved vertex format.
 	 *
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
-	 * @param {Object} pointers - The vertex attribute pointers.
-	 * @param {Object} options - The vertex atlas options.
+	 * @param {object} pointers - The vertex attribute pointers.
+	 * @param {object} options - The vertex atlas options.
 	 * @param {number} options.chunkSize - The size of a single chunk, in vertices.
 	 * @param {number} options.numChunks - The size of the atlas, in tiles.
 	 */
@@ -146,7 +146,7 @@ class VertexAtlas {
 	 *
 	 * @param {string} key - The key of the chunk to return.
 	 *
-	 * @returns {Object} The chunk object.
+	 * @returns {object} The chunk object.
 	 */
 	get(key) {
 		return this.used.get(key);

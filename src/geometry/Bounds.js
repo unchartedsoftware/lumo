@@ -197,7 +197,7 @@ class Bounds {
 	/**
 	 * Extends the bounds by the provided point or bounds object.
 	 *
-	 * @param {Object|Bounds} arg - The point or bounds to extend the bounds by.
+	 * @param {object|Bounds} arg - The point or bounds to extend the bounds by.
 	 *
 	 * @returns {Bounds} The bounds object, for chaining.
 	 */
@@ -239,7 +239,7 @@ class Bounds {
 	/**
 	 * Get the center coordinate of the bounds.
 	 *
-	 * @returns {Object} The center coordinate of the bounds.
+	 * @returns {object} The center coordinate of the bounds.
 	 */
 	getCenter() {
 		return {

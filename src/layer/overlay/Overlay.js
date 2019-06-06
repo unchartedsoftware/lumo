@@ -27,7 +27,7 @@ class Overlay extends Layer {
 	/**
 	 * Instantiates a new Overlay object.
 	 *
-	 * @param {Object} options - The overlay options.
+	 * @param {object} options - The overlay options.
 	 * @param {number} options.opacity - The overlay opacity.
 	 * @param {number} options.zIndex - The overlay z-index.
 	 * @param {boolean} options.hidden - Whether or not the overlay is visible.

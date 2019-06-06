@@ -12,7 +12,7 @@ class IndexBuffer {
 	 *
 	 * @param {WebGLRenderingContext} gl - The WebGL context.
 	 * @param {WebGLBuffer|ArrayBuffer|number} arg - The index data to buffer.
-	 * @param {Object} options - The rendering options.
+	 * @param {object} options - The rendering options.
 	 * @param {string} options.type - The buffer component type.
 	 * @param {string} options.mode - The draw mode / primitive type.
 	 * @param {string} options.byteOffset - The byte offset into the drawn buffer.

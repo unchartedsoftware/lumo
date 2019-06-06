@@ -42,7 +42,7 @@ class DOMHandler {
 	 *
 	 * @param {Event} event - The mouse event.
 	 *
-	 * @returns {Object} The plot position.
+	 * @returns {object} The plot position.
 	 */
 	mouseToPlot(event) {
 		return this.plot.mouseToPlotCoord(event);
@@ -54,7 +54,7 @@ class DOMHandler {
 	 *
 	 * @param {Event} event - The mouse event.
 	 *
-	 * @returns {Object} The viewport pixel coordinate.
+	 * @returns {object} The viewport pixel coordinate.
 	 */
 	mouseToViewPx(event) {
 		return this.plot.mouseToViewportPixel(event);
@@ -65,9 +65,9 @@ class DOMHandler {
 	 * position.
 	 * Coordinate [0, 0] is bottom-left of the plot.
 	 *
-	 * @param {Object} px - The viewport pixel coordinate.
+	 * @param {object} px - The viewport pixel coordinate.
 	 *
-	 * @returns {Object} The plot position.
+	 * @returns {object} The plot position.
 	 */
 	viewPxToPlot(px) {
 		return this.plot.viewportPixelToPlotCoord(px);
@@ -78,9 +78,9 @@ class DOMHandler {
 	 * coordinate.
 	 * Coordinate [0, 0] is bottom-left of the plot.
 	 *
-	 * @param {Object} pos - The plot position.
+	 * @param {object} pos - The plot position.
 	 *
-	 * @returns {Object} The viewport pixel coordinate.
+	 * @returns {object} The viewport pixel coordinate.
 	 */
 	plotToViewPx(pos) {
 		return this.plot.plotCoordToViewportPixel(pos);

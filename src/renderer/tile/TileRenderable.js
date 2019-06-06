@@ -22,7 +22,7 @@ class TileRenderable {
 	 *
 	 * @param {Tile} tile - The tile data to be rendered.
 	 * @param {number} scale - The scale to render the tile at.
-	 * @param {Object} tileOffset - The tile pixel offset relative to the viewport.
+	 * @param {object} tileOffset - The tile pixel offset relative to the viewport.
 	 * @param {Array} uvOffset - The texture coordinate offset describing the portion of the tile to render.
 	 */
 	constructor(tile, scale, tileOffset, uvOffset) {
@@ -196,7 +196,7 @@ class TileRenderable {
 	 * coordinate system, with [0, 0] being the top-left corner. The conversion
 	 * is done in-place.
 	 *
-	 * @param {Object} viewport - The pixel dimensions of the viewport.
+	 * @param {object} viewport - The pixel dimensions of the viewport.
 	 * @param {number} tileSize - The size of each tile in pixels.
 	 *
 	 * @returns {TileRenderable} The renderable object.

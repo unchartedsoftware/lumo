@@ -41,9 +41,9 @@ class Renderer extends EventEmitter {
 	/**
 	 * Pick a position of the layer for a collision with any rendered objects.
 	 *
-	 * @param {Object} pos - The plot position to pick at.
+	 * @param {object} pos - The plot position to pick at.
 	 *
-	 * @returns {Object} The collision, or null.
+	 * @returns {object} The collision, or null.
 	 */
 	/* eslint-disable no-unused-vars */
 	pick(pos) {

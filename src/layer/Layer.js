@@ -14,7 +14,7 @@ class Layer extends EventEmitter {
 	/**
 	 * Instantiates a new Layer object.
 	 *
-	 * @param {Object} options - The options.
+	 * @param {object} options - The options.
 	 * @param {number} options.opacity - The layer opacity.
 	 * @param {number} options.zIndex - The layer z-index.
 	 * @param {boolean} options.hidden - Whether or not the layer is visible.
@@ -220,9 +220,9 @@ class Layer extends EventEmitter {
 	/**
 	 * Pick a position of the layer for a collision with any rendered objects.
 	 *
-	 * @param {Object} pos - The plot position to pick at.
+	 * @param {object} pos - The plot position to pick at.
 	 *
-	 * @returns {Object} The collision, or null.
+	 * @returns {object} The collision, or null.
 	 */
 	pick(pos) {
 		if (this.renderer) {
@@ -234,7 +234,7 @@ class Layer extends EventEmitter {
 	/**
 	 * Highlights the provided data.
 	 *
-	 * @param {Object} data - The data to highlight.
+	 * @param {object} data - The data to highlight.
 	 *
 	 * @returns {Layer} The layer object, for chaining.
 	 */
@@ -266,7 +266,7 @@ class Layer extends EventEmitter {
 	/**
 	 * Returns any highlighted data.
 	 *
-	 * @returns {Object} The highlighted data.
+	 * @returns {object} The highlighted data.
 	 */
 	getHighlighted() {
 		return this.highlighted;
@@ -275,7 +275,7 @@ class Layer extends EventEmitter {
 	/**
 	 * Returns true if the provided argument is highlighted.
 	 *
-	 * @param {Object} data - The data to test.
+	 * @param {object} data - The data to test.
 	 *
 	 * @returns {boolean} Whether or not there is highlighted data.
 	 */
@@ -286,8 +286,8 @@ class Layer extends EventEmitter {
 	/**
 	 * Selects the provided data.
 	 *
-	 * @param {Object} data - The data to select.
-	 * @param {Object} multiSelect - Whether mutli-select is enabled.
+	 * @param {object} data - The data to select.
+	 * @param {object} multiSelect - Whether mutli-select is enabled.
 	 *
 	 * @returns {Layer} The layer object, for chaining.
 	 */
@@ -317,7 +317,7 @@ class Layer extends EventEmitter {
 	/**
 	 * Remove the provided data from the current selection.
 	 *
-	 * @param {Object} data - The data to unselect.
+	 * @param {object} data - The data to unselect.
 	 *
 	 * @returns {Layer} The layer object, for chaining.
 	 */
@@ -361,7 +361,7 @@ class Layer extends EventEmitter {
 	/**
 	 * Returns true if the provided argument is selected.
 	 *
-	 * @param {Object} data - The data to test.
+	 * @param {object} data - The data to test.
 	 *
 	 * @returns {boolean} Whether or not the data is selected.
 	 */

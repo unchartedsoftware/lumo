@@ -63,7 +63,7 @@ class LRUCache {
 	/**
 	 * Instantiates a new LRUCache object.
 	 *
-	 * @param {Object} options - The options object.
+	 * @param {object} options - The options object.
 	 * @param {number} options.capacity - The capacity of the cache.
 	 * @param {Function} options.onRemove - A function to execute when a value is evicted.
 	 */
