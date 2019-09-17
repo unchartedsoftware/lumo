@@ -7,15 +7,17 @@ const Layer = require('../Layer');
 
 /**
  * Cell update event handler symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const CELL_UPDATE = Symbol();
 
 /**
  * Clipped geometry symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const CLIPPED = Symbol();
 

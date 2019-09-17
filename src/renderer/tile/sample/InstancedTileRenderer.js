@@ -8,6 +8,7 @@ const WebGLTileRenderer = require('../WebGLTileRenderer');
 
 /**
  * Numver of vertices supported per chunk.
+ *
  * @private
  * @constant {number}
  */
@@ -15,6 +16,7 @@ const CHUNK_SIZE = 128 * 128;
 
 /**
  * Inner radius of star.
+ *
  * @private
  * @constant {number}
  */
@@ -22,6 +24,7 @@ const STAR_INNER_RADIUS = 0.4;
 
 /**
  * Outer radius of star.
+ *
  * @private
  * @constant {number}
  */
@@ -29,6 +32,7 @@ const STAR_OUTER_RADIUS = 1.0;
 
 /**
  * number of points on the star.
+ *
  * @private
  * @constant {number}
  */
@@ -36,6 +40,7 @@ const STAR_NUM_POINTS = 5;
 
 /**
  * Shader GLSL source.
+ *
  * @private
  * @constant {object}
  */

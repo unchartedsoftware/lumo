@@ -21,6 +21,7 @@ const Viewport = require('./Viewport');
 
 /**
  * Pan request throttle in milliseconds.
+ *
  * @private
  * @constant {number}
  */
@@ -28,6 +29,7 @@ const PAN_THROTTLE_MS = 100;
 
 /**
  * Resize request throttle in milliseconds.
+ *
  * @private
  * @constant {number}
  */
@@ -35,6 +37,7 @@ const RESIZE_THROTTLE_MS = 200;
 
 /**
  * Zoom request throttle in milliseconds.
+ *
  * @private
  * @constant {number}
  */
@@ -42,6 +45,7 @@ const ZOOM_THROTTLE_MS = 400;
 
 /**
  * The maximum zoom delta until a cell update event.
+ *
  * @private
  * @constant {number}
  */
@@ -49,6 +53,7 @@ const CELL_ZOOM_DELTA = 1.0;
 
 /**
  * The maximum zoom level supported.
+ *
  * @private
  * @constant {number}
  */
@@ -56,57 +61,65 @@ const MAX_ZOOM = 24;
 
 /**
  * Click handler symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const CLICK = Symbol();
 
 /**
  * Mouse handler symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const MOUSE = Symbol();
 
 /**
  * Pan handler symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const PAN = Symbol();
 
 /**
  * Zoom handler symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const ZOOM = Symbol();
 
 /**
  * Event handlers symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const HANDLERS = Symbol();
 
 /**
  * Event delegators symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const DELEGATOR = Symbol();
 
 /**
  * Event broadcasters symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const BROADCASTER = Symbol();
 
 /**
  * Dirty plot symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const DIRTY = Symbol();
 

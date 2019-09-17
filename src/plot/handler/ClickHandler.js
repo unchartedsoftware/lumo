@@ -9,6 +9,7 @@ const DOMHandler = require('./DOMHandler');
 /**
  * Distance in pixels the mouse can be moved before the click event is
  * cancelled.
+ *
  * @private
  * @constant {number}
  */
@@ -26,6 +27,7 @@ const createEvent = function(handler, plot, event) {
 
 /**
  * Class representing a click handler.
+ *
  * @private
  */
 class ClickHandler extends DOMHandler {

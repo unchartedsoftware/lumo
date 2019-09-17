@@ -7,36 +7,41 @@ const LinkedList = require('./LinkedList');
 
 /**
  * Max size symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const CAPACITY = Symbol();
 
 /**
  * Dispose function symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const ON_REMOVE = Symbol();
 
 /**
  * Cache symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const CACHE = Symbol();
 
 /**
  * LRU linked list symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const LRU_LIST = Symbol();
 
 /**
  * LRU length symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const LENGTH = Symbol();
 
@@ -56,6 +61,7 @@ const del = function(self, node) {
 
 /**
  * Class representing an LRU cache.
+ *
  * @private
  */
 class LRUCache {
@@ -215,6 +221,7 @@ class LRUCache {
 
 /**
  * Class representing an LRU cache entry.
+ *
  * @private
  */
 class Entry {

@@ -4,6 +4,7 @@
 
 /**
  * Maximum safe integer.
+ *
  * @private
  * @constant {number}
  */

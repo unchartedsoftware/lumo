@@ -8,7 +8,8 @@ const WebGLTileRenderer = require('../WebGLTileRenderer');
 // Constants
 
 /**
- * Numver of vertices supported per chunk.
+ * Number of vertices supported per chunk.
+ *
  * @private
  * @constant {number}
  */
@@ -16,6 +17,7 @@ const CHUNK_SIZE = 128 * 128;
 
 /**
  * Highlighted point radius increase.
+ *
  * @private
  * @constant {number}
  */
@@ -23,6 +25,7 @@ const HIGHLIGHTED_RADIUS_OFFSET = 2;
 
 /**
  * Selected point radius increase.
+ *
  * @private
  * @constant {number}
  */
@@ -30,6 +33,7 @@ const SELECTED_RADIUS_OFFSET = 4;
 
 /**
  * R-Tree node capacity.
+ *
  * @private
  * @constant {number}
  */
@@ -37,6 +41,7 @@ const NODE_CAPACITY = 32;
 
 /**
  * Shader GLSL source.
+ *
  * @private
  * @constant {object}
  */

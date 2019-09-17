@@ -8,8 +8,9 @@ const OverlayRenderer = require('./OverlayRenderer');
 
 /**
  * Refresh event handler symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const REFRESH = Symbol();
 

@@ -2,6 +2,7 @@
 
 /**
  * Class representing an event broadcaster.
+ *
  * @private
  */
 class EventBroadcaster {

@@ -9,15 +9,17 @@ const TileRenderable = require('./TileRenderable');
 
 /**
  * Tile index handler symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const TILE_INDEX = Symbol();
 
 /**
  * Tile unindex handler symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const TILE_UNINDEX = Symbol();
 

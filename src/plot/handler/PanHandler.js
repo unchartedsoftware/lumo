@@ -10,6 +10,7 @@ const DOMHandler = require('./DOMHandler');
 
 /**
  * Time in milliseconds before a pan point expires.
+ *
  * @private
  * @constant {number}
  */
@@ -17,6 +18,7 @@ const PAN_EXPIRY_MS = 50;
 
 /**
  * Pan inertia enabled.
+ *
  * @private
  * @constant {boolean}
  */
@@ -24,6 +26,7 @@ const PAN_INTERTIA = true;
 
 /**
  * Pan inertia easing.
+ *
  * @private
  * @constant {number}
  */
@@ -31,6 +34,7 @@ const PAN_INTERTIA_EASING = 0.2;
 
 /**
  * Pan inertia deceleration.
+ *
  * @private
  * @constant {number}
  */
@@ -38,6 +42,7 @@ const PAN_INTERTIA_DECELERATION = 3400;
 
 /**
  * Pan to animation duration
+ *
  * @private
  * @constant {number}
  */

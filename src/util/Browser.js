@@ -73,42 +73,49 @@ const isSafari = function() {
 
 /**
  * Browser detection.
+ *
  * @private
  */
 module.exports = {
 
 	/**
 	 * Whether or not the browser is firefox.
+  *
 	 * @constant {boolean}
 	 */
 	firefox: !!isFirefox(),
 
 	/**
 	 * Whether or not the browser is chrome.
+  *
 	 * @constant {boolean}
 	 */
 	chrome: !!isChrome(),
 
 	/**
 	 * Whether or not the browser is ie.
+  *
 	 * @constant {boolean}
 	 */
 	ie: !!isIE(),
 
 	/**
 	 * Whether or not the browser is edge.
+  *
 	 * @constant {boolean}
 	 */
 	edge: !!isEdge(),
 
 	/**
 	 * Whether or not the browser is opera.
+  *
 	 * @constant {boolean}
 	 */
 	opera: !!isOpera(),
 
 	/**
 	 * Whether or not the browser is safari.
+  *
 	 * @constant {boolean}
 	 */
 	safari: !!isSafari()

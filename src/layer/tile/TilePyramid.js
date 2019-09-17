@@ -12,6 +12,7 @@ const TilePartial = require('./TilePartial');
 
 /**
  * number of the tiles held in the pyramid.
+ *
  * @private
  * @constant {number}
  */
@@ -19,6 +20,7 @@ const CACHE_SIZE = 256;
 
 /**
  * number of persistent zoom levels held in the pyramids.
+ *
  * @private
  * @constant {number}
  */
@@ -26,6 +28,7 @@ const PERSISTANT_LEVELS = 4;
 
 /**
  * Loaded event throttle in milliseconds.
+ *
  * @private
  * @constant {number}
  */
@@ -33,6 +36,7 @@ const LOADED_THROTTLE_MS = 200;
 
 /**
  * The maximum distance to traverse when checking for tile descendants.
+ *
  * @private
  * @constant {number}
  */

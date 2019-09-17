@@ -8,6 +8,7 @@ const WebGLOverlayRenderer = require('../WebGLOverlayRenderer');
 
 /**
  * Shader GLSL source.
+ *
  * @private
  * @constant {object}
  */

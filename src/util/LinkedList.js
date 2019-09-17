@@ -2,6 +2,7 @@
 
 /**
  * Class representing a linked list.
+ *
  * @private
  */
 class LinkedList {
@@ -226,6 +227,7 @@ class LinkedList {
 
 /**
  * Class representing a linked list node.
+ *
  * @private
  */
 class Node {

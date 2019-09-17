@@ -2,6 +2,7 @@
 
 /**
  * Class representing a DOM handler.
+ *
  * @private
  */
 class DOMHandler {

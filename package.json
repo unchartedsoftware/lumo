@@ -1,6 +1,6 @@
 {
   "name": "lumo",
-  "version": "0.20.16",
+  "version": "0.20.17",
   "description": "A high performance WebGL tile rendering library",
   "main": "build/lumo.min.js",
   "author": "Kevin Birk <birk.kevin@gmail.com>",
@@ -21,22 +21,22 @@
   ],
   "dependencies": {
     "earcut": "^2.1.5",
-    "lodash": "^4.17.11",
-    "rbush": "^3.0.0"
+    "lodash": "^4.17.15",
+    "rbush": "^3.0.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.4.5",
-    "@babel/preset-env": "^7.4.5",
+    "@babel/core": "^7.6.0",
+    "@babel/preset-env": "^7.6.0",
     "babelify": "^10.0.0",
-    "browserify": "^16.2.3",
-    "del": "^4.1.1",
-    "eslint-plugin-jsdoc": "^7.2.3",
+    "browserify": "^16.5.0",
+    "del": "^5.1.0",
+    "eslint-plugin-jsdoc": "^15.9.2",
     "gulp": "^4.0.2",
-    "gulp-eslint": "^5.0.0",
+    "gulp-eslint": "^6.0.0",
     "gulp-uglify": "^3.0.2",
-    "mocha": "^6.1.4",
+    "mocha": "^6.2.0",
     "nyc": "^14.1.1",
-    "sinon": "^7.3.2",
+    "sinon": "^7.4.2",
     "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0"
   },
@@ -48,6 +48,6 @@
   "scripts": {
     "lint": "./node_modules/.bin/gulp lint",
     "build": "./node_modules/.bin/gulp build",
-    "test": "nyc --all --reporter html --reporter text mocha test/**/*.js --reporter list && rm -rf .nyc_output"
+    "test": "nyc --all --reporter html --reporter text mocha ./test --recursive --reporter list && rm -rf .nyc_output"
   }
 }

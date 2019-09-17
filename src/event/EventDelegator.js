@@ -176,6 +176,7 @@ const DELEGATION_FUNCS = {
 
 /**
  * Class representing an event delegator.
+ *
  * @private
  */
 class EventDelegator {

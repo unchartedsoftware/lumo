@@ -4,6 +4,7 @@ const Bounds = require('../geometry/Bounds');
 
 /**
  * The size of the cell, in pixels.
+ *
  * @private
  * @constant {number}
  */
@@ -11,6 +12,7 @@ const CELL_SIZE = Math.pow(2, 16);
 
 /**
  * The half size of the cell, in pixels.
+ *
  * @private
  * @constant {number}
  */
@@ -18,6 +20,7 @@ const CELL_HALF_SIZE = CELL_SIZE / 2;
 
 /**
  * Class representing a cell for clipping a rendering space.
+ *
  * @private
  */
 class Cell {

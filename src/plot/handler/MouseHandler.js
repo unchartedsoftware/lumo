@@ -16,6 +16,7 @@ const createEvent = function(handler, plot, event) {
 
 /**
  * Class representing a mouse handler.
+ *
  * @private
  */
 class MouseHandler extends DOMHandler {

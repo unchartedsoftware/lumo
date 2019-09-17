@@ -7,6 +7,7 @@ const WebGLTileRenderer = require('../WebGLTileRenderer');
 
 /**
  * Numver of vertices supported per chunk.
+ *
  * @private
  * @constant {number}
  */
@@ -14,6 +15,7 @@ const CHUNK_SIZE = 128 * 128;
 
 /**
  * Shader GLSL source.
+ *
  * @private
  * @constant {object}
  */

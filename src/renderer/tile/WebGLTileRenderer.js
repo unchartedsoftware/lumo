@@ -11,15 +11,17 @@ const TileRenderer = require('./TileRenderer');
 
 /**
  * Tile add handler symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const TILE_ADD = Symbol();
 
 /**
  * Tile remove handler symbol.
+ *
  * @private
- * @constant {Symbol}
+ * @constant {symbol}
  */
 const TILE_REMOVE = Symbol();
 
