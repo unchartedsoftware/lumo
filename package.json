@@ -34,7 +34,7 @@
     "gulp": "^4.0.2",
     "gulp-eslint": "^6.0.0",
     "gulp-uglify": "^3.0.2",
-    "mocha": "^6.2.0",
+    "mocha": "^10.2.0",
     "nyc": "^14.1.1",
     "sinon": "^7.4.2",
     "vinyl-buffer": "^1.0.1",
